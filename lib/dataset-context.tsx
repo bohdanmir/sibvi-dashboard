@@ -12,6 +12,12 @@ export interface DatasetDescription {
   location?: string
   application?: string
   currency?: string
+  dataCharacteristics?: {
+    seasonality: string
+    volatility: string
+    seasonalSpikes: string
+    seasonalDips: string
+  }
 }
 
 export interface Dataset {

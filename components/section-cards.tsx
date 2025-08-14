@@ -41,7 +41,7 @@ export function SectionCards() {
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-2 text-left">
+          <div className="line-clamp-3 text-left">
             {selectedDataset.description?.description || 'Dataset information not available'}
           </div>
           <div className="text-muted-foreground">
@@ -51,22 +51,34 @@ export function SectionCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Data Type</CardDescription>
+          <CardDescription>Data Characteristics</CardDescription>
           <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.description?.dataType || 'Time Series'}
+            {selectedDataset.description?.dataCharacteristics?.seasonality || '--'}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {selectedDataset.description?.unit || 'CSV'}
+              {selectedDataset.description?.dataCharacteristics?.volatility || '--'}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Data format <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            {selectedDataset.description?.unit || 'Period and Value columns'}
+          <div className="space-y-1 text-left w-full">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Seasonality:</span>
+              <span className="font-medium">{selectedDataset.description?.dataCharacteristics?.seasonality || '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Volatility:</span>
+              <span className="font-medium">{selectedDataset.description?.dataCharacteristics?.volatility || '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Seasonal Spikes:</span>
+              <span className="font-medium">{selectedDataset.description?.dataCharacteristics?.seasonalSpikes || '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Seasonal Dips:</span>
+              <span className="font-medium">{selectedDataset.description?.dataCharacteristics?.seasonalDips || '--'}</span>
+            </div>
           </div>
         </CardFooter>
       </Card>

@@ -2,10 +2,23 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
+export interface DatasetDescription {
+  title: string
+  description: string
+  category: string
+  source: string
+  dataType: string
+  unit?: string
+  location?: string
+  application?: string
+  currency?: string
+}
+
 export interface Dataset {
   title: string
   url: string
   icon: any
+  description?: DatasetDescription
 }
 
 interface DatasetContextType {

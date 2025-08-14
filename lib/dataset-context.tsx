@@ -19,6 +19,8 @@ export interface DatasetDescription {
     seasonalSpikes: string
     seasonalDips: string
   }
+  implications?: string[]
+  historicalEvents?: string[]
 }
 
 export interface Dataset {

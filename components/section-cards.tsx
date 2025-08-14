@@ -84,45 +84,53 @@ export function SectionCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Application</CardDescription>
+          <CardDescription>Business Implications</CardDescription>
           <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.description?.application?.split(',')[0] || 'Industrial'}
+            {selectedDataset.description?.implications?.[0]?.split(' ').slice(0, 3).join(' ') || 'Strategic Planning'}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              {selectedDataset.description?.category || 'Data'}
+              {selectedDataset.description?.implications?.length || 0} insights
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Primary use case <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            {selectedDataset.description?.application || 'Industrial applications'}
+          <div className="space-y-1 text-left w-full">
+            <div className="line-clamp-2 text-left">
+              {selectedDataset.description?.implications?.[0] || 'No implications available'}
+            </div>
+            {selectedDataset.description?.implications && selectedDataset.description.implications.length > 1 && (
+              <div className="text-xs text-muted-foreground">
+                +{selectedDataset.description.implications.length - 1} more implications
+              </div>
+            )}
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Data Points</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            --
+          <CardDescription>Historical Events</CardDescription>
+          <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            {selectedDataset.description?.historicalEvents?.[0]?.split(' ')[0] || '--'}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              Loading...
+              {selectedDataset.description?.historicalEvents?.length || 0} events
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Total records available <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Historical data points
+          <div className="space-y-1 text-left w-full">
+            {selectedDataset.description?.historicalEvents?.slice(0, 4).map((event, index) => (
+              <div key={index} className="font-medium text-muted-foreground">
+                {event}
+              </div>
+            ))}
+            {/* {selectedDataset.description?.historicalEvents && selectedDataset.description.historicalEvents.length > 4 && (
+              <div className="font-medium">
+                +{selectedDataset.description.historicalEvents.length - 4} more events
+              </div>
+            )} */}
           </div>
         </CardFooter>
       </Card>

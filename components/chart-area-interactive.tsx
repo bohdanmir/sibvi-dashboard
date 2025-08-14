@@ -56,14 +56,14 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("90d")
+  const [timeRange, setTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (isMobile) {
-      setTimeRange("7d")
+      setTimeRange("6m")
     }
   }, [isMobile])
 
@@ -103,16 +103,31 @@ export function ChartAreaInteractive() {
   }, [])
 
   const filteredData = chartData.filter((item) => {
+    if (timeRange === "All") return true
+    
     const date = new Date(item.date)
     const referenceDate = new Date(DATA_SOURCE_CONFIG.referenceDate)
-    let daysToSubtract = 90
-    if (timeRange === "30d") {
-      daysToSubtract = 30
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7
+    let monthsToSubtract = 12 // Default to 1 year
+    
+    switch (timeRange) {
+      case "6m":
+        monthsToSubtract = 6
+        break
+      case "1y":
+        monthsToSubtract = 12
+        break
+      case "3y":
+        monthsToSubtract = 36
+        break
+      case "5y":
+        monthsToSubtract = 60
+        break
+      default:
+        monthsToSubtract = 12
     }
+    
     const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
+    startDate.setMonth(startDate.getMonth() - monthsToSubtract)
     return date >= startDate
   })
 
@@ -164,9 +179,11 @@ export function ChartAreaInteractive() {
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
           >
-            <ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
-            <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
-            <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+            <ToggleGroupItem value="6m">6m</ToggleGroupItem>
+            <ToggleGroupItem value="1y">1y</ToggleGroupItem>
+            <ToggleGroupItem value="3y">3y</ToggleGroupItem>
+            <ToggleGroupItem value="5y">5y</ToggleGroupItem>
+            <ToggleGroupItem value="All">All</ToggleGroupItem>
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
@@ -174,17 +191,23 @@ export function ChartAreaInteractive() {
               size="sm"
               aria-label="Select a value"
             >
-              <SelectValue placeholder="Last 3 months" />
+              <SelectValue placeholder="1 year" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="90d" className="rounded-lg">
-                Last 3 months
+              <SelectItem value="6m" className="rounded-lg">
+                6 months
               </SelectItem>
-              <SelectItem value="30d" className="rounded-lg">
-                Last 30 days
+              <SelectItem value="1y" className="rounded-lg">
+                1 year
               </SelectItem>
-              <SelectItem value="7d" className="rounded-lg">
-                Last 7 days
+              <SelectItem value="3y" className="rounded-lg">
+                3 years
+              </SelectItem>
+              <SelectItem value="5y" className="rounded-lg">
+                5 years
+              </SelectItem>
+              <SelectItem value="All" className="rounded-lg">
+                All data
               </SelectItem>
             </SelectContent>
           </Select>

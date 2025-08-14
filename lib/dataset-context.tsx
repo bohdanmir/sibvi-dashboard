@@ -14,6 +14,7 @@ export interface DatasetDescription {
   currency?: string
   dataCharacteristics?: {
     seasonality: string
+    seasonalitySummary: string
     volatility: string
     seasonalSpikes: string
     seasonalDips: string

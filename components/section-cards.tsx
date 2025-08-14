@@ -36,7 +36,7 @@ export function SectionCards() {
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {selectedDataset.description?.category || 'Data'}
+              {selectedDataset.description?.unit || '--'}
             </Badge>
           </CardAction>
         </CardHeader>
@@ -53,11 +53,11 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Data Characteristics</CardDescription>
           <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.description?.dataCharacteristics?.seasonality || '--'}
+            {selectedDataset.description?.dataCharacteristics?.seasonalitySummary || '--'}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {selectedDataset.description?.dataCharacteristics?.volatility || '--'}
+              {selectedDataset.description?.dataType || '--'}
             </Badge>
           </CardAction>
         </CardHeader>

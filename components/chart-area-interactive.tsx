@@ -4,6 +4,7 @@ import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useDataset } from "@/lib/dataset-context"
 import {
   Card,
   CardAction,
@@ -32,34 +33,26 @@ import {
 
 export const description = "An interactive area chart"
 
-// Data source configuration - easily swap data sources here
-const DATA_SOURCE_CONFIG = {
-  csvPath: "/data/Baerlocher, MB 301, Stearin, Totals, AC Volume.csv",
-  title: "Baerlocher MB 301 Stearin - AC Volume",
-  description: "Monthly volume data from 2016 to 2025",
-  dataKey: "volume",
-  label: "Volume",
-  referenceDate: "2025-06-01"
-}
-
 interface ChartDataPoint {
   date: string
-  volume: number
+  value: number
 }
 
 const chartConfig = {
-  [DATA_SOURCE_CONFIG.dataKey]: {
-    label: DATA_SOURCE_CONFIG.label,
+  value: {
+    label: "Value",
     color: "var(--primary)",
   },
 } satisfies ChartConfig
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
+  const { selectedDataset } = useDataset()
   const [timeRange, setTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [fileName, setFileName] = React.useState<string>("")
 
   React.useEffect(() => {
     if (isMobile) {
@@ -67,46 +60,68 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
+  // Load chart data when selected dataset changes
   React.useEffect(() => {
-    const loadCSVData = async () => {
+    if (!selectedDataset) return
+
+    const loadChartData = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        const response = await fetch(DATA_SOURCE_CONFIG.csvPath)
+        // Get folder information to find the CSV file
+        const folderResponse = await fetch('/api/data-folders')
+        if (!folderResponse.ok) {
+          throw new Error('Failed to get folder information')
+        }
+        
+        const folders = await folderResponse.json()
+        const currentFolder = folders.find((f: any) => f.title === selectedDataset.title)
+        
+        if (!currentFolder || !currentFolder.files || currentFolder.files.length === 0) {
+          throw new Error('No CSV files found in selected folder')
+        }
+        
+        // Use the first CSV file in the folder
+        const csvFileName = currentFolder.files[0]
+        const csvPath = `/data/${encodeURIComponent(selectedDataset.title)}/${encodeURIComponent(csvFileName)}`
+        
+        const response = await fetch(csvPath)
         if (!response.ok) {
-          throw new Error(`Failed to load CSV: ${response.status}`)
+          throw new Error(`Failed to load data: ${response.status}`)
         }
         
         const csvText = await response.text()
-        
-        // Parse CSV data
-        const lines = csvText.split('\n').filter(line => line.trim())
-        const parsedData: ChartDataPoint[] = lines.slice(1).map(line => {
-          const values = line.split(',')
-          return {
-            date: values[0],
-            volume: parseInt(values[1]) || 0
-          }
-        }).filter(item => item.date && !isNaN(item.volume))
-        
+        const parsedData = parseCSV(csvText)
         setChartData(parsedData)
+        setFileName(csvFileName)
         setLoading(false)
       } catch (error) {
-        console.error('Error loading CSV data:', error)
+        console.error('Error loading chart data:', error)
         setError(error instanceof Error ? error.message : 'Failed to load data')
         setLoading(false)
       }
     }
 
-    loadCSVData()
-  }, [])
+    loadChartData()
+  }, [selectedDataset])
+
+  const parseCSV = (csvText: string): ChartDataPoint[] => {
+    const lines = csvText.split('\n').filter(line => line.trim())
+    return lines.slice(1).map(line => {
+      const values = line.split(',')
+      return {
+        date: values[0],
+        value: parseFloat(values[1]) || 0
+      }
+    }).filter(item => item.date && !isNaN(item.value))
+  }
 
   const filteredData = chartData.filter((item) => {
     if (timeRange === "All") return true
     
     const date = new Date(item.date)
-    const referenceDate = new Date(DATA_SOURCE_CONFIG.referenceDate)
+    const referenceDate = new Date("2025-06-01") // You might want to make this dynamic
     let monthsToSubtract = 12 // Default to 1 year
     
     switch (timeRange) {
@@ -131,6 +146,21 @@ export function ChartAreaInteractive() {
     return date >= startDate
   })
 
+  if (!selectedDataset) {
+    return (
+      <Card className="@container/card">
+        <CardHeader>
+          <CardTitle>No Dataset Selected</CardTitle>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="flex items-center justify-center h-[250px]">
+            <div className="text-muted-foreground">Please select a dataset from the sidebar</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (loading) {
     return (
       <Card className="@container/card">
@@ -139,7 +169,7 @@ export function ChartAreaInteractive() {
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <div className="flex items-center justify-center h-[250px]">
-            <div className="text-muted-foreground">Loading data from CSV...</div>
+            <div className="text-muted-foreground">Loading data from {selectedDataset.title}...</div>
           </div>
         </CardContent>
       </Card>
@@ -164,13 +194,17 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>{DATA_SOURCE_CONFIG.title}</CardTitle>
-        <CardDescription>
-          <span className="hidden @[540px]/card:block">
-            {DATA_SOURCE_CONFIG.description}
-          </span>
-          <span className="@[540px]/card:hidden">Monthly volume data</span>
-        </CardDescription>
+        <div className="flex flex-col gap-2">
+          <CardTitle>{selectedDataset.title}</CardTitle>
+          <CardDescription>
+            <span className="hidden @[540px]/card:block">
+              {fileName ? `Data from: ${fileName}` : "Dataset information"}
+            </span>
+            <span className="@[540px]/card:hidden">
+              {fileName ? fileName : "Dataset info"}
+            </span>
+          </CardDescription>
+        </div>
         <CardAction>
           <ToggleGroup
             type="single"
@@ -220,15 +254,15 @@ export function ChartAreaInteractive() {
         >
           <AreaChart data={filteredData}>
             <defs>
-              <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-volume)"
+                  stopColor="var(--color-value)"
                   stopOpacity={1.0}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-volume)"
+                  stopColor="var(--color-value)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -263,10 +297,10 @@ export function ChartAreaInteractive() {
               }
             />
             <Area
-              dataKey={DATA_SOURCE_CONFIG.dataKey}
+              dataKey="value"
               type="natural"
-              fill="url(#fillVolume)"
-              stroke="var(--color-volume)"
+              fill="url(#fillValue)"
+              stroke="var(--color-value)"
             />
           </AreaChart>
         </ChartContainer>

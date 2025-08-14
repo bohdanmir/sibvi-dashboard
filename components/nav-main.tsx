@@ -18,6 +18,8 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    onClick?: () => void
+    isActive?: boolean
   }[]
 }) {
   return (
@@ -45,7 +47,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton 
+                tooltip={item.title}
+                onClick={item.onClick}
+                className={item.isActive ? "bg-accent text-accent-foreground" : ""}
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>

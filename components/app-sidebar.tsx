@@ -32,6 +32,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useDataset } from "@/lib/dataset-context"
 
 const data = {
   user: {
@@ -131,42 +132,20 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [dataFolders, setDataFolders] = React.useState<Array<{title: string, url: string, icon: any}>>([])
-  const [loading, setLoading] = React.useState(true)
+  const { selectedDataset, setSelectedDataset, availableDatasets, loading } = useDataset()
 
-  React.useEffect(() => {
-    const loadDataFolders = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/data-folders')
-        if (!response.ok) {
-          throw new Error('Failed to fetch data folders')
-        }
-        
-        const folders = await response.json()
-        // Map the API response to include the proper icon component
-        const foldersWithIcons = folders.map((folder: any) => ({
-          ...folder,
-          icon: IconFolder
-        }))
-        
-        setDataFolders(foldersWithIcons)
-      } catch (error) {
-        console.error('Error loading data folders:', error)
-        // Fallback to empty array if API fails
-        setDataFolders([])
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Create dataset navigation items with click handlers
+  const datasetNavItems = availableDatasets.map(dataset => ({
+    ...dataset,
+    icon: IconFolder,
+    onClick: () => setSelectedDataset(dataset),
+    isActive: selectedDataset?.title === dataset.title
+  }))
 
-    loadDataFolders()
-  }, [])
-
-  // Combine static navMain with dynamic data folders
+  // Combine static navMain with dynamic dataset items
   const allNavItems = [
     ...data.navMain,
-    ...dataFolders
+    ...datasetNavItems
   ]
 
   return (

@@ -18,6 +18,10 @@ export interface DatasetDescription {
     volatility: string
     seasonalSpikes: string
     seasonalDips: string
+    allTimeHigh?: string
+    allTimeLow?: string
+    highDescription?: string
+    lowDescription?: string
   }
   implications?: string[]
   historicalEvents?: string[]

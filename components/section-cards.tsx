@@ -41,12 +41,12 @@ export function SectionCards() {
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-3 text-left">
+          <div className="line-clamp-5 text-left text-muted-foreground">
             {selectedDataset.description?.description || 'Dataset information not available'}
           </div>
-          <div className="text-muted-foreground">
+          {/* <div className="text-muted-foreground">
             {selectedDataset.description?.source || 'Data source'}
-          </div>
+          </div> */}
         </CardFooter>
       </Card>
       <Card className="@container/card">
@@ -86,51 +86,55 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Business Implications</CardDescription>
           <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.description?.implications?.[0]?.split(' ').slice(0, 3).join(' ') || 'Strategic Planning'}
+            Applications
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {selectedDataset.description?.implications?.length || 0} insights
+              {selectedDataset.description?.implications?.length || 0} areas
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="space-y-1 text-left w-full">
-            <div className="line-clamp-2 text-left">
-              {selectedDataset.description?.implications?.[0] || 'No implications available'}
-            </div>
-            {selectedDataset.description?.implications && selectedDataset.description.implications.length > 1 && (
-              <div className="text-xs text-muted-foreground">
-                +{selectedDataset.description.implications.length - 1} more implications
+            {selectedDataset.description?.implications?.slice(0, 4).map((implication, index) => (
+              <div key={index} className="font-medium text-muted-foreground">
+                {implication}
               </div>
-            )}
+            ))}
+            {/* {selectedDataset.description?.implications && selectedDataset.description.implications.length > 4 && (
+              <div className="text-xs text-muted-foreground">
+                +{selectedDataset.description.implications.length - 4} more areas
+              </div>
+            )} */}
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Historical Events</CardDescription>
+          <CardDescription>Highs/Lows</CardDescription>
           <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.description?.historicalEvents?.[0]?.split(' ')[0] || '--'}
+            Critical Events
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {selectedDataset.description?.historicalEvents?.length || 0} events
+              Peak & Valley
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="space-y-1 text-left w-full">
-            {selectedDataset.description?.historicalEvents?.slice(0, 4).map((event, index) => (
-              <div key={index} className="font-medium text-muted-foreground">
-                {event}
+          <div className="space-y-2 text-left w-full">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-green-600">All-time High: {selectedDataset.description?.dataCharacteristics?.allTimeHigh || '--'}</div>
+              <div className="text-xs text-muted-foreground">
+                {selectedDataset.description?.dataCharacteristics?.highDescription || 'Peak performance period'}
               </div>
-            ))}
-            {/* {selectedDataset.description?.historicalEvents && selectedDataset.description.historicalEvents.length > 4 && (
-              <div className="font-medium">
-                +{selectedDataset.description.historicalEvents.length - 4} more events
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-red-600">All-time Low: {selectedDataset.description?.dataCharacteristics?.allTimeLow || '--'}</div>
+              <div className="text-xs text-muted-foreground">
+                {selectedDataset.description?.dataCharacteristics?.lowDescription || 'Lowest performance period'}
               </div>
-            )} */}
+            </div>
           </div>
         </CardFooter>
       </Card>

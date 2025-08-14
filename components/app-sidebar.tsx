@@ -45,11 +45,6 @@ const data = {
       url: "#",
       icon: IconDashboard,
     },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
   ],
   navClouds: [
     {
@@ -136,6 +131,44 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [dataFolders, setDataFolders] = React.useState<Array<{title: string, url: string, icon: any}>>([])
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    const loadDataFolders = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/data-folders')
+        if (!response.ok) {
+          throw new Error('Failed to fetch data folders')
+        }
+        
+        const folders = await response.json()
+        // Map the API response to include the proper icon component
+        const foldersWithIcons = folders.map((folder: any) => ({
+          ...folder,
+          icon: IconFolder
+        }))
+        
+        setDataFolders(foldersWithIcons)
+      } catch (error) {
+        console.error('Error loading data folders:', error)
+        // Fallback to empty array if API fails
+        setDataFolders([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadDataFolders()
+  }, [])
+
+  // Combine static navMain with dynamic data folders
+  const allNavItems = [
+    ...data.navMain,
+    ...dataFolders
+  ]
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -154,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={allNavItems} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

@@ -43,6 +43,10 @@ const chartConfig = {
     label: "Value",
     color: "var(--primary)",
   },
+  extra: {
+    label: "Extra",
+    color: "#ff6b6b",
+  },
 } satisfies ChartConfig
 
 export function ChartAreaInteractive() {
@@ -110,9 +114,11 @@ export function ChartAreaInteractive() {
     const lines = csvText.split('\n').filter(line => line.trim())
     return lines.slice(1).map(line => {
       const values = line.split(',')
+      const baseValue = parseFloat(values[1]) || 0
       return {
         date: values[0],
-        value: parseFloat(values[1]) || 0
+        value: baseValue,
+        extra: baseValue * 0.8 + Math.random() * 100000 // Simple variation for second line
       }
     }).filter(item => item.date && !isNaN(item.value))
   }
@@ -312,6 +318,13 @@ export function ChartAreaInteractive() {
               dataKey="value"
               type="natural"
               stroke="var(--color-value)"
+            />
+            {/* Simple second line for testing */}
+            <Line
+              dataKey="extra"
+              type="natural"
+              stroke="var(--color-extra)"
+              strokeDasharray="5 5"
             />
           </LineChart>
         </ChartContainer>

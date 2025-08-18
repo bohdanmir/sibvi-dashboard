@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
@@ -252,7 +252,7 @@ export function ChartAreaInteractive() {
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
+          <LineChart data={filteredData}>
             <defs>
               <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -282,7 +282,19 @@ export function ChartAreaInteractive() {
                 })
               }}
             />
-            <ChartTooltip
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                return value.toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })
+              }}
+            />
+            <Tooltip
               cursor={false}
               content={
                 <ChartTooltipContent
@@ -296,13 +308,12 @@ export function ChartAreaInteractive() {
                 />
               }
             />
-            <Area
+            <Line
               dataKey="value"
               type="natural"
-              fill="url(#fillValue)"
               stroke="var(--color-value)"
             />
-          </AreaChart>
+          </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>

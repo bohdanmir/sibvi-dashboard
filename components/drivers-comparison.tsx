@@ -1,7 +1,15 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { useDataset } from "@/lib/dataset-context"
+
+interface AnalysisFolder {
+  id: string
+  name: string
+  path: string
+}
 
 interface DriverCardProps {
   title: string
@@ -81,49 +89,106 @@ function DriverCard({ title, description, progress, currentValue, targetValue, s
 }
 
 export function DriversComparison() {
-  const drivers = [
-    {
-      title: "Driver A",
-      description: "Primary performance metric",
-      progress: 85,
-      currentValue: "8.5M",
+  const { selectedDataset } = useDataset()
+  const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchAnalysisFolders = async () => {
+      if (!selectedDataset) {
+        setAnalysisFolders([])
+        return
+      }
+
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
+        if (response.ok) {
+          const folders = await response.json()
+          setAnalysisFolders(folders)
+        } else {
+          setAnalysisFolders([])
+        }
+      } catch (error) {
+        console.error('Error fetching analysis folders:', error)
+        setAnalysisFolders([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnalysisFolders()
+  }, [selectedDataset])
+
+  // Generate mock data for each analysis folder
+  const generateMockData = (index: number) => {
+    const statuses: Array<"on-track" | "at-risk" | "behind"> = ["on-track", "at-risk", "behind"]
+    const trends: Array<"up" | "down" | "stable"> = ["up", "down", "stable"]
+    
+    return {
+      progress: Math.floor(Math.random() * 60) + 40, // 40-100
+      currentValue: `${(Math.random() * 5 + 3).toFixed(1)}M`,
       targetValue: "10M",
-      status: "on-track" as const,
-      trend: "up" as const,
-    },
-    {
-      title: "Driver B", 
-      description: "Secondary performance metric",
-      progress: 62,
-      currentValue: "6.2M",
-      targetValue: "10M",
-      status: "at-risk" as const,
-      trend: "stable" as const,
-    },
-    {
-      title: "Driver C",
-      description: "Tertiary performance metric", 
-      progress: 45,
-      currentValue: "4.5M",
-      targetValue: "10M",
-      status: "behind" as const,
-      trend: "down" as const,
-    },
-  ]
+      status: statuses[index % statuses.length] as "on-track" | "at-risk" | "behind",
+      trend: trends[index % trends.length] as "up" | "down" | "stable"
+    }
+  }
+
+  if (!selectedDataset) {
+    return (
+      <div className="space-y-4">
+        <div className="px-4 lg:px-6">
+          <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
+          <p className="text-muted-foreground">
+            Select a dataset from the sidebar to view analysis comparisons.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="px-4 lg:px-6">
+          <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
+          <p className="text-muted-foreground">
+            Loading analysis folders for {selectedDataset.title}...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
       <div className="px-4 lg:px-6">
         <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
         <p className="text-muted-foreground">
-          Monitor and compare key performance drivers across different metrics.
+          Analysis folders for {selectedDataset.title} dataset.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
-        {drivers.map((driver, index) => (
-          <DriverCard key={index} {...driver} />
-        ))}
-      </div>
+      {analysisFolders.length === 0 ? (
+        <div className="px-4 lg:px-6">
+          <p className="text-muted-foreground">
+            No analysis folders found for {selectedDataset.title}.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
+          {analysisFolders.map((folder, index) => {
+            const mockData = generateMockData(index)
+            return (
+              <DriverCard
+                key={folder.id}
+                title={folder.name}
+                description={`Analysis folder: ${folder.id}`}
+                {...mockData}
+              />
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

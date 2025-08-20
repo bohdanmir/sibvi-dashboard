@@ -14,6 +14,7 @@ interface AnalysisFolder {
 interface Category {
   id: number
   name: string
+  importance: number
 }
 
 interface DriverCardProps {
@@ -53,10 +54,8 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
 
   // Generate mock progress data for each category (in real implementation, this would come from the API)
   const generateProgressData = () => {
-    const progress = Math.floor(Math.random() * 60) + 40 // 40-100
     const currentValue = `${(Math.random() * 5 + 3).toFixed(1)}M`
     return {
-      progress,
       currentValue,
       targetValue: "10M"
     }
@@ -82,9 +81,9 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
             <div key={category.id} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{category.name}</span>
-                <span className="font-medium">{progressData.progress}%</span>
+                <span className="font-medium">{category.importance}%</span>
               </div>
-              <Progress value={progressData.progress} className="h-2" />
+              <Progress value={category.importance} className="h-2" />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Current: {progressData.currentValue}</span>
                 <span>Target: {progressData.targetValue}</span>
@@ -175,7 +174,8 @@ export function DriversComparison() {
     const numCategories = Math.floor(Math.random() * 5) + 2 // 2-6 categories
     const categories = Array.from({ length: numCategories }, (_, itemIndex) => ({
       id: itemIndex + 1,
-      name: categoryOptions[itemIndex % categoryOptions.length]
+      name: categoryOptions[itemIndex % categoryOptions.length],
+      importance: Math.floor(Math.random() * 60) + 40 // 40-100 for mock data
     }))
     
     return {

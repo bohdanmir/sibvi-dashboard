@@ -242,7 +242,7 @@ export function DriversComparison() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
+        <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4">
           {analysisFolders.map((folder, index) => {
             const mockData = generateMockData(index)
             // Get merged categories (all dataset categories with real values or 0 for missing ones)

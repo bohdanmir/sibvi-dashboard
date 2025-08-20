@@ -97,25 +97,86 @@ export async function discoverAnalyses(datasetId: string): Promise<AnalysisInfo[
 
 export async function fetchDriversData(datasetId: string, analysisId: string): Promise<DriverData[]> {
   try {
-    // Construct the path based on dataset and analysis
-    const analysisPath = `/data/${datasetId}/Analyses/${analysisId}/overwrite/drivers_report.json`
+    // First, get the analysis info to find the correct path
+    const analysesResponse = await fetch(`/api/data-folders/${encodeURIComponent(datasetId)}/analyses`)
+    if (!analysesResponse.ok) {
+      throw new Error(`Failed to fetch analyses for dataset ${datasetId}`)
+    }
     
+    const analyses = await analysesResponse.json()
+    const analysis = analyses.find((a: AnalysisInfo) => a.id === analysisId)
+    
+    if (!analysis) {
+      const availableAnalysisIds = analyses.map((a: AnalysisInfo) => a.id).join(', ')
+      throw new Error(`Analysis ${analysisId} not found in dataset ${datasetId}. Available analyses: ${availableAnalysisIds}`)
+    }
+    
+    const analysisPath = analysis.path
     console.log(`Fetching drivers from: ${analysisPath}`)
+    console.log(`Dataset: ${datasetId}, Analysis: ${analysisId}`)
     
     const response = await fetch(analysisPath)
+    console.log(`Response status: ${response.status}, ok: ${response.ok}`)
+    
     if (!response.ok) {
-      throw new Error('Failed to fetch drivers data')
+      const errorText = await response.text()
+      console.error(`HTTP Error ${response.status}: ${errorText}`)
+      throw new Error(`Failed to fetch drivers data: HTTP ${response.status}`)
     }
     
     const data = await response.json()
+    console.log('Raw data received:', typeof data, 'Keys:', Object.keys(data))
+    
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data format received')
+    }
+    
     const drivers: DriverData[] = []
     
     console.log('Raw data keys:', Object.keys(data).length)
     
     for (const [id, driverData] of Object.entries(data)) {
-      const typedDriverData = driverData as any
-      if (typedDriverData.driver_name && typedDriverData.region && typedDriverData.region.length > 0) {
-        const regionNames = typedDriverData.region.map((r: any) => r.name)
+      try {
+        const typedDriverData = driverData as any
+        console.log(`Processing driver ${id}:`, typedDriverData)
+        
+        if (!typedDriverData.driver_name) {
+          console.warn(`Driver ${id} missing driver_name:`, typedDriverData)
+          continue
+        }
+        
+        // Handle different region formats
+        let regionNames: string[] = []
+        if (typedDriverData.region && Array.isArray(typedDriverData.region)) {
+          if (typedDriverData.region.length > 0 && typeof typedDriverData.region[0] === 'object' && typedDriverData.region[0].name) {
+            regionNames = typedDriverData.region.map((r: any) => r.name)
+          } else if (typedDriverData.region.length > 0 && typeof typedDriverData.region[0] === 'string') {
+            regionNames = typedDriverData.region
+          }
+        }
+        
+        // If no regions found, try to extract from driver name or use default
+        if (regionNames.length === 0) {
+          // Try to extract region from driver name
+          const nameParts = typedDriverData.driver_name.split(',')
+          if (nameParts.length > 1) {
+            // Look for common region indicators in the name
+            const regionIndicators = ['US', 'United States', 'Europe', 'Asia', 'Africa', 'Australia', 'Canada', 'Mexico', 'Brazil', 'China', 'Japan', 'India']
+            for (const part of nameParts) {
+              const trimmed = part.trim()
+              if (regionIndicators.some(indicator => trimmed.includes(indicator))) {
+                regionNames = ['World', trimmed]
+                break
+              }
+            }
+          }
+          
+          // Default to World if still no regions
+          if (regionNames.length === 0) {
+            regionNames = ['World']
+          }
+        }
+        
         const primaryRegion = regionNames[regionNames.length - 1] // Get the most specific region
         
         let coordinates = regionCoordinates[primaryRegion] || regionCoordinates[regionNames[0]] || regionCoordinates["World"]
@@ -158,20 +219,60 @@ export async function fetchDriversData(datasetId: string, analysisId: string): P
         coordinates.x = Math.min(95, Math.max(5, coordinates.x))
         coordinates.y = Math.min(95, Math.max(5, coordinates.y))
         
+        // Extract category information
+        let category = "Unknown"
+        if (typedDriverData.category && Array.isArray(typedDriverData.category) && typedDriverData.category.length > 0) {
+          if (typeof typedDriverData.category[0] === 'object' && typedDriverData.category[0].name) {
+            category = typedDriverData.category[0].name
+          } else if (typeof typedDriverData.category[0] === 'string') {
+            category = typedDriverData.category[0]
+          }
+        }
+        
+        // Extract importance and direction from correlation data
+        let importance = 0
+        let direction = 0
+        
+        if (typedDriverData.pearson_correlation?.overall?.mean !== undefined) {
+          importance = Math.abs(typedDriverData.pearson_correlation.overall.mean) * 100
+          direction = typedDriverData.pearson_correlation.overall.mean
+        } else if (typedDriverData.granger_correlation?.overall?.mean !== undefined) {
+          importance = Math.abs(typedDriverData.granger_correlation.overall.mean) * 100
+          direction = typedDriverData.granger_correlation.overall.mean
+        }
+        
+        // Extract lag information
+        let lag = "Unknown"
+        if (typedDriverData.overall_lag) {
+          lag = typedDriverData.overall_lag
+        } else if (typedDriverData.pearson_correlation) {
+          // Find the lag with highest correlation
+          const lags = Object.keys(typedDriverData.pearson_correlation).filter(k => k.startsWith('lag_'))
+          if (lags.length > 0) {
+            const highestLag = lags.reduce((a, b) => 
+              Math.abs(typedDriverData.pearson_correlation[a]) > Math.abs(typedDriverData.pearson_correlation[b]) ? a : b
+            )
+            lag = highestLag.replace('lag_', '') + ' month(s)'
+          }
+        }
+        
         const driver = {
           id,
           name: typedDriverData.driver_name,
           region: regionNames,
-          category: typedDriverData.category?.name || "Unknown",
+          category: category,
           isPublic: typedDriverData.is_public || false,
-          importance: typedDriverData.importance?.overall?.mean || 0,
-          direction: typedDriverData.direction?.overall?.mean || 0,
-          lag: typedDriverData.overall_lag || "Unknown",
+          importance: importance,
+          direction: direction,
+          lag: lag,
           coordinates
         }
         
         drivers.push(driver)
-        console.log(`Driver: ${typedDriverData.driver_name} at (${coordinates.x.toFixed(1)}%, ${coordinates.y.toFixed(1)}%) - Region: ${primaryRegion}`)
+        console.log(`Driver processed: ${typedDriverData.driver_name} at (${coordinates.x.toFixed(1)}%, ${coordinates.y.toFixed(1)}%) - Region: ${primaryRegion}`)
+      } catch (driverError) {
+        console.error(`Error processing driver ${id}:`, driverError)
+        continue
       }
     }
     
@@ -180,7 +281,13 @@ export async function fetchDriversData(datasetId: string, analysisId: string): P
     
     return drivers
   } catch (error) {
-    console.error('Error fetching drivers data:', error)
-    return []
+    console.error('Error in fetchDriversData:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      datasetId,
+      analysisId
+    })
+    throw error
   }
 }

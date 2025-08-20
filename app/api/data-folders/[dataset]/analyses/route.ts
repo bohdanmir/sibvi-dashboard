@@ -4,10 +4,10 @@ import { join } from 'path'
 
 export async function GET(
   request: Request,
-  { params }: { params: { dataset: string } }
+  { params }: { params: Promise<{ dataset: string }> }
 ) {
   try {
-    const { dataset } = params
+    const { dataset } = await params
     const analysesPath = join(process.cwd(), 'public', 'data', dataset, 'Analyses')
     
     // Check if the analyses directory exists
@@ -56,11 +56,17 @@ export async function GET(
             // Metadata file doesn't exist
           }
           
+          // Determine the correct path for drivers_report.json
+          let driversPath = `/data/${dataset}/Analyses/${folder.name}/drivers_report.json`
+          if (hasOverwriteDriversReport) {
+            driversPath = `/data/${dataset}/Analyses/${folder.name}/overwrite/drivers_report.json`
+          }
+          
           analyses.push({
             id: folder.name,
             name: metadata?.name || `Analysis ${folder.name}`,
             driverCount: 0, // Will be updated when drivers are loaded
-            path: `/data/${dataset}/Analyses/${folder.name}/overwrite/drivers_report.json`,
+            path: driversPath,
             metadata: metadata
           })
         }
@@ -72,7 +78,7 @@ export async function GET(
     
     return NextResponse.json(analyses)
   } catch (error) {
-    console.error(`Error reading analyses for dataset ${params.dataset}:`, error)
+    console.error(`Error reading analyses for dataset:`, error)
     return NextResponse.json(
       { error: 'Failed to read analyses' },
       { status: 500 }

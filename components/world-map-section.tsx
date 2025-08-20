@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight } from "lucide-react"
@@ -27,55 +27,165 @@ export function WorldMapSection() {
   const [loading, setLoading] = useState(true)
   const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null)
   const [availableAnalyses, setAvailableAnalyses] = useState<AnalysisInfo[]>([])
+  const [error, setError] = useState<string | null>(null)
+  
+  // Use ref to track current dataset and prevent stale requests
+  const currentDatasetRef = useRef<string | null>(null)
+  const currentAnalysisRef = useRef<string | null>(null)
+  
+  // Update refs when state changes
+  useEffect(() => {
+    currentDatasetRef.current = selectedDataset?.title || null
+  }, [selectedDataset?.title])
+  
+  useEffect(() => {
+    currentAnalysisRef.current = currentAnalysis
+  }, [currentAnalysis])
+  
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('State changed:', {
+      selectedDataset: selectedDataset?.title,
+      currentAnalysis,
+      availableAnalyses: availableAnalyses.map(a => a.id),
+      driversCount: drivers.length,
+      selectedDriverId: selectedDriver?.id
+    })
+  }, [selectedDataset?.title, currentAnalysis, availableAnalyses, drivers.length, selectedDriver?.id])
+
+  // Immediate state reset when dataset changes
+  useEffect(() => {
+    console.log('Dataset changed, immediately resetting state:', selectedDataset?.title)
+    setCurrentAnalysis(null)
+    setDrivers([])
+    setSelectedDriver(null)
+    setAvailableAnalyses([])
+    setError(null)
+    setLoading(false)
+  }, [selectedDataset?.title])
 
   // Discover analyses when dataset changes
   useEffect(() => {
     const loadAnalyses = async () => {
       if (!selectedDataset) return
       
+      console.log('Loading analyses for dataset:', selectedDataset.title)
       setLoading(true)
-      const analyses = await discoverAnalyses(selectedDataset.title)
-      setAvailableAnalyses(analyses)
       
-      // Set the first analysis as default if available
-      if (analyses.length > 0) {
-        setCurrentAnalysis(analyses[0].id)
-      } else {
-        setCurrentAnalysis(null)
-        setDrivers([])
-        setSelectedDriver(null)
+      try {
+        const analyses = await discoverAnalyses(selectedDataset.title)
+        console.log('Analyses discovered:', analyses)
+        setAvailableAnalyses(analyses)
+        
+        // Set the first analysis as default if available
+        if (analyses.length > 0) {
+          console.log('Setting first analysis as default:', analyses[0].id)
+          setCurrentAnalysis(analyses[0].id)
+        } else {
+          console.log('No analyses found for dataset')
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error loading analyses:', error)
+        setError(`Failed to load analyses: ${error instanceof Error ? error.message : 'Unknown error'}`)
         setLoading(false)
       }
     }
     
-    loadAnalyses()
-  }, [selectedDataset])
+    // Add a small delay to ensure state is stable
+    const timeoutId = setTimeout(loadAnalyses, 100)
+    
+    return () => clearTimeout(timeoutId)
+  }, [selectedDataset?.title]) // Use selectedDataset.title as dependency to ensure it triggers on dataset change
 
   // Load drivers when analysis changes
   useEffect(() => {
     const loadDrivers = async () => {
-      if (!selectedDataset || !currentAnalysis) return
+      // Early return if we don't have the required data
+      if (!selectedDataset || !currentAnalysis || availableAnalyses.length === 0) {
+        console.log('Skipping drivers load - missing required data:', { 
+          hasDataset: !!selectedDataset, 
+          hasAnalysis: !!currentAnalysis,
+          hasAnalyses: availableAnalyses.length > 0,
+          datasetTitle: selectedDataset?.title,
+          analysisId: currentAnalysis,
+          availableAnalysisIds: availableAnalyses.map(a => a.id)
+        })
+        return
+      }
       
+      // Verify that the current analysis exists in the available analyses for this dataset
+      const analysisExists = availableAnalyses.some(a => a.id === currentAnalysis)
+      if (!analysisExists) {
+        console.log('Analysis not found in current dataset, skipping drivers load:', {
+          analysisId: currentAnalysis,
+          availableAnalyses: availableAnalyses.map(a => a.id),
+          datasetTitle: selectedDataset.title
+        })
+        // Reset the current analysis if it's invalid
+        setCurrentAnalysis(null)
+        setDrivers([])
+        setSelectedDriver(null)
+        return
+      }
+      
+      // Check if this request is still valid (dataset hasn't changed)
+      if (currentDatasetRef.current !== selectedDataset.title || currentAnalysisRef.current !== currentAnalysis) {
+        console.log('Dataset or analysis changed during request, skipping stale request:', {
+          currentDataset: currentDatasetRef.current,
+          selectedDataset: selectedDataset.title,
+          currentAnalysis: currentAnalysisRef.current,
+          analysisId: currentAnalysis
+        })
+        return
+      }
+      
+      console.log('Loading drivers for dataset:', selectedDataset.title, 'analysis:', currentAnalysis)
       setLoading(true)
-      const driversData = await fetchDriversData(selectedDataset.title, currentAnalysis)
-      console.log('Drivers loaded:', driversData.length)
-      console.log('Drivers with coordinates:', driversData.map(d => ({
-        name: d.name,
-        coords: d.coordinates,
-        region: d.region
-      })))
-      setDrivers(driversData)
-      setLoading(false)
-      // Set the first driver as selected by default
-      if (driversData.length > 0) {
-        setSelectedDriver(driversData[0])
-      } else {
+      setError(null)
+      
+      try {
+        const driversData = await fetchDriversData(selectedDataset.title, currentAnalysis)
+        
+        // Check again if the request is still valid after fetching
+        if (currentDatasetRef.current !== selectedDataset.title || currentAnalysisRef.current !== currentAnalysis) {
+          console.log('Dataset or analysis changed after fetch, discarding results')
+          return
+        }
+        
+        console.log('Drivers loaded successfully:', driversData.length)
+        console.log('Drivers with coordinates:', driversData.map(d => ({
+          name: d.name,
+          coords: d.coordinates,
+          region: d.region
+        })))
+        setDrivers(driversData)
+        setLoading(false)
+        // Set the first driver as selected by default
+        if (driversData.length > 0) {
+          console.log('Setting first driver as selected:', driversData[0].name)
+          setSelectedDriver(driversData[0])
+        } else {
+          console.log('No drivers found in analysis')
+          setSelectedDriver(null)
+        }
+      } catch (error) {
+        // Check if the request is still valid before setting error
+        if (currentDatasetRef.current !== selectedDataset.title || currentAnalysisRef.current !== currentAnalysis) {
+          console.log('Dataset or analysis changed during error, not setting error state')
+          return
+        }
+        
+        console.error('Error loading drivers:', error)
+        setError(`Failed to load drivers: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setLoading(false)
+        setDrivers([])
         setSelectedDriver(null)
       }
     }
     
     loadDrivers()
-  }, [selectedDataset, currentAnalysis])
+  }, [selectedDataset, currentAnalysis, availableAnalyses])
 
   // Keyboard navigation
   useEffect(() => {
@@ -119,6 +229,49 @@ export function WorldMapSection() {
         <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
           <div className="text-center text-gray-500">
             <p>Select a dataset to view details</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show error if there is one
+  if (error) {
+    return (
+      <div className="w-full flex gap-4">
+        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-red-500">
+            <div className="text-lg font-semibold mb-2">Error Loading Data</div>
+            <p className="text-sm">{error}</p>
+            <Button 
+              onClick={() => {
+                setError(null)
+                setLoading(true)
+                // Retry loading
+                if (currentAnalysis) {
+                  fetchDriversData(selectedDataset.title, currentAnalysis)
+                    .then(driversData => {
+                      setDrivers(driversData)
+                      setLoading(false)
+                      if (driversData.length > 0) {
+                        setSelectedDriver(driversData[0])
+                      }
+                    })
+                    .catch(err => {
+                      setError(`Retry failed: ${err.message}`)
+                      setLoading(false)
+                    })
+                }
+              }}
+              className="mt-4"
+            >
+              Retry
+            </Button>
+          </div>
+        </Card>
+        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>Error occurred while loading data</p>
           </div>
         </Card>
       </div>

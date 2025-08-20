@@ -19,9 +19,10 @@ interface DriverCardProps {
   targetValue: string
   status: "on-track" | "at-risk" | "behind"
   trend: "up" | "down" | "stable"
+  driverName: string
 }
 
-function DriverCard({ title, description, progress, currentValue, targetValue, status, trend }: DriverCardProps) {
+function DriverCard({ title, description, progress, currentValue, targetValue, status, trend, driverName }: DriverCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
@@ -70,7 +71,7 @@ function DriverCard({ title, description, progress, currentValue, targetValue, s
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
+            <span className="text-muted-foreground">{driverName}</span>
             <span className="font-medium">{progress}%</span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -92,11 +93,26 @@ export function DriversComparison() {
   const { selectedDataset } = useDataset()
   const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
   const [loading, setLoading] = useState(false)
+  const [driverNames, setDriverNames] = useState<Record<string, string>>({})
+
+  const fetchDriverName = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/driver-name`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.driverName
+      }
+    } catch (error) {
+      console.error(`Error fetching driver name for ${analysisId}:`, error)
+    }
+    return "Driver Name Unavailable"
+  }
 
   useEffect(() => {
     const fetchAnalysisFolders = async () => {
       if (!selectedDataset) {
         setAnalysisFolders([])
+        setDriverNames({})
         return
       }
 
@@ -106,12 +122,27 @@ export function DriversComparison() {
         if (response.ok) {
           const folders = await response.json()
           setAnalysisFolders(folders)
+          
+          // Fetch driver names for each analysis
+          const names: Record<string, string> = {}
+          const driverNamePromises = folders.map(async (folder: AnalysisFolder) => {
+            const driverName = await fetchDriverName(selectedDataset.title, folder.id)
+            return { id: folder.id, driverName }
+          })
+          
+          const driverNameResults = await Promise.all(driverNamePromises)
+          driverNameResults.forEach(({ id, driverName }) => {
+            names[id] = driverName
+          })
+          setDriverNames(names)
         } else {
           setAnalysisFolders([])
+          setDriverNames({})
         }
       } catch (error) {
         console.error('Error fetching analysis folders:', error)
         setAnalysisFolders([])
+        setDriverNames({})
       } finally {
         setLoading(false)
       }
@@ -130,7 +161,7 @@ export function DriversComparison() {
       currentValue: `${(Math.random() * 5 + 3).toFixed(1)}M`,
       targetValue: "10M",
       status: statuses[index % statuses.length] as "on-track" | "at-risk" | "behind",
-      trend: trends[index % trends.length] as "up" | "down" | "stable"
+      trend: trends[index % statuses.length] as "up" | "down" | "stable"
     }
   }
 
@@ -178,12 +209,14 @@ export function DriversComparison() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
           {analysisFolders.map((folder, index) => {
             const mockData = generateMockData(index)
+            const driverName = driverNames[folder.id] || "Driver Name Unavailable"
             return (
               <DriverCard
                 key={folder.id}
                 title={folder.name}
                 description={`Analysis folder: ${folder.id}`}
                 {...mockData}
+                driverName={driverName}
               />
             )
           })}

@@ -16,22 +16,19 @@ export async function GET(
     const fileContent = await fs.readFile(filePath, 'utf-8')
     const data = JSON.parse(fileContent)
     
-    // Find the first object with a driver_name field
-    let firstDriverName = "Driver Name Unavailable"
+    // Find the first object with a category field
+    let firstCategoryName = "Category Name Unavailable"
     
     for (const key in data) {
-      if (data[key] && typeof data[key] === 'object' && data[key].driver_name) {
-        firstDriverName = data[key].driver_name
+      if (data[key] && typeof data[key] === 'object' && data[key].category && data[key].category.name) {
+        firstCategoryName = data[key].category.name
         break
       }
     }
     
-    return NextResponse.json({ driverName: firstDriverName })
+    return NextResponse.json({ categoryName: firstCategoryName })
   } catch (error) {
     console.error('Error reading drivers report:', error)
-    return NextResponse.json(
-      { error: 'Failed to read drivers report' },
-      { status: 500 }
-    )
+    return NextResponse.json({ categoryName: "Category Name Unavailable" }, { status: 500 })
   }
 }

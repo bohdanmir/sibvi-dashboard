@@ -1,113 +1,63 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { X, TrendingDown, Droplets, BarChart3, Building, Thermometer, Package, Zap, HardHat } from "lucide-react"
+import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity } from "lucide-react"
+import { fetchDriversData, DriverData } from "@/lib/drivers-data"
 
-interface Driver {
-  id: string
-  name: string
-  icon: React.ReactNode
-  region: string
-  position: { x: number; y: number }
-  isActive: boolean
+// Icon mapping based on category
+const getCategoryIcon = (category: string) => {
+  const categoryLower = category.toLowerCase()
+  if (categoryLower.includes('housing') || categoryLower.includes('construction')) return <Building className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('climate') || categoryLower.includes('weather')) return <Thermometer className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('supply') || categoryLower.includes('trade')) return <Package className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('energy') || categoryLower.includes('power')) return <Zap className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('labour') || categoryLower.includes('employment')) return <HardHat className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('volume') || categoryLower.includes('production')) return <Activity className="h-full w-full text-gray-500" />
+  if (categoryLower.includes('price') || categoryLower.includes('inflation')) return <TrendingUp className="h-full w-full text-gray-500" />
+  return <BarChart3 className="h-full w-full text-gray-500" />
 }
 
-const drivers: Driver[] = [
-  {
-    id: "1",
-    name: "Stock levels for oil",
-    icon: <Droplets className="h-full w-full text-blue-500" />,
-    region: "Europe",
-    position: { x: 45, y: 35 },
-    isActive: true
-  },
-  {
-    id: "2",
-    name: "Construction activity",
-    icon: <HardHat className="h-full w-full text-gray-500" />,
-    region: "North America",
-    position: { x: 22, y: 37 },
-    isActive: false
-  },
-  {
-    id: "3",
-    name: "Market trends",
-    icon: <BarChart3 className="h-full w-full text-gray-500" />,
-    region: "North America",
-    position: { x: 25, y: 41 },
-    isActive: false
-  },
-  {
-    id: "4",
-    name: "Energy production",
-    icon: <Zap className="h-full w-full text-gray-500" />,
-    region: "Europe",
-    position: { x: 50, y: 48 },
-    isActive: false
-  },
-  {
-    id: "5",
-    name: "Market trends",
-    icon: <BarChart3 className="h-full w-full text-gray-500" />,
-    region: "Europe",
-    position: { x: 52, y: 52 },
-    isActive: false
-  },
-  {
-    id: "6",
-    name: "Infrastructure",
-    icon: <Building className="h-full w-full text-gray-500" />,
-    region: "Africa",
-    position: { x: 45, y: 67 },
-    isActive: false
-  },
-  {
-    id: "7",
-    name: "Climate impact",
-    icon: <Thermometer className="h-full w-full text-gray-500" />,
-    region: "South America",
-    position: { x: 33, y: 75 },
-    isActive: false
-  },
-  {
-    id: "8",
-    name: "Supply chain",
-    icon: <Package className="h-full w-full text-gray-500" />,
-    region: "Asia",
-    position: { x: 72, y: 52 },
-    isActive: false
-  },
-  {
-    id: "9",
-    name: "Trade logistics",
-    icon: <BarChart3 className="h-full w-full text-gray-500" />,
-    region: "Asia",
-    position: { x: 76, y: 56 },
-    isActive: false
-  },
-  {
-    id: "10",
-    name: "Climate impact",
-    icon: <Thermometer className="h-full w-full text-gray-500" />,
-    region: "Oceania",
-    position: { x: 82, y: 82 },
-    isActive: false
-  }
-]
-
 export function WorldMapSection() {
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(drivers[0])
-  const [isCardVisible, setIsCardVisible] = useState(true)
+  const [drivers, setDrivers] = useState<DriverData[]>([])
+  const [selectedDriver, setSelectedDriver] = useState<DriverData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleDriverClick = (driver: Driver) => {
+  useEffect(() => {
+    const loadDrivers = async () => {
+      const driversData = await fetchDriversData()
+      setDrivers(driversData)
+      setLoading(false)
+      // Set the first driver as selected by default
+      if (driversData.length > 0) {
+        setSelectedDriver(driversData[0])
+      }
+    }
+    
+    loadDrivers()
+  }, [])
+
+  const handleDriverClick = (driver: DriverData) => {
     setSelectedDriver(driver)
-    setIsCardVisible(true)
   }
 
-  const closeCard = () => {
-    setIsCardVisible(false)
+  if (loading) {
+    return (
+      <div className="w-full flex gap-4">
+        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p>Loading drivers data...</p>
+          </div>
+        </Card>
+        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>Select a driver to view details</p>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -127,18 +77,19 @@ export function WorldMapSection() {
               key={driver.id}
               onClick={() => handleDriverClick(driver)}
               className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                driver.isActive 
+                selectedDriver?.id === driver.id
                   ? 'border-blue-500 bg-blue-100 shadow-lg' 
                   : 'border-gray-400 bg-gray-100 hover:border-gray-500'
               }`}
               style={{
-                left: `${driver.position.x}%`,
-                top: `${driver.position.y}%`
+                left: `${driver.coordinates.x}%`,
+                top: `${driver.coordinates.y}%`
               }}
+              title={`${driver.name} (${driver.category})`}
             >
               <div className="flex items-center justify-center w-full h-full">
                 <div className="w-3 h-3 md:w-4 md:h-4">
-                  {driver.icon}
+                  {getCategoryIcon(driver.category)}
                 </div>
               </div>
             </button>
@@ -150,44 +101,56 @@ export function WorldMapSection() {
       <Card className="w-80 h-[500px] md:h-[600px] overflow-y-auto">
         <CardHeader className="pb-3 border-b">
           <h3 className="text-lg font-semibold text-gray-900">Expert Drivers</h3>
-          <p className="text-sm text-gray-600">Click on map icons to view details</p>
+          <p className="text-sm text-gray-600">{drivers.length} drivers available</p>
         </CardHeader>
         
         <CardContent className="p-4">
-          {isCardVisible && selectedDriver ? (
+          {selectedDriver ? (
             <div className="space-y-4">
               {/* Driver Header */}
               <div className="flex items-center gap-3 pb-3 border-b">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
                   <div className="w-5 h-5">
-                    {selectedDriver.icon}
+                    {getCategoryIcon(selectedDriver.category)}
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">{selectedDriver.name}</h4>
-                  <p className="text-sm text-gray-600">{selectedDriver.region}</p>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 text-sm">{selectedDriver.name}</h4>
+                  <p className="text-xs text-gray-600">{selectedDriver.region.join(' > ')}</p>
+                  <p className="text-xs text-blue-600">{selectedDriver.category}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={closeCard}
-                  className="h-6 w-6 p-0 ml-auto"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
               </div>
 
               {/* Key Metrics */}
               <div className="text-center bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">12.6M</div>
-                <div className="text-sm text-red-600">-60% from last year</div>
+                <div className="text-2xl font-bold text-gray-900">{selectedDriver.importance.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">Importance Score</div>
               </div>
 
-              {/* Impact Statement */}
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-red-700">
-                  <TrendingDown className="h-4 w-4" />
-                  <span className="text-sm font-medium">24% Lower goods output</span>
+              {/* Direction Indicator */}
+              <div className={`rounded-lg p-3 ${
+                selectedDriver.direction > 0 
+                  ? 'bg-green-50 border border-green-200' 
+                  : 'bg-red-50 border border-red-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {selectedDriver.direction > 0 ? (
+                    <TrendingUp className="h-4 w-4 text-green-700" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-700" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    selectedDriver.direction > 0 ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {selectedDriver.direction > 0 ? 'Positive' : 'Negative'} Impact
+                  </span>
+                </div>
+              </div>
+
+              {/* Lag Information */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="text-sm text-blue-700">
+                  <span className="font-medium">Lag:</span> {selectedDriver.lag}
                 </div>
               </div>
 
@@ -196,22 +159,22 @@ export function WorldMapSection() {
                 <div className="text-center text-gray-500">
                   <BarChart3 className="h-6 w-6 mx-auto mb-2" />
                   <p className="text-sm">Chart visualization</p>
-                  <p className="text-xs">Last: 905,966</p>
-                  <p className="text-xs">Target: 560,000</p>
+                  <p className="text-xs">Driver: {selectedDriver.id}</p>
                 </div>
               </div>
 
               {/* Description */}
               <p className="text-sm text-gray-600 leading-relaxed">
-                If energy pressures, trade fragility, and climate disruptions persist, 
-                PVC additive demand is likely to remain flat or decline slightly in late 2025 
-                as cost and supply-side constraints dampen production.
+                This driver shows {selectedDriver.direction > 0 ? 'positive' : 'negative'} correlation 
+                with the target variable, with an importance score of {selectedDriver.importance.toFixed(1)}% 
+                and a lag of {selectedDriver.lag}.
               </p>
             </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
               <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="text-sm">Select a driver from the map to view details</p>
+              <p className="text-xs mt-2">Click on any icon to explore driver data</p>
             </div>
           )}
         </CardContent>

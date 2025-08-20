@@ -50,12 +50,14 @@ export async function GET(
       }
     })
     
-    // Convert to array format
-    const categoriesArray = Array.from(categories.entries()).map(([id, data]) => ({
-      id,
-      name: data.name,
-      importance: data.importance
-    }))
+    // Convert to array format and sort by category ID
+    const categoriesArray = Array.from(categories.entries())
+      .map(([id, data]) => ({
+        id,
+        name: data.name,
+        importance: data.importance
+      }))
+      .sort((a, b) => a.id - b.id) // Sort by category ID ascending
     
     return NextResponse.json({
       categories: categoriesArray,

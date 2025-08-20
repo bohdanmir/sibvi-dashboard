@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity } from "lucide-react"
-import { fetchDriversData, DriverData } from "@/lib/drivers-data"
+import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight } from "lucide-react"
+import { fetchDriversData, discoverAnalyses, DriverData, AnalysisInfo } from "@/lib/drivers-data"
+import { useDataset } from "@/lib/dataset-context"
 
 // Icon mapping based on category
 const getCategoryIcon = (category: string) => {
@@ -20,26 +21,108 @@ const getCategoryIcon = (category: string) => {
 }
 
 export function WorldMapSection() {
+  const { selectedDataset } = useDataset()
   const [drivers, setDrivers] = useState<DriverData[]>([])
   const [selectedDriver, setSelectedDriver] = useState<DriverData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null)
+  const [availableAnalyses, setAvailableAnalyses] = useState<AnalysisInfo[]>([])
 
+  // Discover analyses when dataset changes
+  useEffect(() => {
+    const loadAnalyses = async () => {
+      if (!selectedDataset) return
+      
+      setLoading(true)
+      const analyses = await discoverAnalyses(selectedDataset.title)
+      setAvailableAnalyses(analyses)
+      
+      // Set the first analysis as default if available
+      if (analyses.length > 0) {
+        setCurrentAnalysis(analyses[0].id)
+      } else {
+        setCurrentAnalysis(null)
+        setDrivers([])
+        setSelectedDriver(null)
+        setLoading(false)
+      }
+    }
+    
+    loadAnalyses()
+  }, [selectedDataset])
+
+  // Load drivers when analysis changes
   useEffect(() => {
     const loadDrivers = async () => {
-      const driversData = await fetchDriversData()
+      if (!selectedDataset || !currentAnalysis) return
+      
+      setLoading(true)
+      const driversData = await fetchDriversData(selectedDataset.title, currentAnalysis)
+      console.log('Drivers loaded:', driversData.length)
+      console.log('Drivers with coordinates:', driversData.map(d => ({
+        name: d.name,
+        coords: d.coordinates,
+        region: d.region
+      })))
       setDrivers(driversData)
       setLoading(false)
       // Set the first driver as selected by default
       if (driversData.length > 0) {
         setSelectedDriver(driversData[0])
+      } else {
+        setSelectedDriver(null)
       }
     }
     
     loadDrivers()
-  }, [])
+  }, [selectedDataset, currentAnalysis])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (!selectedDriver || drivers.length === 0) return
+      
+      const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id)
+      
+      if (event.key === 'ArrowLeft') {
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : drivers.length - 1
+        setSelectedDriver(drivers[prevIndex])
+      } else if (event.key === 'ArrowRight') {
+        const nextIndex = currentIndex < drivers.length - 1 ? currentIndex + 1 : 0
+        setSelectedDriver(drivers[nextIndex])
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [selectedDriver, drivers])
 
   const handleDriverClick = (driver: DriverData) => {
     setSelectedDriver(driver)
+  }
+
+  const handleAnalysisChange = (analysisId: string) => {
+    setCurrentAnalysis(analysisId)
+  }
+
+  const getCurrentAnalysis = () => availableAnalyses.find(a => a.id === currentAnalysis)
+
+  // Don't render if no dataset is selected
+  if (!selectedDataset) {
+    return (
+      <div className="w-full flex gap-4">
+        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>Please select a dataset to view drivers</p>
+          </div>
+        </Card>
+        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>Select a dataset to view details</p>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   if (loading) {
@@ -60,6 +143,24 @@ export function WorldMapSection() {
     )
   }
 
+  // Don't render if no analyses are available
+  if (availableAnalyses.length === 0) {
+    return (
+      <div className="w-full flex gap-4">
+        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>No analyses available for {selectedDataset.title}</p>
+          </div>
+        </Card>
+        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p>No analyses found</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full flex gap-4">
       {/* Map Card - Left Side (2/3 width) */}
@@ -68,11 +169,95 @@ export function WorldMapSection() {
           <img 
             src="/map.svg" 
             alt="World Map" 
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-contain"
+            style={{ minWidth: '100%', minHeight: '100%' }}
           />
           
+          {/* Debug Overlay */}
+          <div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-2 rounded">
+            Drivers: {drivers.length} | Visible: {drivers.filter(d => d.coordinates.x >= 0 && d.coordinates.x <= 100 && d.coordinates.y >= 0 && d.coordinates.y <= 100).length}
+          </div>
+          
+          {/* Analysis Navigation */}
+          <div className="absolute top-2 right-2 bg-white/90 rounded-lg p-2 shadow-lg">
+            <div className="text-xs text-gray-600 mb-1">Current Analysis:</div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const currentIndex = availableAnalyses.findIndex(a => a.id === currentAnalysis)
+                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : availableAnalyses.length - 1
+                  handleAnalysisChange(availableAnalyses[prevIndex].id)
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+              
+              <span className="text-sm font-medium text-gray-700 px-2">
+                {getCurrentAnalysis()?.name || "Unknown"}
+              </span>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const currentIndex = availableAnalyses.findIndex(a => a.id === currentAnalysis)
+                  const nextIndex = currentIndex < availableAnalyses.length - 1 ? currentIndex + 1 : 0
+                  handleAnalysisChange(availableAnalyses[nextIndex].id)
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="text-xs text-gray-500 text-center">
+              {availableAnalyses.findIndex(a => a.id === currentAnalysis)! + 1} / {availableAnalyses.length}
+            </div>
+          </div>
+          
+          {/* Driver Navigation Controls */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (selectedDriver) {
+                  const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id)
+                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : drivers.length - 1
+                  setSelectedDriver(drivers[prevIndex])
+                }
+              }}
+              className="bg-white/90 hover:bg-white"
+            >
+              ← Previous
+            </Button>
+            
+            <div className="bg-white/90 px-3 py-2 rounded-md text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span>{drivers.findIndex(d => d.id === selectedDriver?.id) + 1}</span>
+              <span className="text-gray-400">/</span>
+              <span>{drivers.length}</span>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (selectedDriver) {
+                  const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id)
+                  const nextIndex = currentIndex < drivers.length - 1 ? currentIndex + 1 : 0
+                  setSelectedDriver(drivers[nextIndex])
+                }
+              }}
+              className="bg-white/90 hover:bg-white"
+            >
+              Next →
+            </Button>
+          </div>
+          
           {/* Driver Icons */}
-          {drivers.map((driver) => (
+          {drivers.map((driver, index) => (
             <button
               key={driver.id}
               onClick={() => handleDriverClick(driver)}
@@ -85,12 +270,16 @@ export function WorldMapSection() {
                 left: `${driver.coordinates.x}%`,
                 top: `${driver.coordinates.y}%`
               }}
-              title={`${driver.name} (${driver.category})`}
+              title={`${index + 1}. ${driver.name} (${driver.category}) at (${driver.coordinates.x.toFixed(1)}%, ${driver.coordinates.y.toFixed(1)}%)`}
             >
               <div className="flex items-center justify-center w-full h-full">
                 <div className="w-3 h-3 md:w-4 md:h-4">
                   {getCategoryIcon(driver.category)}
                 </div>
+              </div>
+              {/* Debug number */}
+              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {index + 1}
               </div>
             </button>
           ))}
@@ -100,8 +289,14 @@ export function WorldMapSection() {
       {/* Drivers Card - Right Side (1/3 width) */}
       <Card className="w-80 h-[500px] md:h-[600px] overflow-y-auto">
         <CardHeader className="pb-3 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Expert Drivers</h3>
-          <p className="text-sm text-gray-600">{drivers.length} drivers available</p>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">
+              {drivers.length} drivers available • {drivers.filter(d => d.coordinates.x >= 0 && d.coordinates.x <= 100 && d.coordinates.y >= 0 && d.coordinates.y <= 100).length} visible on map
+            </p>
+            <p className="text-xs text-blue-600 font-medium">
+              {selectedDataset.title} • {getCurrentAnalysis()?.name}
+            </p>
+          </div>
         </CardHeader>
         
         <CardContent className="p-4">

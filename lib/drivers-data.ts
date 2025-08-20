@@ -22,6 +22,19 @@ export interface RegionMapping {
   }
 }
 
+export interface AnalysisInfo {
+  id: string
+  name: string
+  driverCount: number
+  path: string
+}
+
+export interface DatasetInfo {
+  id: string
+  name: string
+  analyses: AnalysisInfo[]
+}
+
 // Map regions to approximate coordinates on the world map
 export const regionCoordinates: RegionMapping = {
   "United States of America": { x: 22, y: 37, continent: "North America" },
@@ -66,10 +79,30 @@ export const regionCoordinates: RegionMapping = {
   "Oceania": { x: 85, y: 80, continent: "Oceania" }
 }
 
-export async function fetchDriversData(): Promise<DriverData[]> {
+// Function to discover available analyses for a dataset
+export async function discoverAnalyses(datasetId: string): Promise<AnalysisInfo[]> {
   try {
-    // Fetch from the MB 301 analysis dataset
-    const response = await fetch('/data/MB 301/Analyses/8095/overwrite/drivers_report.json')
+    const response = await fetch(`/api/data-folders/${datasetId}/analyses`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch analyses for dataset ${datasetId}`)
+    }
+    
+    const analyses = await response.json()
+    return analyses
+  } catch (error) {
+    console.error(`Error discovering analyses for dataset ${datasetId}:`, error)
+    return []
+  }
+}
+
+export async function fetchDriversData(datasetId: string, analysisId: string): Promise<DriverData[]> {
+  try {
+    // Construct the path based on dataset and analysis
+    const analysisPath = `/data/${datasetId}/Analyses/${analysisId}/overwrite/drivers_report.json`
+    
+    console.log(`Fetching drivers from: ${analysisPath}`)
+    
+    const response = await fetch(analysisPath)
     if (!response.ok) {
       throw new Error('Failed to fetch drivers data')
     }
@@ -77,15 +110,55 @@ export async function fetchDriversData(): Promise<DriverData[]> {
     const data = await response.json()
     const drivers: DriverData[] = []
     
+    console.log('Raw data keys:', Object.keys(data).length)
+    
     for (const [id, driverData] of Object.entries(data)) {
       const typedDriverData = driverData as any
       if (typedDriverData.driver_name && typedDriverData.region && typedDriverData.region.length > 0) {
         const regionNames = typedDriverData.region.map((r: any) => r.name)
         const primaryRegion = regionNames[regionNames.length - 1] // Get the most specific region
         
-        const coordinates = regionCoordinates[primaryRegion] || regionCoordinates[regionNames[0]] || regionCoordinates["World"]
+        let coordinates = regionCoordinates[primaryRegion] || regionCoordinates[regionNames[0]] || regionCoordinates["World"]
         
-        drivers.push({
+        // If multiple drivers have the same region, offset them in a grid pattern with more spacing
+        const existingDriversAtRegion = drivers.filter(d => 
+          Math.abs(d.coordinates.x - coordinates.x) < 8 && Math.abs(d.coordinates.y - coordinates.y) < 8
+        )
+        
+        if (existingDriversAtRegion.length > 0) {
+          // Create a grid offset pattern with more spacing
+          const gridSize = Math.ceil(Math.sqrt(existingDriversAtRegion.length + 1))
+          const gridIndex = existingDriversAtRegion.length
+          const row = Math.floor(gridIndex / gridSize)
+          const col = gridIndex % gridSize
+          
+          coordinates = {
+            ...coordinates,
+            x: Math.min(90, Math.max(5, coordinates.x + (col - 1) * 6)),
+            y: Math.min(90, Math.max(5, coordinates.y + (row - 1) * 6))
+          }
+        }
+        
+        // Additional continent-based positioning for better distribution
+        const continentDrivers = drivers.filter(d => d.coordinates.continent === coordinates.continent)
+        if (continentDrivers.length > 0) {
+          // Spread out drivers within the same continent
+          const continentIndex = continentDrivers.length
+          const angle = (continentIndex * 45) * (Math.PI / 180) // 45-degree increments
+          const radius = 8 // Distance from center
+          
+          coordinates = {
+            ...coordinates,
+            x: Math.min(90, Math.max(5, coordinates.x + Math.cos(angle) * radius)),
+            y: Math.min(90, Math.max(5, coordinates.y + Math.sin(angle) * radius))
+          }
+        }
+        
+        // Ensure coordinates are within bounds
+        coordinates.x = Math.min(95, Math.max(5, coordinates.x))
+        coordinates.y = Math.min(95, Math.max(5, coordinates.y))
+        
+        const driver = {
           id,
           name: typedDriverData.driver_name,
           region: regionNames,
@@ -95,9 +168,15 @@ export async function fetchDriversData(): Promise<DriverData[]> {
           direction: typedDriverData.direction?.overall?.mean || 0,
           lag: typedDriverData.overall_lag || "Unknown",
           coordinates
-        })
+        }
+        
+        drivers.push(driver)
+        console.log(`Driver: ${typedDriverData.driver_name} at (${coordinates.x.toFixed(1)}%, ${coordinates.y.toFixed(1)}%) - Region: ${primaryRegion}`)
       }
     }
+    
+    console.log(`Total drivers processed: ${drivers.length}`)
+    console.log('All driver coordinates:', drivers.map(d => ({ name: d.name, coords: d.coordinates })))
     
     return drivers
   } catch (error) {

@@ -221,11 +221,46 @@ export async function fetchDriversData(datasetId: string, analysisId: string): P
         
         // Extract category information
         let category = "Unknown"
-        if (typedDriverData.category && Array.isArray(typedDriverData.category) && typedDriverData.category.length > 0) {
-          if (typeof typedDriverData.category[0] === 'object' && typedDriverData.category[0].name) {
-            category = typedDriverData.category[0].name
-          } else if (typeof typedDriverData.category[0] === 'string') {
-            category = typedDriverData.category[0]
+        if (typedDriverData.category) {
+          if (typeof typedDriverData.category === 'object' && typedDriverData.category.name) {
+            // Category is an object with a name property
+            category = typedDriverData.category.name
+          } else if (Array.isArray(typedDriverData.category) && typedDriverData.category.length > 0) {
+            // Category is an array
+            if (typeof typedDriverData.category[0] === 'object' && typedDriverData.category[0].name) {
+              category = typedDriverData.category[0].name
+            } else if (typeof typedDriverData.category[0] === 'string') {
+              category = typedDriverData.category[0]
+            }
+          }
+        }
+        
+        // If category is still "Unknown", try to extract from driver name
+        if (category === "Unknown" && typedDriverData.driver_name) {
+          const nameParts = typedDriverData.driver_name.split(',')
+          if (nameParts.length > 1) {
+            // Look for common category indicators in the name
+            const categoryIndicators = [
+              'Stearin', 'Fatty Acids', 'Volume', 'Price', 'Index', 'Rate', 'Employment',
+              'Housing', 'Inventory', 'Imports', 'Exports', 'Temperature', 'Wind', 'Power',
+              'Emissions', 'Chemicals', 'Manufacturing', 'Construction', 'Unemployment'
+            ]
+            
+            for (const part of nameParts) {
+              const trimmed = part.trim()
+              const matchedCategory = categoryIndicators.find(indicator => 
+                trimmed.includes(indicator)
+              )
+              if (matchedCategory) {
+                category = matchedCategory
+                break
+              }
+            }
+            
+            // If still no match, use the second part of the name as it often contains category info
+            if (category === "Unknown" && nameParts.length > 1) {
+              category = nameParts[1].trim()
+            }
           }
         }
         

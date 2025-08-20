@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Sparkline } from "@/components/ui/sparkline"
+import { Badge } from "@/components/ui/badge"
 import { useDataset } from "@/lib/dataset-context"
 
 interface AnalysisFolder {
@@ -16,6 +17,7 @@ interface Category {
   id: number
   name: string
   importance: number
+  driverCount: number // Add driver count to the category interface
 }
 
 interface DriverCardProps {
@@ -69,8 +71,6 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
     }
   }
 
-
-
   // Get sparkline colors based on status
   const getSparklineColor = (status: string) => {
     switch (status) {
@@ -100,8 +100,6 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
     return generateSparklineData(overallStatus)
   }
 
-
-
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
@@ -123,18 +121,38 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Summary section showing total drivers */}
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <span className="text-sm font-medium text-muted-foreground">Total Drivers</span>
+          <Badge variant="outline" className="text-sm">
+            {categories.reduce((total, cat) => total + cat.driverCount, 0)} total
+          </Badge>
+        </div>
+        
         {categories.map((category) => (
           <div key={category.id} className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground truncate min-w-0 flex-1" title={category.name}>
-                {category.name}
-              </span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-muted-foreground truncate" title={category.name}>
+                  {category.name}
+                </span>
+                {/* Add badge showing number of drivers */}
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                    category.driverCount > 0 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                  }`}
+                >
+                  {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
+                </Badge>
+              </div>
               <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
             </div>
             <Progress value={category.importance} className="h-1.5" />
           </div>
         ))}
-
       </CardContent>
     </Card>
   )
@@ -187,6 +205,54 @@ export function DriversComparison() {
     return []
   }
 
+  // New function to count drivers per category from the drivers report
+  const countDriversPerCategory = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/drivers-report`)
+      if (response.ok) {
+        const data = await response.json()
+        const driversReport = data.driversReport || data
+        
+        // Count drivers per category
+        const categoryCounts = new Map<number, number>()
+        
+        if (driversReport && typeof driversReport === 'object') {
+          Object.values(driversReport).forEach((driver: any) => {
+            if (driver && driver.category) {
+              let categoryId: number | null = null
+              
+              // Handle different category data structures
+              if (typeof driver.category === 'object' && driver.category !== null) {
+                if (driver.category.id !== undefined) {
+                  categoryId = driver.category.id
+                } else if (Array.isArray(driver.category) && driver.category.length > 0) {
+                  // If category is an array, take the first item
+                  const firstCategory = driver.category[0]
+                  if (typeof firstCategory === 'object' && firstCategory.id !== undefined) {
+                    categoryId = firstCategory.id
+                  } else if (typeof firstCategory === 'number') {
+                    categoryId = firstCategory
+                  }
+                }
+              } else if (typeof driver.category === 'number') {
+                categoryId = driver.category
+              }
+              
+              if (categoryId !== null && !isNaN(categoryId)) {
+                categoryCounts.set(categoryId, (categoryCounts.get(categoryId) || 0) + 1)
+              }
+            }
+          })
+        }
+        
+        return categoryCounts
+      }
+    } catch (error) {
+      console.error(`Error counting drivers per category for ${analysisId}:`, error)
+    }
+    return new Map<number, number>()
+  }
+
   useEffect(() => {
     const fetchAnalysisFolders = async () => {
       if (!selectedDataset) {
@@ -208,21 +274,34 @@ export function DriversComparison() {
           const allCategories = await fetchAllDatasetCategories(selectedDataset.title)
           setAllDatasetCategories(allCategories)
           
-          // Fetch drivers report and forecast data for each analysis
+          // Fetch drivers report, forecast data, and driver counts for each analysis
           const categories: Record<string, Category[]> = {}
           const forecasts: Record<string, number[]> = {}
           
           const promises = folders.map(async (folder: AnalysisFolder) => {
-            const [driversCategories, forecastData] = await Promise.all([
+            const [driversCategories, forecastData, driverCounts] = await Promise.all([
               fetchDriversReport(selectedDataset.title, folder.id),
-              fetchForecastData(selectedDataset.title, folder.id)
+              fetchForecastData(selectedDataset.title, folder.id),
+              countDriversPerCategory(selectedDataset.title, folder.id)
             ])
-            return { id: folder.id, driversCategories, forecastData }
+            return { id: folder.id, driversCategories, forecastData, driverCounts }
           })
           
           const results = await Promise.all(promises)
-          results.forEach(({ id, driversCategories, forecastData }) => {
-            categories[id] = driversCategories
+          results.forEach(({ id, driversCategories, forecastData, driverCounts }) => {
+            // Merge categories with driver counts
+            const categoriesWithCounts = driversCategories.map((cat: any) => ({
+              ...cat,
+              driverCount: driverCounts.get(cat.id) || 0
+            }))
+            
+            console.log(`Analysis ${id}:`, {
+              categories: categoriesWithCounts,
+              driverCounts: Object.fromEntries(driverCounts),
+              totalDrivers: Array.from(driverCounts.values()).reduce((sum: any, count: any) => sum + count, 0)
+            })
+            
+            categories[id] = categoriesWithCounts
             forecasts[id] = forecastData
           })
           
@@ -263,15 +342,19 @@ export function DriversComparison() {
     
     // Create a map of analysis-specific categories for quick lookup
     const analysisCategoriesMap = new Map(
-      analysisSpecificCategories.map(cat => [cat.id, cat.importance])
+      analysisSpecificCategories.map(cat => [cat.id, { importance: cat.importance, driverCount: cat.driverCount }])
     )
     
     // Return all dataset categories with real values or 0 for missing ones
-    return allDatasetCategories.map(category => ({
-      id: category.id,
-      name: category.name,
-      importance: analysisCategoriesMap.get(category.id) || 0
-    }))
+    return allDatasetCategories.map(category => {
+      const analysisData = analysisCategoriesMap.get(category.id)
+      return {
+        id: category.id,
+        name: category.name,
+        importance: analysisData?.importance || 0,
+        driverCount: analysisData?.driverCount || 0
+      }
+    })
   }
 
   if (!selectedDataset) {
@@ -296,12 +379,25 @@ export function DriversComparison() {
             Loading analysis folders for {selectedDataset.title}...
           </p>
         </div>
+        <div className="px-4 lg:px-6">
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="w-80 h-48 bg-muted animate-pulse rounded-lg"></div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
+      <div className="px-4 lg:px-6">
+        <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
+        <p className="text-muted-foreground">
+          Analysis cards showing driver categories and their contribution percentages with driver counts.
+        </p>
+      </div>
       {analysisFolders.length === 0 ? (
         <div className="px-4 lg:px-6">
           <p className="text-muted-foreground">

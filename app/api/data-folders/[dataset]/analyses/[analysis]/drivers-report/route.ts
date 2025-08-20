@@ -62,7 +62,8 @@ export async function GET(
     return NextResponse.json({
       categories: categoriesArray,
       totalDrivers: Object.keys(driversReport).length,
-      categoriesCount: categoriesArray.length
+      categoriesCount: categoriesArray.length,
+      driversReport: driversReport // Return the full drivers report for counting drivers per category
     })
     
   } catch (error) {

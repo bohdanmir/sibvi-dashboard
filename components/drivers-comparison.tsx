@@ -52,14 +52,7 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
     }
   }
 
-  // Generate mock progress data for each category (in real implementation, this would come from the API)
-  const generateProgressData = () => {
-    const currentValue = `${(Math.random() * 5 + 3).toFixed(1)}M`
-    return {
-      currentValue,
-      targetValue: "10M"
-    }
-  }
+
 
   return (
     <Card className="w-full">
@@ -75,22 +68,17 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {categories.map((category) => {
-          const progressData = generateProgressData()
-          return (
-            <div key={category.id} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{category.name}</span>
-                <span className="font-medium">{category.importance}%</span>
-              </div>
-              <Progress value={category.importance} className="h-2" />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Current: {progressData.currentValue}</span>
-                <span>Target: {progressData.targetValue}</span>
-              </div>
+        {categories.map((category) => (
+          <div key={category.id} className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground truncate min-w-0 flex-1" title={category.name}>
+                {category.name}
+              </span>
+              <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
             </div>
-          )
-        })}
+            <Progress value={category.importance} className="h-1.5" />
+          </div>
+        ))}
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Trend</span>
           <span className="font-medium">{getTrendIcon(trend)} {trend}</span>
@@ -105,6 +93,7 @@ export function DriversComparison() {
   const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
   const [loading, setLoading] = useState(false)
   const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
+  const [allDatasetCategories, setAllDatasetCategories] = useState<Array<{ id: number; name: string }>>([])
 
   const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
@@ -119,11 +108,25 @@ export function DriversComparison() {
     return []
   }
 
+  const fetchAllDatasetCategories = async (datasetTitle: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/categories`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.categories || []
+      }
+    } catch (error) {
+      console.error(`Error fetching all dataset categories:`, error)
+    }
+    return []
+  }
+
   useEffect(() => {
     const fetchAnalysisFolders = async () => {
       if (!selectedDataset) {
         setAnalysisFolders([])
         setAnalysisCategories({})
+        setAllDatasetCategories([])
         return
       }
 
@@ -133,6 +136,10 @@ export function DriversComparison() {
         if (response.ok) {
           const folders = await response.json()
           setAnalysisFolders(folders)
+          
+          // Fetch all dataset categories first
+          const allCategories = await fetchAllDatasetCategories(selectedDataset.title)
+          setAllDatasetCategories(allCategories)
           
           // Fetch drivers report for each analysis
           const categories: Record<string, Category[]> = {}
@@ -169,20 +176,29 @@ export function DriversComparison() {
     const statuses: Array<"on-track" | "at-risk" | "behind"> = ["on-track", "at-risk", "behind"]
     const trends: Array<"up" | "down" | "stable"> = ["up", "down", "stable"]
     
-    // Generate mock categories for each card
-    const categoryOptions = ["Population", "Wholesale and retail trade", "Manufacturing", "Construction", "Transportation", "Healthcare", "Education", "Finance"]
-    const numCategories = Math.floor(Math.random() * 5) + 2 // 2-6 categories
-    const categories = Array.from({ length: numCategories }, (_, itemIndex) => ({
-      id: itemIndex + 1,
-      name: categoryOptions[itemIndex % categoryOptions.length],
-      importance: Math.floor(Math.random() * 60) + 40 // 40-100 for mock data
-    }))
-    
     return {
-      categories,
       overallStatus: statuses[index % statuses.length] as "on-track" | "at-risk" | "behind",
       trend: trends[index % statuses.length] as "up" | "down" | "stable"
     }
+  }
+
+  // Merge all dataset categories with analysis-specific data
+  const getMergedCategories = (analysisId: string): Category[] => {
+    if (allDatasetCategories.length === 0) return []
+    
+    const analysisSpecificCategories = analysisCategories[analysisId] || []
+    
+    // Create a map of analysis-specific categories for quick lookup
+    const analysisCategoriesMap = new Map(
+      analysisSpecificCategories.map(cat => [cat.id, cat.importance])
+    )
+    
+    // Return all dataset categories with real values or 0 for missing ones
+    return allDatasetCategories.map(category => ({
+      id: category.id,
+      name: category.name,
+      importance: analysisCategoriesMap.get(category.id) || 0
+    }))
   }
 
   if (!selectedDataset) {
@@ -229,10 +245,8 @@ export function DriversComparison() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
           {analysisFolders.map((folder, index) => {
             const mockData = generateMockData(index)
-            // Use real categories if available, otherwise fall back to mock data
-            const categories = analysisCategories[folder.id]?.length > 0 
-              ? analysisCategories[folder.id] 
-              : mockData.categories
+            // Get merged categories (all dataset categories with real values or 0 for missing ones)
+            const categories = getMergedCategories(folder.id)
             
             return (
               <DriverCard

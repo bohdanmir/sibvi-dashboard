@@ -11,18 +11,20 @@ interface AnalysisFolder {
   path: string
 }
 
+interface Category {
+  id: number
+  name: string
+}
+
 interface DriverCardProps {
   title: string
   description: string
-  progress: number
-  currentValue: string
-  targetValue: string
-  status: "on-track" | "at-risk" | "behind"
+  categories: Category[]
+  overallStatus: "on-track" | "at-risk" | "behind"
   trend: "up" | "down" | "stable"
-  categoryName: string
 }
 
-function DriverCard({ title, description, progress, currentValue, targetValue, status, trend, categoryName }: DriverCardProps) {
+function DriverCard({ title, description, categories, overallStatus, trend }: DriverCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
@@ -49,10 +51,15 @@ function DriverCard({ title, description, progress, currentValue, targetValue, s
     }
   }
 
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return "bg-green-500"
-    if (progress >= 60) return "bg-yellow-500"
-    return "bg-red-500"
+  // Generate mock progress data for each category (in real implementation, this would come from the API)
+  const generateProgressData = () => {
+    const progress = Math.floor(Math.random() * 60) + 40 // 40-100
+    const currentValue = `${(Math.random() * 5 + 3).toFixed(1)}M`
+    return {
+      progress,
+      currentValue,
+      targetValue: "10M"
+    }
   }
 
   return (
@@ -63,23 +70,28 @@ function DriverCard({ title, description, progress, currentValue, targetValue, s
             <CardTitle className="text-lg font-semibold">{title}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
           </div>
-          <div className={`text-sm font-medium ${getStatusColor(status)}`}>
-            {status.replace("-", " ").toUpperCase()}
+          <div className={`text-sm font-medium ${getStatusColor(overallStatus)}`}>
+            {overallStatus.replace("-", " ").toUpperCase()}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{categoryName}</span>
-            <span className="font-medium">{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Current: {currentValue}</span>
-            <span>Target: {targetValue}</span>
-          </div>
-        </div>
+        {categories.map((category) => {
+          const progressData = generateProgressData()
+          return (
+            <div key={category.id} className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{category.name}</span>
+                <span className="font-medium">{progressData.progress}%</span>
+              </div>
+              <Progress value={progressData.progress} className="h-2" />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Current: {progressData.currentValue}</span>
+                <span>Target: {progressData.targetValue}</span>
+              </div>
+            </div>
+          )
+        })}
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Trend</span>
           <span className="font-medium">{getTrendIcon(trend)} {trend}</span>
@@ -93,26 +105,26 @@ export function DriversComparison() {
   const { selectedDataset } = useDataset()
   const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
   const [loading, setLoading] = useState(false)
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({})
+  const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
 
-  const fetchCategoryName = async (datasetTitle: string, analysisId: string) => {
+  const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
-      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/driver-name`)
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/drivers-report`)
       if (response.ok) {
         const data = await response.json()
-        return data.categoryName
+        return data.categories || []
       }
     } catch (error) {
-      console.error(`Error fetching category name for ${analysisId}:`, error)
+      console.error(`Error fetching drivers report for ${analysisId}:`, error)
     }
-    return "Category Name Unavailable"
+    return []
   }
 
   useEffect(() => {
     const fetchAnalysisFolders = async () => {
       if (!selectedDataset) {
         setAnalysisFolders([])
-        setCategoryNames({})
+        setAnalysisCategories({})
         return
       }
 
@@ -123,26 +135,28 @@ export function DriversComparison() {
           const folders = await response.json()
           setAnalysisFolders(folders)
           
-          // Fetch category names for each analysis
-          const names: Record<string, string> = {}
-          const categoryNamePromises = folders.map(async (folder: AnalysisFolder) => {
-            const categoryName = await fetchCategoryName(selectedDataset.title, folder.id)
-            return { id: folder.id, categoryName }
+          // Fetch drivers report for each analysis
+          const categories: Record<string, Category[]> = {}
+          
+          const promises = folders.map(async (folder: AnalysisFolder) => {
+            const driversCategories = await fetchDriversReport(selectedDataset.title, folder.id)
+            return { id: folder.id, driversCategories }
           })
           
-          const categoryNameResults = await Promise.all(categoryNamePromises)
-          categoryNameResults.forEach(({ id, categoryName }) => {
-            names[id] = categoryName
+          const results = await Promise.all(promises)
+          results.forEach(({ id, driversCategories }) => {
+            categories[id] = driversCategories
           })
-          setCategoryNames(names)
+          
+          setAnalysisCategories(categories)
         } else {
           setAnalysisFolders([])
-          setCategoryNames({})
+          setAnalysisCategories({})
         }
       } catch (error) {
         console.error('Error fetching analysis folders:', error)
         setAnalysisFolders([])
-        setCategoryNames({})
+        setAnalysisCategories({})
       } finally {
         setLoading(false)
       }
@@ -156,11 +170,17 @@ export function DriversComparison() {
     const statuses: Array<"on-track" | "at-risk" | "behind"> = ["on-track", "at-risk", "behind"]
     const trends: Array<"up" | "down" | "stable"> = ["up", "down", "stable"]
     
+    // Generate mock categories for each card
+    const categoryOptions = ["Population", "Wholesale and retail trade", "Manufacturing", "Construction", "Transportation", "Healthcare", "Education", "Finance"]
+    const numCategories = Math.floor(Math.random() * 5) + 2 // 2-6 categories
+    const categories = Array.from({ length: numCategories }, (_, itemIndex) => ({
+      id: itemIndex + 1,
+      name: categoryOptions[itemIndex % categoryOptions.length]
+    }))
+    
     return {
-      progress: Math.floor(Math.random() * 60) + 40, // 40-100
-      currentValue: `${(Math.random() * 5 + 3).toFixed(1)}M`,
-      targetValue: "10M",
-      status: statuses[index % statuses.length] as "on-track" | "at-risk" | "behind",
+      categories,
+      overallStatus: statuses[index % statuses.length] as "on-track" | "at-risk" | "behind",
       trend: trends[index % statuses.length] as "up" | "down" | "stable"
     }
   }
@@ -209,14 +229,19 @@ export function DriversComparison() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
           {analysisFolders.map((folder, index) => {
             const mockData = generateMockData(index)
-            const categoryName = categoryNames[folder.id] || "Category Name Unavailable"
+            // Use real categories if available, otherwise fall back to mock data
+            const categories = analysisCategories[folder.id]?.length > 0 
+              ? analysisCategories[folder.id] 
+              : mockData.categories
+            
             return (
               <DriverCard
                 key={folder.id}
                 title={folder.name}
                 description={`Analysis folder: ${folder.id}`}
-                {...mockData}
-                categoryName={categoryName}
+                categories={categories}
+                overallStatus={mockData.overallStatus}
+                trend={mockData.trend}
               />
             )
           })}

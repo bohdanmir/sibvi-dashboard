@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Sparkline } from "@/components/ui/sparkline"
 import { useDataset } from "@/lib/dataset-context"
 
 interface AnalysisFolder {
@@ -23,9 +24,11 @@ interface DriverCardProps {
   categories: Category[]
   overallStatus: "on-track" | "at-risk" | "behind"
   trend: "up" | "down" | "stable"
+  analysisId: string
+  forecastData: number[]
 }
 
-function DriverCard({ title, description, categories, overallStatus, trend }: DriverCardProps) {
+function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData }: DriverCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
@@ -52,6 +55,51 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
     }
   }
 
+  // Generate sparkline data based on status
+  const generateSparklineData = (status: string) => {
+    switch (status) {
+      case "on-track":
+        return [20, 35, 45, 60, 75, 85, 90] // Upward trend
+      case "at-risk":
+        return [80, 70, 65, 55, 45, 40, 35] // Downward trend
+      case "behind":
+        return [90, 85, 80, 75, 70, 65, 60] // Steady decline
+      default:
+        return [50, 55, 50, 45, 50, 55, 50] // Flat line
+    }
+  }
+
+
+
+  // Get sparkline colors based on status
+  const getSparklineColor = (status: string) => {
+    switch (status) {
+      case "on-track":
+        return "hsl(var(--green-600))"
+      case "at-risk":
+        return "hsl(var(--yellow-600))"
+      case "behind":
+        return "hsl(var(--red-600))"
+      default:
+        return "hsl(var(--muted-foreground))"
+    }
+  }
+
+  // Get real forecast data for sparkline
+  const getForecastSparklineData = (): number[] => {
+    if (forecastData && forecastData.length > 0) {
+      // Normalize the data to fit nicely in the sparkline (0-100 range)
+      const min = Math.min(...forecastData)
+      const max = Math.max(...forecastData)
+      const range = max - min || 1
+      
+      return forecastData.map((value: number) => ((value - min) / range) * 100)
+    }
+    
+    // Fallback to status-based data if no forecast data available
+    return generateSparklineData(overallStatus)
+  }
+
 
 
   return (
@@ -62,8 +110,15 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
             <CardTitle className="text-lg font-semibold">{title}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">{description}</CardDescription>
           </div>
-          <div className={`text-sm font-medium ${getStatusColor(overallStatus)}`}>
-            {overallStatus.replace("-", " ").toUpperCase()}
+          <div className="flex items-center gap-2">
+            <Sparkline 
+              data={getForecastSparklineData()}
+              width={60}
+              height={24}
+              strokeColor={getSparklineColor(overallStatus)}
+              fillColor={getSparklineColor(overallStatus)}
+              showValue={false}
+            />
           </div>
         </div>
       </CardHeader>
@@ -79,10 +134,7 @@ function DriverCard({ title, description, categories, overallStatus, trend }: Dr
             <Progress value={category.importance} className="h-1.5" />
           </div>
         ))}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Trend</span>
-          <span className="font-medium">{getTrendIcon(trend)} {trend}</span>
-        </div>
+
       </CardContent>
     </Card>
   )
@@ -94,6 +146,7 @@ export function DriversComparison() {
   const [loading, setLoading] = useState(false)
   const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
   const [allDatasetCategories, setAllDatasetCategories] = useState<Array<{ id: number; name: string }>>([])
+  const [analysisForecasts, setAnalysisForecasts] = useState<Record<string, number[]>>({})
 
   const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
@@ -121,12 +174,26 @@ export function DriversComparison() {
     return []
   }
 
+  const fetchForecastData = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/forecast`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.forecastValues || []
+      }
+    } catch (error) {
+      console.error(`Error fetching forecast data for ${analysisId}:`, error)
+    }
+    return []
+  }
+
   useEffect(() => {
     const fetchAnalysisFolders = async () => {
       if (!selectedDataset) {
         setAnalysisFolders([])
         setAnalysisCategories({})
         setAllDatasetCategories([])
+        setAnalysisForecasts({})
         return
       }
 
@@ -141,20 +208,26 @@ export function DriversComparison() {
           const allCategories = await fetchAllDatasetCategories(selectedDataset.title)
           setAllDatasetCategories(allCategories)
           
-          // Fetch drivers report for each analysis
+          // Fetch drivers report and forecast data for each analysis
           const categories: Record<string, Category[]> = {}
+          const forecasts: Record<string, number[]> = {}
           
           const promises = folders.map(async (folder: AnalysisFolder) => {
-            const driversCategories = await fetchDriversReport(selectedDataset.title, folder.id)
-            return { id: folder.id, driversCategories }
+            const [driversCategories, forecastData] = await Promise.all([
+              fetchDriversReport(selectedDataset.title, folder.id),
+              fetchForecastData(selectedDataset.title, folder.id)
+            ])
+            return { id: folder.id, driversCategories, forecastData }
           })
           
           const results = await Promise.all(promises)
-          results.forEach(({ id, driversCategories }) => {
+          results.forEach(({ id, driversCategories, forecastData }) => {
             categories[id] = driversCategories
+            forecasts[id] = forecastData
           })
           
           setAnalysisCategories(categories)
+          setAnalysisForecasts(forecasts)
         } else {
           setAnalysisFolders([])
           setAnalysisCategories({})
@@ -229,12 +302,6 @@ export function DriversComparison() {
 
   return (
     <div className="space-y-4">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
-        <p className="text-muted-foreground">
-          Analysis folders for {selectedDataset.title} dataset.
-        </p>
-      </div>
       {analysisFolders.length === 0 ? (
         <div className="px-4 lg:px-6">
           <p className="text-muted-foreground">
@@ -256,6 +323,8 @@ export function DriversComparison() {
                 categories={categories}
                 overallStatus={mockData.overallStatus}
                 trend={mockData.trend}
+                analysisId={folder.id}
+                forecastData={analysisForecasts[folder.id] || []}
               />
             )
           })}

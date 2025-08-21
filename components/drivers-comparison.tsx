@@ -28,9 +28,10 @@ interface DriverCardProps {
   trend: "up" | "down" | "stable"
   analysisId: string
   forecastData: number[]
+  analysisIndex: number
 }
 
-function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData }: DriverCardProps) {
+function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData, analysisIndex }: DriverCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
@@ -71,17 +72,29 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
     }
   }
 
-  // Get sparkline colors based on status
-  const getSparklineColor = (status: string) => {
+  // Get sparkline colors based on status - using same colors as main forecast chart
+  const getSparklineColor = (status: string, analysisId?: string, analysisIndex?: number) => {
+    // Use the same colors as the main forecast chart
+    const forecastColors = [
+      "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1",
+      "#d084d0", "#ff8042", "#00c49f", "#ffbb28", "#ff6b6b"
+    ]
+    
+    // If we have an analysis index, use it to get the same color as the main chart
+    if (analysisIndex !== undefined) {
+      return forecastColors[analysisIndex % forecastColors.length]
+    }
+    
+    // Fallback to status-based colors if no analysis index is available
     switch (status) {
       case "on-track":
-        return "hsl(var(--green-600))"
+        return forecastColors[1] // Green (#82ca9d)
       case "at-risk":
-        return "hsl(var(--yellow-600))"
+        return forecastColors[2] // Yellow (#ffc658)
       case "behind":
-        return "hsl(var(--red-600))"
+        return forecastColors[9] // Red (#ff6b6b)
       default:
-        return "hsl(var(--muted-foreground))"
+        return forecastColors[0] // Purple (#8884d8)
     }
   }
 
@@ -113,8 +126,8 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
               data={getForecastSparklineData()}
               width={60}
               height={24}
-              strokeColor={getSparklineColor(overallStatus)}
-              fillColor={getSparklineColor(overallStatus)}
+              strokeColor={getSparklineColor(overallStatus, analysisId, analysisIndex)}
+              fillColor={getSparklineColor(overallStatus, analysisId, analysisIndex)}
               showValue={false}
             />
           </div>
@@ -278,17 +291,17 @@ export function DriversComparison() {
           const categories: Record<string, Category[]> = {}
           const forecasts: Record<string, number[]> = {}
           
-          const promises = folders.map(async (folder: AnalysisFolder) => {
+          const promises = folders.map(async (folder: AnalysisFolder, index: number) => {
             const [driversCategories, forecastData, driverCounts] = await Promise.all([
               fetchDriversReport(selectedDataset.title, folder.id),
               fetchForecastData(selectedDataset.title, folder.id),
               countDriversPerCategory(selectedDataset.title, folder.id)
             ])
-            return { id: folder.id, driversCategories, forecastData, driverCounts }
+            return { id: folder.id, driversCategories, forecastData, driverCounts, index }
           })
           
           const results = await Promise.all(promises)
-          results.forEach(({ id, driversCategories, forecastData, driverCounts }) => {
+          results.forEach(({ id, driversCategories, forecastData, driverCounts, index }) => {
             // Merge categories with driver counts
             const categoriesWithCounts = driversCategories.map((cat: any) => ({
               ...cat,
@@ -413,6 +426,7 @@ export function DriversComparison() {
                 trend={mockData.trend}
                 analysisId={folder.id}
                 forecastData={analysisForecasts[folder.id] || []}
+                analysisIndex={index}
               />
             )
           })}

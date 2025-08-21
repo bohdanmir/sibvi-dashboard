@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { Line, LineChart, ResponsiveContainer } from "recharts"
 import { cn } from "@/lib/utils"
 
 interface SparklineProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -20,7 +21,7 @@ const Sparkline = React.forwardRef<HTMLDivElement, SparklineProps>(
     data, 
     width = 100, 
     height = 30, 
-    strokeWidth = 1.5, 
+    strokeWidth = 1, 
     strokeColor = "hsl(var(--foreground))",
     fillColor = "hsl(var(--muted))",
     showValue = false,
@@ -40,49 +41,29 @@ const Sparkline = React.forwardRef<HTMLDivElement, SparklineProps>(
       )
     }
 
-    const max = Math.max(...data)
-    const min = Math.min(...data)
-    const range = max - min || 1
+    // Transform data for Recharts
+    const chartData = data.map((value, index) => ({
+      index,
+      value
+    }))
 
-    const points = data.map((value, index) => {
-      const x = (index / (data.length - 1)) * width
-      const y = height - ((value - min) / range) * height
-      return `${x},${y}`
-    }).join(" ")
-
-    const path = `M ${points}`
+    // Ensure we have a visible stroke color
+    const finalStrokeColor = strokeColor || "hsl(var(--foreground))"
 
     return (
       <div ref={ref} className={cn("flex items-center gap-2", className)} {...props}>
-        <svg
-          width={width}
-          height={height}
-          viewBox={`0 0 ${width} ${height}`}
-          className="overflow-visible"
-        >
-          <defs>
-            <linearGradient id="sparkline-fill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={fillColor} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={fillColor} stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
-          
-          {/* Fill area */}
-          <path
-            d={`${path} L ${width},${height} L 0,${height} Z`}
-            fill="url(#sparkline-fill)"
-          />
-          
-          {/* Line */}
-          <path
-            d={path}
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ResponsiveContainer width={width} height={height}>
+          <LineChart data={chartData}>
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={finalStrokeColor}
+              strokeWidth={strokeWidth}
+              dot={false}
+              activeDot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
         
         {showValue && (
           <span className="text-xs font-medium text-muted-foreground">

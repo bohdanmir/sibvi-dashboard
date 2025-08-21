@@ -382,7 +382,7 @@ export function ChartAreaInteractive() {
               <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-[400px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filteredData}>
@@ -427,7 +427,11 @@ export function ChartAreaInteractive() {
                   />
                 }
               />
-              <Legend />
+              <Legend 
+                verticalAlign="bottom" 
+                align="left"
+                wrapperStyle={{ paddingTop: '20px' }}
+              />
               
               {/* Historical Data Line */}
               <Line

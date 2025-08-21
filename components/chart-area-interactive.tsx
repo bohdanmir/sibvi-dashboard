@@ -438,9 +438,9 @@ export function ChartAreaInteractive() {
                 type="monotone"
                 dataKey="historical"
                 stroke="#000000" // Dark black line like drivers info card
-                strokeWidth={2}
-                dot={{ fill: "#000000", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={1}
+                dot={{ fill: "#ffffff", stroke: "#000000", strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 4 }}
                 name="Historical Data"
                 strokeDasharray="0" // Solid line for historical data
               />
@@ -457,10 +457,10 @@ export function ChartAreaInteractive() {
                     type="monotone"
                     dataKey={dataKey}
                     stroke={color}
-                    strokeWidth={2}
-                    strokeDasharray="8 4" // More pronounced dashed pattern for forecasts
-                    dot={{ fill: color, strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6 }}
+                    strokeWidth={1}
+                    strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
+                    dot={{ fill: "#ffffff", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
+                    activeDot={{ r: 4 }}
                     name={`${analysis?.name || `Analysis ${analysisId}`} (Forecast)`}
                   />
                 )

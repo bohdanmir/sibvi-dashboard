@@ -72,54 +72,47 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  // Load analyses when selected dataset changes
+  // Load all data (analyses, forecasts, and chart data) when selected dataset changes
+  // This prevents the chart from flickering by loading everything in one operation
+  // and only rendering when all data is ready
   React.useEffect(() => {
     if (!selectedDataset) return
 
-    const loadAnalyses = async () => {
-      try {
-        const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
-        if (response.ok) {
-          const analysesData = await response.json()
-          setAnalyses(analysesData)
-          
-          // Check which analyses actually have forecast data and select all available ones
-          const availableForecastsSet = new Set<string>()
-          const analysesWithForecasts = await Promise.all(
-            analysesData.map(async (analysis: Analysis) => {
-              try {
-                const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
-                if (forecastResponse.ok) {
-                  availableForecastsSet.add(analysis.id)
-                  return analysis.id
-                }
-                return null
-              } catch {
-                return null
-              }
-            })
-          )
-          
-          setAvailableAnalyses(analysesWithForecasts.filter(id => id !== null) as string[])
-        }
-      } catch (error) {
-        console.error('Error loading analyses:', error)
-      }
-    }
-
-    loadAnalyses()
-  }, [selectedDataset])
-
-  // Load chart data when selected dataset or analyses change
-  React.useEffect(() => {
-    if (!selectedDataset) return
-
-    const loadChartData = async () => {
+    const loadAllData = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        // Get folder information to find the CSV file
+        // Step 1: Load analyses and check for forecast availability
+        const analysesResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
+        if (!analysesResponse.ok) {
+          throw new Error('Failed to load analyses')
+        }
+        
+        const analysesData = await analysesResponse.json()
+        setAnalyses(analysesData)
+        
+        // Step 2: Check which analyses have forecast data
+        const availableForecastsSet = new Set<string>()
+        const analysesWithForecasts = await Promise.all(
+          analysesData.map(async (analysis: Analysis) => {
+            try {
+              const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
+              if (forecastResponse.ok) {
+                availableForecastsSet.add(analysis.id)
+                return analysis.id
+              }
+              return null
+            } catch {
+              return null
+            }
+          })
+        )
+        
+        const availableAnalysesList = analysesWithForecasts.filter(id => id !== null) as string[]
+        setAvailableAnalyses(availableAnalysesList)
+        
+        // Step 3: Get folder information to find the CSV file
         const folderResponse = await fetch('/api/data-folders')
         if (!folderResponse.ok) {
           throw new Error('Failed to get folder information')
@@ -132,27 +125,27 @@ export function ChartAreaInteractive() {
           throw new Error('No CSV files found in selected folder')
         }
         
-        // Use the first CSV file in the folder
+        // Step 4: Load historical data
         const csvFileName = currentFolder.files[0]
         const csvPath = `/data/${encodeURIComponent(selectedDataset.title)}/${encodeURIComponent(csvFileName)}`
         
-        const response = await fetch(csvPath)
-        if (!response.ok) {
-          throw new Error(`Failed to load data: ${response.status}`)
+        const csvResponse = await fetch(csvPath)
+        if (!csvResponse.ok) {
+          throw new Error(`Failed to load CSV data: ${csvResponse.status}`)
         }
         
-        const csvText = await response.text()
+        const csvText = await csvResponse.text()
         const historicalData = parseCSV(csvText)
         
-        // Load forecast data for all available analyses
-        const forecastData = availableAnalyses.length > 0 
-          ? await loadForecastData(availableAnalyses)
+        // Step 5: Load forecast data for all available analyses
+        const forecastData = availableAnalysesList.length > 0 
+          ? await loadForecastData(availableAnalysesList)
           : {}
         
         console.log('Historical data:', historicalData)
         console.log('Forecast data:', forecastData)
         
-        // Combine historical and forecast data
+        // Step 6: Combine all data and set state
         const combinedData = combineData(historicalData, forecastData)
         console.log('Combined data:', combinedData)
         
@@ -160,14 +153,14 @@ export function ChartAreaInteractive() {
         setFileName(csvFileName)
         setLoading(false)
       } catch (error) {
-        console.error('Error loading chart data:', error)
+        console.error('Error loading all data:', error)
         setError(error instanceof Error ? error.message : 'Failed to load data')
         setLoading(false)
       }
     }
 
-    loadChartData()
-  }, [selectedDataset, availableAnalyses])
+    loadAllData()
+  }, [selectedDataset])
 
   const loadForecastData = async (analysisIds: string[]) => {
     const forecasts: { [key: string]: { dates: string[]; forecastValues: number[]; totalPoints: number } } = {}
@@ -297,11 +290,24 @@ export function ChartAreaInteractive() {
     return (
       <Card className="@container/card">
         <CardHeader>
-          <CardTitle>Loading Chart Data...</CardTitle>
+          <CardTitle>{selectedDataset.title}</CardTitle>
+          <CardDescription>
+            <span className="hidden @[540px]/card:block">
+              Loading data and forecasts...
+            </span>
+            <span className="@[540px]/card:hidden">
+              Loading...
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex items-center justify-center h-[250px]">
-            <div className="text-muted-foreground">Loading data from {selectedDataset.title}...</div>
+          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="w-8 h-8 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+              <div className="text-muted-foreground text-sm">
+                Loading {selectedDataset.title} data and forecasts...
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -323,17 +329,62 @@ export function ChartAreaInteractive() {
     )
   }
 
+  // Don't render chart until we have data and analyses loaded
+  // This ensures no flickering between historical-only and historical+forecast views
+  if (!chartData.length || !analyses.length) {
+    return (
+      <Card className="@container/card">
+        <CardHeader>
+          <CardTitle>{selectedDataset.title}</CardTitle>
+          <CardDescription>
+            <span className="hidden @[540px]/card:block">
+              Preparing chart data...
+            </span>
+            <span className="@[540px]/card:hidden">
+              Preparing...
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+              <div className="text-muted-foreground text-sm">
+                Preparing chart...
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="@container/card">
       <CardHeader>
         <div className="flex flex-col gap-2">
-          <CardTitle>{selectedDataset.title}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            {selectedDataset.title}
+            {loading && (
+              <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+            )}
+          </CardTitle>
           <CardDescription>
             <span className="hidden @[540px]/card:block">
               {fileName ? `Data from: ${fileName}` : "Dataset information"}
+              {loading && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  • Loading forecasts...
+                </span>
+              )}
             </span>
             <span className="@[540px]/card:hidden">
               {fileName ? fileName : "Dataset info"}
+              {loading && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  • Loading...
+                </span>
+              )}
             </span>
           </CardDescription>
         </div>
@@ -343,19 +394,21 @@ export function ChartAreaInteractive() {
             value={timeRange}
             onValueChange={setTimeRange}
             variant="outline"
+            disabled={loading}
             className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
           >
-            <ToggleGroupItem value="6m">6m</ToggleGroupItem>
-            <ToggleGroupItem value="1y">1y</ToggleGroupItem>
-            <ToggleGroupItem value="3y">3y</ToggleGroupItem>
-            <ToggleGroupItem value="5y">5y</ToggleGroupItem>
-            <ToggleGroupItem value="All">All</ToggleGroupItem>
+            <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
+            <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
+            <ToggleGroupItem value="3y" disabled={loading}>3y</ToggleGroupItem>
+            <ToggleGroupItem value="5y" disabled={loading}>5y</ToggleGroupItem>
+            <ToggleGroupItem value="All" disabled={loading}>All</ToggleGroupItem>
           </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={timeRange} onValueChange={setTimeRange} disabled={loading}>
             <SelectTrigger
               className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
               size="sm"
               aria-label="Select a value"
+              disabled={loading}
             >
               <SelectValue placeholder="1 year" />
             </SelectTrigger>
@@ -384,6 +437,17 @@ export function ChartAreaInteractive() {
           config={chartConfig}
           className="aspect-auto h-[400px] w-full"
         >
+          {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
+          {loading ? (
+            <div className="w-full h-full bg-muted/20 rounded-lg flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+                <div className="text-muted-foreground text-sm">
+                  Preparing chart...
+                </div>
+              </div>
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -467,6 +531,7 @@ export function ChartAreaInteractive() {
               })}
             </LineChart>
           </ResponsiveContainer>
+          )}
         </ChartContainer>
       </CardContent>
     </Card>

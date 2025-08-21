@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress"
 import { Sparkline } from "@/components/ui/sparkline"
 import { Badge } from "@/components/ui/badge"
 import { useDataset } from "@/lib/dataset-context"
+import { Button } from "@/components/ui/button"
+import { IconChevronUp, IconChevronDown } from "@tabler/icons-react"
 
 interface AnalysisFolder {
   id: string
@@ -29,9 +31,10 @@ interface DriverCardProps {
   analysisId: string
   forecastData: number[]
   analysisIndex: number
+  isExpanded: boolean
 }
 
-function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData, analysisIndex }: DriverCardProps) {
+function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData, analysisIndex, isExpanded }: DriverCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
@@ -114,7 +117,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-80 min-w-80 min-h-[280px] flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -133,7 +136,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Summary section showing total drivers */}
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
           <span className="text-sm font-medium text-muted-foreground">Total Drivers</span>
@@ -142,30 +145,62 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
           </Badge>
         </div>
         
-        {categories.map((category) => (
-          <div key={category.id} className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-muted-foreground truncate" title={category.name}>
-                  {category.name}
-                </span>
-                {/* Add badge showing number of drivers */}
-                <Badge 
-                  variant="secondary" 
-                  className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
-                    category.driverCount > 0 
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`}
-                >
-                  {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
-                </Badge>
+        <div className="flex-1 space-y-4">
+          {isExpanded ? (
+            categories.map((category) => (
+              <div key={category.id} className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-muted-foreground truncate" title={category.name}>
+                      {category.name}
+                    </span>
+                    {/* Add badge showing number of drivers */}
+                    <Badge 
+                      variant="secondary" 
+                      className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                        category.driverCount > 0 
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}
+                    >
+                      {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                  <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
+                </div>
+                <Progress value={category.importance} className="h-1.5" />
               </div>
-              <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
-            </div>
-            <Progress value={category.importance} className="h-1.5" />
-          </div>
-        ))}
+            ))
+          ) : (
+            categories
+              .sort((a, b) => b.importance - a.importance) // Sort by importance descending
+              .slice(0, 3) // Take top 3
+              .map((category) => (
+                <div key={category.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-muted-foreground truncate" title={category.name}>
+                        {category.name}
+                      </span>
+                      {/* Add badge showing number of drivers */}
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                          category.driverCount > 0 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        }`}
+                      >
+                        {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                    <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
+                  </div>
+                  <Progress value={category.importance} className="h-1.5" />
+                </div>
+              ))
+          )}
+        </div>
       </CardContent>
     </Card>
   )
@@ -178,6 +213,7 @@ export function DriversComparison() {
   const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
   const [allDatasetCategories, setAllDatasetCategories] = useState<Array<{ id: number; name: string }>>([])
   const [analysisForecasts, setAnalysisForecasts] = useState<Record<string, number[]>>({})
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
@@ -410,27 +446,52 @@ export function DriversComparison() {
           </p>
         </div>
       ) : (
-        <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4">
-          {analysisFolders.map((folder, index) => {
-            const mockData = generateMockData(index)
-            // Get merged categories (all dataset categories with real values or 0 for missing ones)
-            const categories = getMergedCategories(folder.id)
-            
-            return (
-              <DriverCard
-                key={folder.id}
-                title={folder.name}
-                description={`Analysis folder: ${folder.id}`}
-                categories={categories}
-                overallStatus={mockData.overallStatus}
-                trend={mockData.trend}
-                analysisId={folder.id}
-                forecastData={analysisForecasts[folder.id] || []}
-                analysisIndex={index}
-              />
-            )
-          })}
-        </div>
+        <>
+          <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4 pr-8">
+            {analysisFolders.map((folder, index) => {
+              const mockData = generateMockData(index)
+              // Get merged categories (all dataset categories with real values or 0 for missing ones)
+              const categories = getMergedCategories(folder.id)
+              
+              return (
+                <DriverCard
+                  key={folder.id}
+                  title={folder.name}
+                  description={`Analysis folder: ${folder.id}`}
+                  categories={categories}
+                  overallStatus={mockData.overallStatus}
+                  trend={mockData.trend}
+                  analysisId={folder.id}
+                  forecastData={analysisForecasts[folder.id] || []}
+                  analysisIndex={index}
+                  isExpanded={isExpanded}
+                />
+              )
+            })}
+          </div>
+          
+          {/* Expand/Collapse Button - Centered below cards */}
+          <div className="flex justify-center px-4 lg:px-6 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-2"
+            >
+              {isExpanded ? (
+                <>
+                  <IconChevronUp className="h-4 w-4" />
+                  Show Top 3 Drivers
+                </>
+              ) : (
+                <>
+                  <IconChevronDown className="h-4 w-4" />
+                  Show All Drivers
+                </>
+              )}
+            </Button>
+          </div>
+        </>
       )}
     </div>
   )

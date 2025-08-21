@@ -666,22 +666,13 @@ export function WorldMapSection() {
 
       {/* Drivers Card - Right Side (1/3 width) */}
       <Card className="w-80 h-[500px] md:h-[600px] overflow-y-auto">
-        <CardHeader className="pb-3 border-b">
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              {drivers.length} drivers available • {drivers.filter(d => d.coordinates.x >= 0 && d.coordinates.x <= 100 && d.coordinates.y >= 0 && d.coordinates.y <= 100).length} visible on map
-            </p>
-            <p className="text-xs text-blue-600 font-medium">
-              {selectedDataset.title} • {getCurrentAnalysis()?.name}
-            </p>
-          </div>
-        </CardHeader>
+
         
-        <CardContent className="p-4">
+        <CardContent>
           {selectedDriver ? (
             <div className="space-y-4">
               {/* Driver Header */}
-              <div className="flex items-center gap-3 pb-3 border-b">
+              <div className="flex flex-col items-start gap-3 pb-3 border-b">
                 <Badge 
                   variant="outline" 
                   className="w-10 h-10 rounded-full p-0 border border-gray-200 bg-gray-100"
@@ -690,10 +681,27 @@ export function WorldMapSection() {
                     {getCategoryIcon(selectedDriver.category)}
                   </div>
                 </Badge>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 text-sm">{selectedDriver.name}</h4>
+                <div className="flex-1 space-y-2">
+                  {selectedDriver.name.length > 60 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <h4 className="font-bold text-gray-900 text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="top" 
+                        className="max-w-xs text-xs bg-white text-gray-900 border border-gray-200 shadow-lg"
+                      >
+                        <div className="font-medium">{selectedDriver.name}</div>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <h4 className="font-bold text-gray-900 text-base">{selectedDriver.name}</h4>
+                  )}
+                  <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <span className="h-3 w-3 text-gray-800">{getCategoryIcon(selectedDriver.category)}</span>
+                    {selectedDriver.category}
+                  </p>
                   <p className="text-xs text-gray-600">{selectedDriver.region.join(' > ')}</p>
-                  <p className="text-xs text-blue-600">{selectedDriver.category}</p>
                 </div>
               </div>
 

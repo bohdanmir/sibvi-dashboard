@@ -359,9 +359,8 @@ export function DriversComparison() {
 
   if (!selectedDataset) {
     return (
-      <div className="space-y-4">
+      <div className="">
         <div className="px-4 lg:px-6">
-          <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
           <p className="text-muted-foreground">
             Select a dataset from the sidebar to view analysis comparisons.
           </p>
@@ -372,9 +371,8 @@ export function DriversComparison() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="">
         <div className="px-4 lg:px-6">
-          <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
           <p className="text-muted-foreground">
             Loading analysis folders for {selectedDataset.title}...
           </p>
@@ -391,13 +389,7 @@ export function DriversComparison() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-2xl font-bold tracking-tight">Drivers Comparison</h2>
-        <p className="text-muted-foreground">
-          Analysis cards showing driver categories and their contribution percentages with driver counts.
-        </p>
-      </div>
+    <div className="">
       {analysisFolders.length === 0 ? (
         <div className="px-4 lg:px-6">
           <p className="text-muted-foreground">

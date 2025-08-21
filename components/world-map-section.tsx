@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from "recharts"
 import { fetchDriversData, discoverAnalyses, DriverData, AnalysisInfo } from "@/lib/drivers-data"
 import { useDataset } from "@/lib/dataset-context"
 
@@ -109,6 +116,92 @@ export function WorldMapSection() {
   const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null)
   const [availableAnalyses, setAvailableAnalyses] = useState<AnalysisInfo[]>([])
   const [error, setError] = useState<string | null>(null)
+  
+  // Generate chart data from driver's normalized series or fallback to sample data
+  const generateDriverChartData = (driver: DriverData) => {
+    console.log('Generating chart data for driver:', driver.name)
+    console.log('Driver normalized_series:', driver.normalized_series)
+    
+    // Try to get real data from the driver if available
+    if (driver.normalized_series) {
+      const entries = Object.entries(driver.normalized_series)
+      console.log('Raw entries from normalized_series:', entries.slice(0, 5)) // Show first 5 entries
+      
+      const seriesData = entries
+        .filter(([_, value]) => value !== null) // Filter out null values
+        .map(([date, value]) => {
+          console.log('Processing date:', date, 'value:', value, 'type:', typeof date)
+          
+          // Parse date safely - handle YYYY-MM-DD format
+          let parsedDate: Date
+          try {
+            // Ensure date string is in proper format
+            const dateStr = date.toString()
+            console.log('Date string to parse:', dateStr)
+            
+            if (dateStr.includes('-')) {
+              // Handle YYYY-MM-DD format
+              parsedDate = new Date(dateStr + 'T00:00:00')
+            } else {
+              parsedDate = new Date(dateStr)
+            }
+            
+            console.log('Parsed date result:', parsedDate, 'isValid:', !isNaN(parsedDate.getTime()))
+            
+            // Validate the parsed date
+            if (isNaN(parsedDate.getTime())) {
+              console.warn(`Invalid date format: ${date}`, parsedDate)
+              return null
+            }
+          } catch (error) {
+            console.warn(`Error parsing date: ${date}`, error)
+            return null
+          }
+          
+          // Keep values in 0-1 range (don't multiply by 100)
+          const numericValue = parseFloat((value as number).toFixed(3))
+          
+          const result = {
+            date: parsedDate,
+            value: numericValue
+          }
+          console.log('Created data point:', result)
+          return result
+        })
+        .filter(item => item !== null) // Remove any failed date parsing
+        .sort((a, b) => a!.date.getTime() - b!.date.getTime()) // Sort by date
+        .slice(-24) // Take last 24 data points for better visualization
+      
+      console.log('Final series data:', seriesData)
+      
+      if (seriesData.length > 0) {
+        return seriesData
+      }
+    }
+    
+    console.log('Using fallback sample data')
+    // Fallback to sample data if no real data available
+    const data = []
+    const baseValue = driver.importance / 100 // Convert importance to 0-1 range
+    
+    for (let i = 0; i < 12; i++) {
+      const randomVariation = (Math.random() - 0.5) * 0.2 // 20% volatility
+      const value = Math.max(0, Math.min(1, baseValue + randomVariation))
+      data.push({
+        date: new Date(2023, i, 1), // Sample dates
+        value: parseFloat(value.toFixed(3))
+      })
+    }
+    return data
+  }
+  
+  // Chart configuration for driver performance
+  const driverChartConfig = {
+    value: {
+      label: "Performance",
+      color: "var(--primary)",
+    },
+  } satisfies ChartConfig
   
   // Calculate badge size based on importance score
   const getBadgeSize = (importance: number, allDrivers: DriverData[]) => {
@@ -605,50 +698,102 @@ export function WorldMapSection() {
               </div>
 
               {/* Key Metrics */}
-              <div className="text-center bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">{selectedDriver.importance.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">Importance Score</div>
+              <div className="text-left">
+                <div className="text-4xl font-bold text-gray-900">{selectedDriver.importance.toFixed(1)}%</div>
+                <div className="text-xs text-gray-600">Importance Score</div>
               </div>
 
-              {/* Direction Indicator */}
-              <div className={`rounded-lg p-3 ${
-                selectedDriver.direction > 0 
-                  ? 'bg-green-50 border border-green-200' 
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                <div className="flex items-center gap-2">
+              {/* Direction and Lag Information */}
+              <div className="flex items-center justify-between">
+                <Badge 
+                  variant={selectedDriver.direction > 0 ? "default" : "destructive"}
+                  className="flex items-center gap-2"
+                >
                   {selectedDriver.direction > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-green-700" />
+                    <TrendingUp className="h-3 w-3" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-700" />
+                    <TrendingDown className="h-3 w-3" />
                   )}
-                  <span className={`text-sm font-medium ${
-                    selectedDriver.direction > 0 ? 'text-green-700' : 'text-red-700'
-                  }`}>
-                    {selectedDriver.direction > 0 ? 'Positive' : 'Negative'} Impact
-                  </span>
-                </div>
+                  {selectedDriver.direction > 0 ? 'Positive' : 'Negative'} Impact
+                </Badge>
+                
+                <span className="text-xs text-muted-foreground">
+                  Lag: {selectedDriver.lag}
+                </span>
               </div>
 
-              {/* Lag Information */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="text-sm text-blue-700">
-                  <span className="font-medium">Lag:</span> {selectedDriver.lag}
-                </div>
-              </div>
-
-              {/* Chart Placeholder */}
-              <div className="h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <Badge 
-                    variant="outline" 
-                    className="w-8 h-8 mx-auto mb-2 rounded-full p-0 bg-gray-200 border-gray-300"
+              {/* Driver Performance Chart */}
+              <div className="w-full">
+                {(() => {
+                  const chartData = generateDriverChartData(selectedDriver)
+                  console.log('Chart data being passed to LineChart:', chartData)
+                  return null
+                })()}
+                <ChartContainer config={driverChartConfig} className="h-60 w-full -ml-4">
+                  <LineChart 
+                    data={generateDriverChartData(selectedDriver)}
+                    margin={{ left: 10, right: 0, top: 5, bottom: 5 }}
                   >
-                    <BarChart3 className="h-4 w-4 text-gray-500" />
-                  </Badge>
-                  <p className="text-sm">Chart visualization</p>
-                  <p className="text-xs">Driver: {selectedDriver.id}</p>
-                </div>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={4}
+                      minTickGap={20}
+                      tickFormatter={(value) => {
+                        const date = new Date(value)
+                        return date.toLocaleDateString("en-US", {
+                          month: "short",
+                          year: "2-digit",
+                        })
+                      }}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={0}
+                      minTickGap={20}
+                      domain={[0, 1]}
+                      tickFormatter={(value) => {
+                        return value.toFixed(2)
+                      }}
+                      width={40}
+                    />
+                    <RechartsTooltip
+                      cursor={false}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const dataPoint = payload[0]
+                          const date = dataPoint.payload.date
+                          const value = dataPoint.value
+                          
+                          console.log('Tooltip data:', { date, value, label })
+                          
+                          return (
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                              <div className="text-sm font-medium text-gray-900">
+                                {date instanceof Date ? date.toLocaleDateString("en-US", {
+                                  month: "long",
+                                  year: "numeric",
+                                }) : 'Unknown Date'}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Performance: {typeof value === 'number' ? value.toFixed(3) : value}
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
+                    <Line
+                      dataKey="value"
+                      type="natural"
+                      stroke="var(--color-value)"
+                    />
+                  </LineChart>
+                </ChartContainer>
               </div>
 
               {/* Description */}

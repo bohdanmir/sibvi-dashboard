@@ -12,6 +12,9 @@ export interface DriverData {
     y: number
     continent: string
   }
+  normalized_series?: {
+    [date: string]: number | null
+  }
 }
 
 export interface RegionMapping {
@@ -300,7 +303,8 @@ export async function fetchDriversData(datasetId: string, analysisId: string): P
           importance: importance,
           direction: direction,
           lag: lag,
-          coordinates
+          coordinates,
+          normalized_series: typedDriverData.normalized_series || null
         }
         
         drivers.push(driver)

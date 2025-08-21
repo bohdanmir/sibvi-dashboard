@@ -406,10 +406,16 @@ export function WorldMapSection() {
         })))
         setDrivers(driversData)
         setLoading(false)
-        // Set the first driver as selected by default
+        // Set the driver with highest importance as selected by default
         if (driversData.length > 0) {
-          console.log('Setting first driver as selected:', driversData[0].name)
-          setSelectedDriver(driversData[0])
+          const highestImportanceDriver = getHighestImportanceDriver(driversData)
+          if (highestImportanceDriver) {
+            console.log('Setting highest importance driver as selected:', highestImportanceDriver.name)
+            setSelectedDriver(highestImportanceDriver)
+          } else {
+            console.log('No valid drivers found in analysis')
+            setSelectedDriver(null)
+          }
         } else {
           console.log('No drivers found in analysis')
           setSelectedDriver(null)
@@ -462,6 +468,52 @@ export function WorldMapSection() {
 
   const getCurrentAnalysis = () => availableAnalyses.find(a => a.id === currentAnalysis)
 
+  // Helper function to get the driver with the highest importance score
+  const getHighestImportanceDriver = (driversList: DriverData[]) => {
+    if (driversList.length === 0) return null
+    
+    return driversList.reduce((highest, driver) => {
+      let importance = 0
+      if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+        const importanceObj = driver.rawImportance as any
+        if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+          const overall = importanceObj.overall as any
+          if (typeof overall.mean === 'number') {
+            importance = overall.mean
+          }
+        }
+      }
+      if (importance === 0) {
+        importance = driver.importance
+      }
+      
+      // Only consider drivers with importance > 0
+      if (importance <= 0) return highest
+      
+      // If no highest driver yet, or current driver has higher importance
+      if (!highest || importance > (() => {
+        let highestImportance = 0
+        if (highest.rawImportance && typeof highest.rawImportance === 'object') {
+          const highestImportanceObj = highest.rawImportance as any
+          if (highestImportanceObj.overall && typeof highestImportanceObj.overall === 'object') {
+            const highestOverall = highestImportanceObj.overall as any
+            if (typeof highestOverall.mean === 'number') {
+              highestImportance = highestOverall.mean
+            }
+          }
+        }
+        if (highestImportance === 0) {
+          highestImportance = highest.importance
+        }
+        return highestImportance
+      })()) {
+        return driver
+      }
+      
+      return highest
+    }, null as DriverData | null)
+  }
+
   // Don't render if no dataset is selected
   if (!selectedDataset) {
     return (
@@ -499,7 +551,10 @@ export function WorldMapSection() {
                       setDrivers(driversData)
                       setLoading(false)
                       if (driversData.length > 0) {
-                        setSelectedDriver(driversData[0])
+                        const highestImportanceDriver = getHighestImportanceDriver(driversData)
+                        if (highestImportanceDriver) {
+                          setSelectedDriver(highestImportanceDriver)
+                        }
                       }
                     })
                     .catch(err => {
@@ -596,7 +651,25 @@ export function WorldMapSection() {
           
           {/* Driver Icons */}
           <TooltipProvider>
-            {drivers.map((driver, index) => (
+            {drivers
+              .filter(driver => {
+                // Filter out drivers with 0 importance
+                let importance = 0
+                if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+                  const importanceObj = driver.rawImportance as any
+                  if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+                    const overall = importanceObj.overall as any
+                    if (typeof overall.mean === 'number') {
+                      importance = overall.mean
+                    }
+                  }
+                }
+                if (importance === 0) {
+                  importance = driver.importance
+                }
+                return importance > 0
+              })
+              .map((driver, index) => (
               <Tooltip key={driver.id}>
                 <TooltipTrigger asChild>
                   <button

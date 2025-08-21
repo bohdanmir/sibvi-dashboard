@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight } from "lucide-react"
 import { fetchDriversData, discoverAnalyses, DriverData, AnalysisInfo } from "@/lib/drivers-data"
 import { useDataset } from "@/lib/dataset-context"
@@ -410,32 +413,54 @@ export function WorldMapSection() {
           </div>
           
           {/* Driver Icons */}
-          {drivers.map((driver, index) => (
-            <button
-              key={driver.id}
-              onClick={() => handleDriverClick(driver)}
-              className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                selectedDriver?.id === driver.id
-                  ? 'border-blue-500 bg-blue-100 shadow-lg' 
-                  : 'border-gray-400 bg-gray-100 hover:border-gray-500'
-              }`}
-              style={{
-                left: `${driver.coordinates.x}%`,
-                top: `${driver.coordinates.y}%`
-              }}
-              title={`${index + 1}. ${driver.name} (${driver.category}) at (${driver.coordinates.x.toFixed(1)}%, ${driver.coordinates.y.toFixed(1)}%)`}
-            >
-              <div className="flex items-center justify-center w-full h-full">
-                <div className="w-3 h-3 md:w-4 md:h-4">
-                  {getCategoryIcon(driver.category)}
-                </div>
-              </div>
-              {/* Debug number */}
-              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {index + 1}
-              </div>
-            </button>
-          ))}
+          <TooltipProvider>
+            {drivers.map((driver, index) => (
+              <Tooltip key={driver.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => handleDriverClick(driver)}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    style={{
+                      left: `${driver.coordinates.x}%`,
+                      top: `${driver.coordinates.y}%`
+                    }}
+                  >
+                    <Avatar className={`w-8 h-8 md:w-12 md:h-12 border-2 transition-all duration-200 ${
+                      selectedDriver?.id === driver.id
+                        ? 'border-blue-500 bg-blue-100 shadow-lg ring-2 ring-blue-200' 
+                        : 'border-gray-400 bg-gray-100 hover:border-gray-500 hover:bg-gray-200'
+                    }`}>
+                      <AvatarFallback className="bg-transparent">
+                        <div className="w-3 h-3 md:w-4 md:h-4">
+                          {getCategoryIcon(driver.category)}
+                        </div>
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    {/* Numbered Badge */}
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 w-4 h-4 p-0 text-xs rounded-full flex items-center justify-center min-w-0"
+                    >
+                      {index + 1}
+                    </Badge>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent 
+                  side="top" 
+                  className="max-w-xs text-xs bg-white text-gray-900 border border-gray-200 shadow-lg"
+                >
+                  <div className="space-y-1">
+                    <div className="font-medium">{index + 1}. {driver.name}</div>
+                    <div className="text-gray-600">{driver.category}</div>
+                    <div className="text-gray-500">
+                      ({driver.coordinates.x.toFixed(1)}%, {driver.coordinates.y.toFixed(1)}%)
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
         </div>
       </Card>
 
@@ -457,11 +482,13 @@ export function WorldMapSection() {
             <div className="space-y-4">
               {/* Driver Header */}
               <div className="flex items-center gap-3 pb-3 border-b">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                  <div className="w-5 h-5">
-                    {getCategoryIcon(selectedDriver.category)}
-                  </div>
-                </div>
+                <Avatar className="w-10 h-10 border border-gray-200">
+                  <AvatarFallback className="bg-gray-100">
+                    <div className="w-5 h-5">
+                      {getCategoryIcon(selectedDriver.category)}
+                    </div>
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900 text-sm">{selectedDriver.name}</h4>
                   <p className="text-xs text-gray-600">{selectedDriver.region.join(' > ')}</p>
@@ -505,7 +532,11 @@ export function WorldMapSection() {
               {/* Chart Placeholder */}
               <div className="h-24 bg-gray-100 rounded-lg flex items-center justify-center">
                 <div className="text-center text-gray-500">
-                  <BarChart3 className="h-6 w-6 mx-auto mb-2" />
+                  <Avatar className="w-8 h-8 mx-auto mb-2 bg-gray-200">
+                    <AvatarFallback className="bg-gray-200">
+                      <BarChart3 className="h-4 w-4 text-gray-500" />
+                    </AvatarFallback>
+                  </Avatar>
                   <p className="text-sm">Chart visualization</p>
                   <p className="text-xs">Driver: {selectedDriver.id}</p>
                 </div>
@@ -520,7 +551,11 @@ export function WorldMapSection() {
             </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <Avatar className="w-16 h-16 mx-auto mb-4 bg-gray-100">
+                <AvatarFallback className="bg-gray-100">
+                  <BarChart3 className="h-8 w-8 text-gray-300" />
+                </AvatarFallback>
+              </Avatar>
               <p className="text-sm">Select a driver from the map to view details</p>
               <p className="text-xs mt-2">Click on any icon to explore driver data</p>
             </div>

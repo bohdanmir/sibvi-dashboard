@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
@@ -31,19 +31,33 @@ import {
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
 
-export const description = "An interactive area chart"
+export const description = "An interactive multi-series line chart with forecasts"
 
 interface ChartDataPoint {
   date: string
-  value: number
+  historical?: number
+  [key: string]: any // For dynamic forecast series
+}
+
+interface Analysis {
+  id: string
+  name: string
+  path: string
+  metadata?: any
 }
 
 const chartConfig = {
-  value: {
-    label: "Value",
-    color: "var(--primary)",
+  historical: {
+    label: "Historical Data",
+    color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig
+
+// Colors for different forecast series
+const forecastColors = [
+  "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1",
+  "#d084d0", "#ff8042", "#00c49f", "#ffbb28", "#ff6b6b"
+]
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
@@ -53,6 +67,8 @@ export function ChartAreaInteractive() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [fileName, setFileName] = React.useState<string>("")
+  const [analyses, setAnalyses] = React.useState<Analysis[]>([])
+  const [selectedAnalyses, setSelectedAnalyses] = React.useState<string[]>([])
 
   React.useEffect(() => {
     if (isMobile) {
@@ -60,7 +76,28 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  // Load chart data when selected dataset changes
+  // Load analyses when selected dataset changes
+  React.useEffect(() => {
+    if (!selectedDataset) return
+
+    const loadAnalyses = async () => {
+      try {
+        const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
+        if (response.ok) {
+          const analysesData = await response.json()
+          setAnalyses(analysesData)
+          // Select first few analyses by default
+          setSelectedAnalyses(analysesData.slice(0, 3).map((a: Analysis) => a.id))
+        }
+      } catch (error) {
+        console.error('Error loading analyses:', error)
+      }
+    }
+
+    loadAnalyses()
+  }, [selectedDataset])
+
+  // Load chart data when selected dataset or analyses change
   React.useEffect(() => {
     if (!selectedDataset) return
 
@@ -92,8 +129,21 @@ export function ChartAreaInteractive() {
         }
         
         const csvText = await response.text()
-        const parsedData = parseCSV(csvText)
-        setChartData(parsedData)
+        const historicalData = parseCSV(csvText)
+        
+        // Load forecast data for each selected analysis
+        const forecastData = selectedAnalyses.length > 0 
+          ? await loadForecastData(selectedAnalyses)
+          : {}
+        
+        console.log('Historical data:', historicalData)
+        console.log('Forecast data:', forecastData)
+        
+        // Combine historical and forecast data
+        const combinedData = combineData(historicalData, forecastData)
+        console.log('Combined data:', combinedData)
+        
+        setChartData(combinedData)
         setFileName(csvFileName)
         setLoading(false)
       } catch (error) {
@@ -104,7 +154,53 @@ export function ChartAreaInteractive() {
     }
 
     loadChartData()
-  }, [selectedDataset])
+  }, [selectedDataset, selectedAnalyses])
+
+  const loadForecastData = async (analysisIds: string[]) => {
+    const forecasts: { [key: string]: any } = {}
+    
+    for (const analysisId of analysisIds) {
+      try {
+        const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset!.title)}/analyses/${analysisId}/forecast`)
+        if (response.ok) {
+          const data = await response.json()
+          forecasts[analysisId] = data
+        }
+      } catch (error) {
+        console.error(`Error loading forecast for analysis ${analysisId}:`, error)
+      }
+    }
+    
+    return forecasts
+  }
+
+  const combineData = (historical: ChartDataPoint[], forecasts: { [key: string]: any }) => {
+    const combined: { [key: string]: ChartDataPoint } = {}
+    
+    console.log('Combining data - historical:', historical.length, 'forecasts:', Object.keys(forecasts))
+    
+    // Add historical data
+    historical.forEach(item => {
+      combined[item.date] = { ...item }
+    })
+    
+    // Add forecast data
+    Object.entries(forecasts).forEach(([analysisId, forecastData]) => {
+      console.log(`Processing forecast for analysis ${analysisId}:`, forecastData)
+      if (forecastData.dates && forecastData.forecastValues) {
+        forecastData.dates.forEach((date: string, index: number) => {
+          if (!combined[date]) {
+            combined[date] = { date }
+          }
+          combined[date][`forecast_${analysisId}`] = forecastData.forecastValues[index]
+        })
+      }
+    })
+    
+    const result = Object.values(combined).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    console.log('Final combined data:', result)
+    return result
+  }
 
   const parseCSV = (csvText: string): ChartDataPoint[] => {
     const lines = csvText.split('\n').filter(line => line.trim())
@@ -112,16 +208,26 @@ export function ChartAreaInteractive() {
       const values = line.split(',')
       return {
         date: values[0],
-        value: parseFloat(values[1]) || 0
+        historical: parseFloat(values[1]) || 0
       }
-    }).filter(item => item.date && !isNaN(item.value))
+    }).filter(item => item.date && !isNaN(item.historical!))
   }
 
   const filteredData = chartData.filter((item) => {
     if (timeRange === "All") return true
     
     const date = new Date(item.date)
-    const referenceDate = new Date("2025-06-01") // You might want to make this dynamic
+    
+    // Always include forecast data (future dates)
+    const hasForecastData = selectedAnalyses.some(analysisId => 
+      item[`forecast_${analysisId}`] !== undefined
+    )
+    if (hasForecastData) {
+      console.log('Including item with forecast data:', item.date, item)
+      return true
+    }
+    
+    // For historical data, apply time range filtering
     let monthsToSubtract = 12 // Default to 1 year
     
     switch (timeRange) {
@@ -141,10 +247,27 @@ export function ChartAreaInteractive() {
         monthsToSubtract = 12
     }
     
+    // Use current date as reference for historical data filtering
+    const referenceDate = new Date()
     const startDate = new Date(referenceDate)
     startDate.setMonth(startDate.getMonth() - monthsToSubtract)
-    return date >= startDate
+    
+    const shouldInclude = date >= startDate
+    if (!shouldInclude) {
+      console.log('Filtering out historical item:', item.date, 'startDate:', startDate)
+    }
+    return shouldInclude
   })
+
+  console.log('Filtered data:', filteredData)
+
+  const toggleAnalysis = (analysisId: string) => {
+    setSelectedAnalyses(prev => 
+      prev.includes(analysisId) 
+        ? prev.filter(id => id !== analysisId)
+        : [...prev, analysisId]
+    )
+  }
 
   if (!selectedDataset) {
     return (
@@ -248,72 +371,111 @@ export function ChartAreaInteractive() {
         </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+        {/* Analysis Selection */}
+        {analyses.length > 0 && (
+          <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+            <div className="text-sm font-medium mb-2">Select Forecasts to Display:</div>
+            <div className="flex flex-wrap gap-2">
+              {analyses.map((analysis) => (
+                <button
+                  key={analysis.id}
+                  onClick={() => toggleAnalysis(analysis.id)}
+                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                    selectedAnalyses.includes(analysis.id)
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                  }`}
+                >
+                  {analysis.name || `Analysis ${analysis.id}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <LineChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-value)"
-                  stopOpacity={1.0}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-value)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                })
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                return value.toLocaleString("en-US", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
-              }}
-            />
-            <Tooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Line
-              dataKey="value"
-              type="natural"
-              stroke="var(--color-value)"
-            />
-          </LineChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={filteredData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "2-digit",
+                  })
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  return value.toLocaleString("en-US", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })
+                }}
+              />
+              <Tooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      })
+                    }}
+                    indicator="dot"
+                  />
+                }
+              />
+              <Legend />
+              
+              {/* Historical Data Line */}
+              <Line
+                type="monotone"
+                dataKey="historical"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Historical Data"
+                strokeDasharray="0" // Solid line for historical data
+              />
+              
+              {/* Forecast Lines */}
+              {selectedAnalyses.map((analysisId, index) => {
+                const analysis = analyses.find(a => a.id === analysisId)
+                const color = forecastColors[index % forecastColors.length]
+                const dataKey = `forecast_${analysisId}`
+                
+                return (
+                  <Line
+                    key={analysisId}
+                    type="monotone"
+                    dataKey={dataKey}
+                    stroke={color}
+                    strokeWidth={2}
+                    strokeDasharray="8 4" // More pronounced dashed pattern for forecasts
+                    dot={{ fill: color, strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name={`${analysis?.name || `Analysis ${analysisId}`} (Forecast)`}
+                  />
+                )
+              })}
+            </LineChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
     </Card>

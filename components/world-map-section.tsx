@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
 import {
   ChartConfig,
@@ -561,7 +562,7 @@ export function WorldMapSection() {
   return (
     <div className="w-full flex gap-4">
       {/* Map Card - Left Side (2/3 width) */}
-      <Card className="flex-1 h-[500px] md:h-[600px] overflow-hidden">
+      <Card className="flex-1 h-[400px] md:h-[500px] overflow-hidden p-0">
         <div className="relative w-full h-full">
           <img 
             src="/map.svg" 
@@ -570,90 +571,28 @@ export function WorldMapSection() {
             style={{ minWidth: '100%', minHeight: '100%' }}
           />
           
-          {/* Debug Overlay */}
-          <div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-2 rounded">
-            Drivers: {drivers.length} | Visible: {drivers.filter(d => d.coordinates.x >= 0 && d.coordinates.x <= 100 && d.coordinates.y >= 0 && d.coordinates.y <= 100).length}
-          </div>
+
           
 
           
           {/* Analysis Navigation */}
-          <div className="absolute top-2 right-2 bg-white/90 rounded-lg p-2 shadow-lg">
-            <div className="text-xs text-gray-600 mb-1">Current Analysis:</div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const currentIndex = availableAnalyses.findIndex(a => a.id === currentAnalysis)
-                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : availableAnalyses.length - 1
-                  handleAnalysisChange(availableAnalyses[prevIndex].id)
-                }}
-                className="h-6 w-6 p-0"
-              >
-                <ChevronLeft className="h-3 w-3" />
-              </Button>
-              
-              <span className="text-sm font-medium text-gray-700 px-2">
-                {getCurrentAnalysis()?.name || "Unknown"}
-              </span>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const currentIndex = availableAnalyses.findIndex(a => a.id === currentAnalysis)
-                  const nextIndex = currentIndex < availableAnalyses.length - 1 ? currentIndex + 1 : 0
-                  handleAnalysisChange(availableAnalyses[nextIndex].id)
-                }}
-                className="h-6 w-6 p-0"
-              >
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </div>
-            <div className="text-xs text-gray-500 text-center">
-              {availableAnalyses.findIndex(a => a.id === currentAnalysis)! + 1} / {availableAnalyses.length}
-            </div>
+          <div className="absolute top-2 left-2">
+            <Tabs value={currentAnalysis || ""} onValueChange={handleAnalysisChange} className="w-auto">
+              <TabsList className="w-auto">
+                {availableAnalyses.map((analysis) => (
+                  <TabsTrigger 
+                    key={analysis.id} 
+                    value={analysis.id}
+                    className="text-xs px-3 py-1"
+                  >
+                    {analysis.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
           
-          {/* Driver Navigation Controls */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (selectedDriver) {
-                  const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id)
-                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : drivers.length - 1
-                  setSelectedDriver(drivers[prevIndex])
-                }
-              }}
-              className="bg-white/90 hover:bg-white"
-            >
-              ← Previous
-            </Button>
-            
-            <div className="bg-white/90 px-3 py-2 rounded-md text-sm font-medium text-gray-700 flex items-center gap-2">
-              <span>{drivers.findIndex(d => d.id === selectedDriver?.id) + 1}</span>
-              <span className="text-gray-400">/</span>
-              <span>{drivers.length}</span>
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (selectedDriver) {
-                  const currentIndex = drivers.findIndex(d => d.id === selectedDriver.id)
-                  const nextIndex = currentIndex < drivers.length - 1 ? currentIndex + 1 : 0
-                  setSelectedDriver(drivers[nextIndex])
-                }
-              }}
-              className="bg-white/90 hover:bg-white"
-            >
-              Next →
-            </Button>
-          </div>
+
           
           {/* Driver Icons */}
           <TooltipProvider>
@@ -708,7 +647,7 @@ export function WorldMapSection() {
       </Card>
 
       {/* Drivers Card - Right Side (1/3 width) */}
-      <Card className="w-80 h-[500px] md:h-[600px] overflow-y-auto">
+      <Card className="w-80 h-[400px] md:h-[500px] overflow-y-auto">
 
         
         <CardContent>

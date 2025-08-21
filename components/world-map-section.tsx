@@ -203,18 +203,61 @@ export function WorldMapSection() {
     },
   } satisfies ChartConfig
   
-  // Calculate badge size based on importance score
-  const getBadgeSize = (importance: number, allDrivers: DriverData[]) => {
+  // Calculate badge size based on raw importance score (same as comparison cards)
+  const getBadgeSize = (driver: DriverData, allDrivers: DriverData[]) => {
     if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
     
-    const maxImportance = Math.max(...allDrivers.map(d => d.importance))
-    const minImportance = Math.min(...allDrivers.map(d => d.importance))
+    // Extract raw importance value (same logic as comparison cards)
+    let rawImportance = 0
+    if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+      const importanceObj = driver.rawImportance as any
+      if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+        const overall = importanceObj.overall as any
+        if (typeof overall.mean === 'number') {
+          rawImportance = overall.mean
+        }
+      }
+    }
+    
+    // If no raw importance, fallback to calculated importance
+    if (rawImportance === 0) {
+      rawImportance = driver.importance
+    }
+    
+    const maxImportance = Math.max(...allDrivers.map(d => {
+      let dImportance = 0
+      if (d.rawImportance && typeof d.rawImportance === 'object') {
+        const importanceObj = d.rawImportance as any
+        if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+          const overall = importanceObj.overall as any
+          if (typeof overall.mean === 'number') {
+            dImportance = overall.mean
+          }
+        }
+      }
+      return dImportance > 0 ? dImportance : d.importance
+    }))
+    
+    const minImportance = Math.min(...allDrivers.map(d => {
+      let dImportance = 0
+      if (d.rawImportance && typeof d.rawImportance === 'object') {
+        const importanceObj = d.rawImportance as any
+        if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+          const overall = importanceObj.overall as any
+          if (typeof overall.mean === 'number') {
+            dImportance = overall.mean
+          }
+        }
+      }
+      return dImportance > 0 ? dImportance : d.importance
+    }))
+    
     const importanceRange = maxImportance - minImportance
     
     if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
     
     // Normalize importance to a scale of 0-1
-    const normalizedImportance = (importance - minImportance) / importanceRange
+    const normalizedImportance = (rawImportance - minImportance) / importanceRange
     
     // Map to size ranges: min size = 24px (w-6), max size = 56px (w-14)
     const sizeIndex = Math.floor(normalizedImportance * 4) // 0, 1, 2, 3, 4
@@ -626,7 +669,7 @@ export function WorldMapSection() {
                     }}
                   >
                     {(() => {
-                      const size = getBadgeSize(driver.importance, drivers)
+                      const size = getBadgeSize(driver, drivers)
                       return (
                         <Badge 
                           variant="outline" 
@@ -707,7 +750,23 @@ export function WorldMapSection() {
 
               {/* Key Metrics */}
               <div className="text-left">
-                <div className="text-4xl font-bold text-gray-900">{selectedDriver.importance.toFixed(1)}%</div>
+                <div className="text-4xl font-bold text-gray-900">
+                  {(() => {
+                    // Use the same calculation as drivers comparison cards
+                    let importance = 0
+                    if (selectedDriver.rawImportance && typeof selectedDriver.rawImportance === 'object') {
+                      const importanceObj = selectedDriver.rawImportance as any
+                      if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+                        const overall = importanceObj.overall as any
+                        if (typeof overall.mean === 'number') {
+                          importance = Math.round(overall.mean) // Round to whole percentage like comparison cards
+                        }
+                      }
+                    }
+                    // Fallback to the current importance if the above structure doesn't exist
+                    return importance > 0 ? `${importance}%` : `${selectedDriver.importance.toFixed(1)}%`
+                  })()}
+                </div>
                 <div className="text-xs text-gray-600">Importance Score</div>
               </div>
 

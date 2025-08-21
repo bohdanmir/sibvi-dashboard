@@ -33,26 +33,26 @@ export function WorldMapSection() {
   
   // Calculate badge size based on importance score
   const getBadgeSize = (importance: number, allDrivers: DriverData[]) => {
-    if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' }
+    if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
     
     const maxImportance = Math.max(...allDrivers.map(d => d.importance))
     const minImportance = Math.min(...allDrivers.map(d => d.importance))
     const importanceRange = maxImportance - minImportance
     
-    if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' }
+    if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
     
     // Normalize importance to a scale of 0-1
     const normalizedImportance = (importance - minImportance) / importanceRange
     
-    // Map to size ranges: min size = 24px (w-6), max size = 48px (w-12)
+    // Map to size ranges: min size = 24px (w-6), max size = 56px (w-14)
     const sizeIndex = Math.floor(normalizedImportance * 4) // 0, 1, 2, 3, 4
     
     const sizes = [
-      { width: 'w-6', height: 'h-6', iconSize: 'w-2 h-2' },      // 24px - Very small
-      { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' },      // 32px - Small
-      { width: 'w-10', height: 'h-10', iconSize: 'w-4 h-4' },    // 40px - Medium
-      { width: 'w-12', height: 'h-12', iconSize: 'w-5 h-5' },    // 48px - Large
-      { width: 'w-14', height: 'h-14', iconSize: 'w-6 h-6' }     // 56px - Very large
+      { width: 'w-6', height: 'h-6', iconSize: 'w-2 h-2', borderWidth: 'border' },      // 24px - Very small
+      { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border-2' },    // 32px - Small
+      { width: 'w-10', height: 'h-10', iconSize: 'w-4 h-4', borderWidth: 'border-2' },  // 40px - Medium
+      { width: 'w-12', height: 'h-12', iconSize: 'w-5 h-5', borderWidth: 'border-2' },  // 48px - Large
+      { width: 'w-14', height: 'h-14', iconSize: 'w-6 h-6', borderWidth: 'border-2' }   // 56px - Very large
     ]
     
     return sizes[Math.min(sizeIndex, sizes.length - 1)]
@@ -458,10 +458,10 @@ export function WorldMapSection() {
                       return (
                         <Badge 
                           variant="outline" 
-                          className={`${size.width} ${size.height} rounded-full p-0 border-2 transition-all duration-200 ${
+                          className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
                             selectedDriver?.id === driver.id
                               ? 'border-blue-500 bg-blue-100 shadow-lg' 
-                              : 'border-gray-400 bg-gray-100 hover:border-gray-500 hover:bg-gray-200'
+                              : 'border-gray-400 bg-gray-50 hover:border-gray-500 hover:bg-gray-100'
                           }`}
                         >
                           <div className={size.iconSize}>

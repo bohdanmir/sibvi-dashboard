@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight } from "lucide-react"
@@ -31,6 +30,33 @@ export function WorldMapSection() {
   const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null)
   const [availableAnalyses, setAvailableAnalyses] = useState<AnalysisInfo[]>([])
   const [error, setError] = useState<string | null>(null)
+  
+  // Calculate badge size based on importance score
+  const getBadgeSize = (importance: number, allDrivers: DriverData[]) => {
+    if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' }
+    
+    const maxImportance = Math.max(...allDrivers.map(d => d.importance))
+    const minImportance = Math.min(...allDrivers.map(d => d.importance))
+    const importanceRange = maxImportance - minImportance
+    
+    if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' }
+    
+    // Normalize importance to a scale of 0-1
+    const normalizedImportance = (importance - minImportance) / importanceRange
+    
+    // Map to size ranges: min size = 24px (w-6), max size = 48px (w-12)
+    const sizeIndex = Math.floor(normalizedImportance * 4) // 0, 1, 2, 3, 4
+    
+    const sizes = [
+      { width: 'w-6', height: 'h-6', iconSize: 'w-2 h-2' },      // 24px - Very small
+      { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3' },      // 32px - Small
+      { width: 'w-10', height: 'h-10', iconSize: 'w-4 h-4' },    // 40px - Medium
+      { width: 'w-12', height: 'h-12', iconSize: 'w-5 h-5' },    // 48px - Large
+      { width: 'w-14', height: 'h-14', iconSize: 'w-6 h-6' }     // 56px - Very large
+    ]
+    
+    return sizes[Math.min(sizeIndex, sizes.length - 1)]
+  }
   
   // Use ref to track current dataset and prevent stale requests
   const currentDatasetRef = useRef<string | null>(null)
@@ -334,6 +360,8 @@ export function WorldMapSection() {
             Drivers: {drivers.length} | Visible: {drivers.filter(d => d.coordinates.x >= 0 && d.coordinates.x <= 100 && d.coordinates.y >= 0 && d.coordinates.y <= 100).length}
           </div>
           
+
+          
           {/* Analysis Navigation */}
           <div className="absolute top-2 right-2 bg-white/90 rounded-lg p-2 shadow-lg">
             <div className="text-xs text-gray-600 mb-1">Current Analysis:</div>
@@ -419,31 +447,46 @@ export function WorldMapSection() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleDriverClick(driver)}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none"
                     style={{
                       left: `${driver.coordinates.x}%`,
                       top: `${driver.coordinates.y}%`
                     }}
                   >
-                    <Avatar className={`w-8 h-8 md:w-12 md:h-12 border-2 transition-all duration-200 ${
-                      selectedDriver?.id === driver.id
-                        ? 'border-blue-500 bg-blue-100 shadow-lg ring-2 ring-blue-200' 
-                        : 'border-gray-400 bg-gray-100 hover:border-gray-500 hover:bg-gray-200'
-                    }`}>
-                      <AvatarFallback className="bg-transparent">
-                        <div className="w-3 h-3 md:w-4 md:h-4">
-                          {getCategoryIcon(driver.category)}
-                        </div>
-                      </AvatarFallback>
-                    </Avatar>
+                    {(() => {
+                      const size = getBadgeSize(driver.importance, drivers)
+                      return (
+                        <Badge 
+                          variant="outline" 
+                          className={`${size.width} ${size.height} rounded-full p-0 border-2 transition-all duration-200 ${
+                            selectedDriver?.id === driver.id
+                              ? 'border-blue-500 bg-blue-100 shadow-lg' 
+                              : 'border-gray-400 bg-gray-100 hover:border-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          <div className={size.iconSize}>
+                            {getCategoryIcon(driver.category)}
+                          </div>
+                        </Badge>
+                      )
+                    })()}
                     
                     {/* Numbered Badge */}
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-1 -right-1 w-4 h-4 p-0 text-xs rounded-full flex items-center justify-center min-w-0"
-                    >
-                      {index + 1}
-                    </Badge>
+                    {(() => {
+                      const size = getBadgeSize(driver.importance, drivers)
+                      const badgeOffset = size.width === 'w-6' ? '-top-0.5 -right-0.5' : 
+                                        size.width === 'w-8' ? '-top-1 -right-1' : 
+                                        size.width === 'w-10' ? '-top-1 -right-1' : 
+                                        size.width === 'w-12' ? '-top-1 -right-1' : '-top-1 -right-1'
+                      return (
+                        <Badge 
+                          variant="destructive" 
+                          className={`absolute ${badgeOffset} w-4 h-4 p-0 text-xs rounded-full flex items-center justify-center min-w-0`}
+                        >
+                          {index + 1}
+                        </Badge>
+                      )
+                    })()}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent 
@@ -482,13 +525,14 @@ export function WorldMapSection() {
             <div className="space-y-4">
               {/* Driver Header */}
               <div className="flex items-center gap-3 pb-3 border-b">
-                <Avatar className="w-10 h-10 border border-gray-200">
-                  <AvatarFallback className="bg-gray-100">
-                    <div className="w-5 h-5">
-                      {getCategoryIcon(selectedDriver.category)}
-                    </div>
-                  </AvatarFallback>
-                </Avatar>
+                <Badge 
+                  variant="outline" 
+                  className="w-10 h-10 rounded-full p-0 border border-gray-200 bg-gray-100"
+                >
+                  <div className="w-5 h-5">
+                    {getCategoryIcon(selectedDriver.category)}
+                  </div>
+                </Badge>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900 text-sm">{selectedDriver.name}</h4>
                   <p className="text-xs text-gray-600">{selectedDriver.region.join(' > ')}</p>
@@ -532,11 +576,12 @@ export function WorldMapSection() {
               {/* Chart Placeholder */}
               <div className="h-24 bg-gray-100 rounded-lg flex items-center justify-center">
                 <div className="text-center text-gray-500">
-                  <Avatar className="w-8 h-8 mx-auto mb-2 bg-gray-200">
-                    <AvatarFallback className="bg-gray-200">
-                      <BarChart3 className="h-4 w-4 text-gray-500" />
-                    </AvatarFallback>
-                  </Avatar>
+                  <Badge 
+                    variant="outline" 
+                    className="w-8 h-8 mx-auto mb-2 rounded-full p-0 bg-gray-200 border-gray-300"
+                  >
+                    <BarChart3 className="h-4 w-4 text-gray-500" />
+                  </Badge>
                   <p className="text-sm">Chart visualization</p>
                   <p className="text-xs">Driver: {selectedDriver.id}</p>
                 </div>
@@ -551,11 +596,12 @@ export function WorldMapSection() {
             </div>
           ) : (
             <div className="text-center text-gray-500 py-8">
-              <Avatar className="w-16 h-16 mx-auto mb-4 bg-gray-100">
-                <AvatarFallback className="bg-gray-100">
-                  <BarChart3 className="h-8 w-8 text-gray-300" />
-                </AvatarFallback>
-              </Avatar>
+              <Badge 
+                variant="outline" 
+                className="w-16 h-16 mx-auto mb-4 rounded-full p-0 bg-gray-100 border-gray-300"
+              >
+                <BarChart3 className="h-8 w-8 text-gray-300" />
+              </Badge>
               <p className="text-sm">Select a driver from the map to view details</p>
               <p className="text-xs mt-2">Click on any icon to explore driver data</p>
             </div>

@@ -26,7 +26,7 @@ export async function GET(
         .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
         .forEach(([date, data]) => {
           if (data && typeof data === 'object' && 'forecast' in data) {
-            const forecastValue = (data as any).forecast
+            const forecastValue = (data as { forecast: number }).forecast
             if (typeof forecastValue === 'number') {
               dates.push(date)
               forecastValues.push(forecastValue)

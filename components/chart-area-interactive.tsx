@@ -16,7 +16,6 @@ import {
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import {
@@ -36,21 +35,18 @@ export const description = "An interactive multi-series line chart with forecast
 interface ChartDataPoint {
   date: string
   historical?: number
-  [key: string]: any // For dynamic forecast series
+  [key: string]: string | number | undefined // For dynamic forecast series
 }
 
 interface Analysis {
   id: string
   name: string
   path: string
-  metadata?: any
+  metadata?: Record<string, unknown>
 }
 
 const chartConfig = {
-  historical: {
-    label: "Historical Data",
-    color: "hsl(var(--primary))",
-  },
+  // Historical data uses hardcoded black color for consistency with drivers info card
 } satisfies ChartConfig
 
 // Colors for different forecast series
@@ -68,7 +64,7 @@ export function ChartAreaInteractive() {
   const [error, setError] = React.useState<string | null>(null)
   const [fileName, setFileName] = React.useState<string>("")
   const [analyses, setAnalyses] = React.useState<Analysis[]>([])
-  const [selectedAnalyses, setSelectedAnalyses] = React.useState<string[]>([])
+  const [availableAnalyses, setAvailableAnalyses] = React.useState<string[]>([])
 
   React.useEffect(() => {
     if (isMobile) {
@@ -86,8 +82,25 @@ export function ChartAreaInteractive() {
         if (response.ok) {
           const analysesData = await response.json()
           setAnalyses(analysesData)
-          // Select first few analyses by default
-          setSelectedAnalyses(analysesData.slice(0, 3).map((a: Analysis) => a.id))
+          
+          // Check which analyses actually have forecast data and select all available ones
+          const availableForecastsSet = new Set<string>()
+          const analysesWithForecasts = await Promise.all(
+            analysesData.map(async (analysis: Analysis) => {
+              try {
+                const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
+                if (forecastResponse.ok) {
+                  availableForecastsSet.add(analysis.id)
+                  return analysis.id
+                }
+                return null
+              } catch {
+                return null
+              }
+            })
+          )
+          
+          setAvailableAnalyses(analysesWithForecasts.filter(id => id !== null) as string[])
         }
       } catch (error) {
         console.error('Error loading analyses:', error)
@@ -113,7 +126,7 @@ export function ChartAreaInteractive() {
         }
         
         const folders = await folderResponse.json()
-        const currentFolder = folders.find((f: any) => f.title === selectedDataset.title)
+        const currentFolder = folders.find((f: { title: string; files?: string[] }) => f.title === selectedDataset.title)
         
         if (!currentFolder || !currentFolder.files || currentFolder.files.length === 0) {
           throw new Error('No CSV files found in selected folder')
@@ -131,9 +144,9 @@ export function ChartAreaInteractive() {
         const csvText = await response.text()
         const historicalData = parseCSV(csvText)
         
-        // Load forecast data for each selected analysis
-        const forecastData = selectedAnalyses.length > 0 
-          ? await loadForecastData(selectedAnalyses)
+        // Load forecast data for all available analyses
+        const forecastData = availableAnalyses.length > 0 
+          ? await loadForecastData(availableAnalyses)
           : {}
         
         console.log('Historical data:', historicalData)
@@ -154,10 +167,10 @@ export function ChartAreaInteractive() {
     }
 
     loadChartData()
-  }, [selectedDataset, selectedAnalyses])
+  }, [selectedDataset, availableAnalyses])
 
   const loadForecastData = async (analysisIds: string[]) => {
-    const forecasts: { [key: string]: any } = {}
+    const forecasts: { [key: string]: { dates: string[]; forecastValues: number[]; totalPoints: number } } = {}
     
     for (const analysisId of analysisIds) {
       try {
@@ -165,6 +178,8 @@ export function ChartAreaInteractive() {
         if (response.ok) {
           const data = await response.json()
           forecasts[analysisId] = data
+        } else {
+          console.warn(`Analysis ${analysisId} has no forecast data (${response.status})`)
         }
       } catch (error) {
         console.error(`Error loading forecast for analysis ${analysisId}:`, error)
@@ -174,7 +189,7 @@ export function ChartAreaInteractive() {
     return forecasts
   }
 
-  const combineData = (historical: ChartDataPoint[], forecasts: { [key: string]: any }) => {
+  const combineData = (historical: ChartDataPoint[], forecasts: { [key: string]: { dates: string[]; forecastValues: number[]; totalPoints: number } }) => {
     const combined: { [key: string]: ChartDataPoint } = {}
     
     console.log('Combining data - historical:', historical.length, 'forecasts:', Object.keys(forecasts))
@@ -219,7 +234,7 @@ export function ChartAreaInteractive() {
     const date = new Date(item.date)
     
     // Always include forecast data (future dates)
-    const hasForecastData = selectedAnalyses.some(analysisId => 
+    const hasForecastData = availableAnalyses.some(analysisId => 
       item[`forecast_${analysisId}`] !== undefined
     )
     if (hasForecastData) {
@@ -261,13 +276,7 @@ export function ChartAreaInteractive() {
 
   console.log('Filtered data:', filteredData)
 
-  const toggleAnalysis = (analysisId: string) => {
-    setSelectedAnalyses(prev => 
-      prev.includes(analysisId) 
-        ? prev.filter(id => id !== analysisId)
-        : [...prev, analysisId]
-    )
-  }
+
 
   if (!selectedDataset) {
     return (
@@ -370,30 +379,8 @@ export function ChartAreaInteractive() {
           </Select>
         </CardAction>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {/* Analysis Selection */}
-        {analyses.length > 0 && (
-          <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-            <div className="text-sm font-medium mb-2">Select Forecasts to Display:</div>
-            <div className="flex flex-wrap gap-2">
-              {analyses.map((analysis) => (
-                <button
-                  key={analysis.id}
-                  onClick={() => toggleAnalysis(analysis.id)}
-                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                    selectedAnalyses.includes(analysis.id)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
-                  }`}
-                >
-                  {analysis.name || `Analysis ${analysis.id}`}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        <ChartContainer
+              <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
@@ -446,16 +433,16 @@ export function ChartAreaInteractive() {
               <Line
                 type="monotone"
                 dataKey="historical"
-                stroke="hsl(var(--primary))"
+                stroke="#000000" // Dark black line like drivers info card
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#000000", strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6 }}
                 name="Historical Data"
                 strokeDasharray="0" // Solid line for historical data
               />
               
               {/* Forecast Lines */}
-              {selectedAnalyses.map((analysisId, index) => {
+              {availableAnalyses.map((analysisId: string, index: number) => {
                 const analysis = analyses.find(a => a.id === analysisId)
                 const color = forecastColors[index % forecastColors.length]
                 const dataKey = `forecast_${analysisId}`

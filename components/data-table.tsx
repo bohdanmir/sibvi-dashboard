@@ -236,7 +236,9 @@ export function DataTable() {
   const [analyses, setAnalyses] = React.useState<any[]>([])
   const [selectedAnalysis, setSelectedAnalysis] = React.useState<string>("")
   const [forecastData, setForecastData] = React.useState<z.infer<typeof forecastSchema>[]>([])
+  const [allForecastData, setAllForecastData] = React.useState<Record<string, z.infer<typeof forecastSchema>[]>>({})
   const [loading, setLoading] = React.useState(false)
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false)
   
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -250,72 +252,89 @@ export function DataTable() {
     pageSize: 10,
   })
 
-  // Load analyses when dataset changes
+  // Load analyses and preload all forecast data when dataset changes
   React.useEffect(() => {
     if (selectedDataset) {
-      loadAnalyses()
+      loadAnalysesAndForecasts()
     }
   }, [selectedDataset])
 
-  // Load forecast data when analysis changes
+  // Switch forecast data instantly when analysis changes
   React.useEffect(() => {
-    if (selectedAnalysis && selectedDataset) {
-      loadForecastData()
+    if (selectedAnalysis && allForecastData[selectedAnalysis]) {
+      setForecastData(allForecastData[selectedAnalysis])
     }
-  }, [selectedAnalysis, selectedDataset])
+  }, [selectedAnalysis, allForecastData])
 
-  const loadAnalyses = async () => {
+  const loadAnalysesAndForecasts = async () => {
     if (!selectedDataset) return
-    
-    try {
-      const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
-      if (response.ok) {
-        const data = await response.json()
-        setAnalyses(data)
-        if (data.length > 0) {
-          setSelectedAnalysis(data[0].id)
-        }
-      }
-    } catch (error) {
-      console.error('Error loading analyses:', error)
-    }
-  }
-
-  const loadForecastData = async () => {
-    if (!selectedAnalysis || !selectedDataset) return
     
     setLoading(true)
     try {
-      const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${selectedAnalysis}/forecast`)
+      // Load analyses first
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
       if (response.ok) {
-        const data = await response.json()
+        const analysesData = await response.json()
+        setAnalyses(analysesData)
         
-        // Transform the forecast data to match our schema
-        const transformedData: z.infer<typeof forecastSchema>[] = []
-        
-        if (data.forecastValues && data.dates) {
-          data.dates.forEach((date: string, index: number) => {
-            transformedData.push({
-              id: `${selectedAnalysis}-${date}`,
-              date: date,
-              forecast: data.forecastValues[index],
-              quantile_05: data.quantile05?.[index] || undefined,
-              quantile_25: data.quantile25?.[index] || undefined,
-              quantile_75: data.quantile75?.[index] || undefined,
-              quantile_95: data.quantile95?.[index] || undefined,
-              analysisId: selectedAnalysis,
+        if (analysesData.length > 0) {
+          const firstAnalysisId = analysesData[0].id
+          setSelectedAnalysis(firstAnalysisId)
+          
+          // Preload all forecast data for all analyses
+          const forecasts: Record<string, z.infer<typeof forecastSchema>[]> = {}
+          
+          await Promise.all(
+            analysesData.map(async (analysis: any) => {
+              try {
+                const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
+                if (forecastResponse.ok) {
+                  const data = await forecastResponse.json()
+                  
+                  // Transform the forecast data
+                  const transformedData: z.infer<typeof forecastSchema>[] = []
+                  
+                  if (data.forecastValues && data.dates) {
+                    data.dates.forEach((date: string, index: number) => {
+                      transformedData.push({
+                        id: `${analysis.id}-${date}`,
+                        date: date,
+                        forecast: data.forecastValues[index],
+                        quantile_05: data.quantile05?.[index] || undefined,
+                        quantile_25: data.quantile25?.[index] || undefined,
+                        quantile_75: data.quantile75?.[index] || undefined,
+                        quantile_95: data.quantile95?.[index] || undefined,
+                        analysisId: analysis.id,
+                      })
+                    })
+                  }
+                  
+                  forecasts[analysis.id] = transformedData
+                }
+              } catch (error) {
+                console.error(`Error loading forecast for analysis ${analysis.id}:`, error)
+                forecasts[analysis.id] = []
+              }
             })
-          })
+          )
+          
+          setAllForecastData(forecasts)
+          
+          // Set initial forecast data for first analysis
+          if (forecasts[firstAnalysisId]) {
+            setForecastData(forecasts[firstAnalysisId])
+          }
         }
-        
-        setForecastData(transformedData)
       }
     } catch (error) {
-      console.error('Error loading forecast data:', error)
+      console.error('Error loading analyses and forecasts:', error)
     } finally {
       setLoading(false)
+      setInitialLoadComplete(true)
     }
   }
+
+
 
 
 
@@ -425,10 +444,10 @@ export function DataTable() {
         </div>
       </div>
       <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6">
-        {loading ? (
+        {!initialLoadComplete ? (
           <div className="flex items-center justify-center p-8">
             <IconLoader className="mr-2 h-4 w-4 animate-spin" />
-            Loading forecast data...
+            Loading analyses and forecasts...
           </div>
         ) : forecastData.length === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center">

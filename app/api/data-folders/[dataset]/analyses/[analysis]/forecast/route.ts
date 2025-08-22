@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
 
+// Quantile finder function to calculate quantiles from samples
+function quantileFinder(samples: number[], quantile: number): number {
+  const p = quantile / 100;
+  const index = (samples.length - 1) * p;
+  return samples[Math.round(index)];
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { dataset: string; analysis: string } }
@@ -24,6 +31,7 @@ export async function GET(
       const forecastValues: number[] = []
       const dates: string[] = []
       const allQuantiles: Record<string, (number | null)[]> = {}
+      const allSamples: Record<string, number[][]> = {}
       
       // Sort dates and extract forecast values
       Object.entries(forecastSeries)
@@ -35,17 +43,49 @@ export async function GET(
               dates.push(date)
               forecastValues.push(forecastValue)
               
-              // Extract all available quantile values dynamically
-              const quantileData = (data as any).quantile_forecast
-              if (quantileData && typeof quantileData === 'object') {
-                Object.entries(quantileData).forEach(([quantileKey, quantileValue]) => {
-                  if (typeof quantileValue === 'number') {
+              // Extract forecast samples if available
+              const samples = (data as any).forecast_samples
+              if (samples && Array.isArray(samples)) {
+                // Sort samples for accurate quantile calculation
+                const sortedSamples = [...samples].sort((a, b) => a - b)
+                allSamples[date] = sortedSamples
+                
+                // Calculate quantiles from samples if quantile_forecast is not available
+                const quantileData = (data as any).quantile_forecast
+                if (quantileData && typeof quantileData === 'object') {
+                  // Use existing quantile_forecast data
+                  Object.entries(quantileData).forEach(([quantileKey, quantileValue]) => {
+                    if (typeof quantileValue === 'number') {
+                      if (!allQuantiles[quantileKey]) {
+                        allQuantiles[quantileKey] = new Array(dates.length - 1).fill(null)
+                      }
+                      allQuantiles[quantileKey].push(quantileValue)
+                    }
+                  })
+                } else {
+                  // Calculate quantiles from samples
+                  const quantileLevels = [5, 15, 25, 50, 75, 85, 95]
+                  quantileLevels.forEach(level => {
+                    const quantileKey = (level / 100).toString()
                     if (!allQuantiles[quantileKey]) {
                       allQuantiles[quantileKey] = new Array(dates.length - 1).fill(null)
                     }
-                    allQuantiles[quantileKey].push(quantileValue)
-                  }
-                })
+                    allQuantiles[quantileKey].push(quantileFinder(sortedSamples, level))
+                  })
+                }
+              } else {
+                // Extract all available quantile values dynamically
+                const quantileData = (data as any).quantile_forecast
+                if (quantileData && typeof quantileData === 'object') {
+                  Object.entries(quantileData).forEach(([quantileKey, quantileValue]) => {
+                    if (typeof quantileValue === 'number') {
+                      if (!allQuantiles[quantileKey]) {
+                        allQuantiles[quantileKey] = new Array(dates.length - 1).fill(null)
+                      }
+                      allQuantiles[quantileKey].push(quantileValue)
+                    }
+                  })
+                }
               }
               
               // Fill null for any quantiles that don't have data for this date
@@ -66,6 +106,7 @@ export async function GET(
         dates,
         allQuantiles,
         sortedQuantileKeys,
+        allSamples,
         totalPoints: forecastValues.length
       })
     }

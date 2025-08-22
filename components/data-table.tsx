@@ -10,7 +10,6 @@ import {
   IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
-  IconLayoutColumns,
   IconLoader,
   IconPlus,
   IconTrendingUp,
@@ -95,6 +94,7 @@ export const forecastSchema = z.object({
   forecast: z.number(),
   quantiles: z.record(z.string(), z.number()).optional(),
   analysisId: z.string(),
+  samples: z.array(z.number()).optional(),
 })
 
 
@@ -105,7 +105,11 @@ const getColumns = (
   setCustomLowerQuantile?: (quantile: string) => void,
   setCustomUpperQuantile?: (quantile: string) => void,
   customLowerQuantile?: string | null,
-  customUpperQuantile?: string | null
+  customUpperQuantile?: string | null,
+  customLowerChartValue?: string | null,
+  customUpperChartValue?: string | null,
+  setCustomLowerChartValue?: (value: string) => void,
+  setCustomUpperChartValue?: (value: string) => void
 ): ColumnDef<z.infer<typeof forecastSchema>>[] => {
   const baseColumns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     {
@@ -195,7 +199,8 @@ const getColumns = (
           ),
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[lowestQuantile] ? row.original.quantiles[lowestQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[lowestQuantile] ? row.original.quantiles[lowestQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(lowestQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -225,7 +230,8 @@ const getColumns = (
           ),
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[highestQuantile] ? row.original.quantiles[highestQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[highestQuantile] ? row.original.quantiles[highestQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(highestQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -236,14 +242,14 @@ const getColumns = (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
-                    Lower (Chart Scale) ▼
+                    {customLowerChartValue ? `Lower (${parseFloat(customLowerChartValue).toLocaleString()})` : 'Lower (Chart Scale)'} ▼
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {generateDiscreteValues().map((value, index) => (
                     <DropdownMenuItem
                       key={`${value}-${index}`}
-                      onClick={() => setCustomLowerQuantile?.(value.toString())}
+                      onClick={() => setCustomLowerChartValue?.(value.toString())}
                       className="text-right"
                     >
                       {value.toLocaleString()}
@@ -253,7 +259,23 @@ const getColumns = (
               </DropdownMenu>
             </div>
           ),
-          cell: () => <div className="text-right">-</div>,
+          cell: ({ row }) => {
+            if (!customLowerChartValue) return <div className="text-right">-</div>;
+            
+            const targetValue = parseFloat(customLowerChartValue);
+            if (isNaN(targetValue)) return <div className="text-right">-</div>;
+            
+            if (row.original.samples) {
+              const quantile = findClosestValueQuantile(row.original.samples, targetValue);
+              return (
+                <div className="text-right">
+                  {quantile}%
+                </div>
+              );
+            }
+            
+            return <div className="text-right">-</div>;
+          },
         },
         {
           accessorKey: "discrete-upper",
@@ -262,14 +284,14 @@ const getColumns = (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
-                    Upper (Chart Scale) ▼
+                    {customUpperChartValue ? `Upper (${parseFloat(customUpperChartValue).toLocaleString()})` : 'Upper (Chart Scale)'} ▼
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {generateDiscreteValues().map((value, index) => (
                     <DropdownMenuItem
                       key={`${value}-${index}`}
-                      onClick={() => setCustomUpperQuantile?.(value.toString())}
+                      onClick={() => setCustomUpperChartValue?.(value.toString())}
                       className="text-right"
                     >
                       {value.toLocaleString()}
@@ -279,7 +301,23 @@ const getColumns = (
               </DropdownMenu>
             </div>
           ),
-          cell: () => <div className="text-right">-</div>,
+          cell: ({ row }) => {
+            if (!customUpperChartValue) return <div className="text-right">-</div>;
+            
+            const targetValue = parseFloat(customUpperChartValue);
+            if (isNaN(targetValue)) return <div className="text-right">-</div>;
+            
+            if (row.original.samples) {
+              const quantile = findClosestValueQuantile(row.original.samples, targetValue);
+              return (
+                <div className="text-right">
+                  {quantile}%
+                </div>
+              );
+            }
+            
+            return <div className="text-right">-</div>;
+          },
         }
       )
     } else if (riskTolerance === 'optimistic') {
@@ -295,7 +333,8 @@ const getColumns = (
           header: () => <div className="text-right">Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(lowerQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -304,7 +343,8 @@ const getColumns = (
           header: () => <div className="text-right">Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(upperQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -374,7 +414,8 @@ const getColumns = (
           header: () => <div className="text-right">Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(lowerQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -383,7 +424,8 @@ const getColumns = (
           header: () => <div className="text-right">Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
-              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
+              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 
+               row.original.samples ? quantileFinder(row.original.samples, parseFloat(upperQuantile) * 100).toLocaleString() : 'N/A'}
             </div>
           ),
         },
@@ -502,6 +544,37 @@ const findClosestQuantile = (targetQuantile: string, availableQuantiles: string[
   return closest
 }
 
+// Quantile finder function to calculate quantiles from samples
+const quantileFinder = (samples: number[], quantile: number): number => {
+  const p = quantile / 100;
+  const index = (samples.length - 1) * p;
+  return samples[Math.round(index)];
+}
+
+// Function to find the closest value in samples and return its quantile percentage
+const findClosestValueQuantile = (samples: number[], targetValue: number): number => {
+  if (!samples || samples.length === 0) return 0;
+  
+  // Sort samples for binary search
+  const sortedSamples = [...samples].sort((a, b) => a - b);
+  
+  // Find the closest value
+  let closestIndex = 0;
+  let minDiff = Math.abs(sortedSamples[0] - targetValue);
+  
+  for (let i = 1; i < sortedSamples.length; i++) {
+    const diff = Math.abs(sortedSamples[i] - targetValue);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestIndex = i;
+    }
+  }
+  
+  // Calculate quantile percentage
+  const quantile = (closestIndex / (sortedSamples.length - 1)) * 100;
+  return Math.round(quantile);
+}
+
 // Helper function to generate static discrete values from 0 to 1,600,000 with 100,000 steps
 const generateDiscreteValues = (): number[] => {
   const values: number[] = []
@@ -522,6 +595,8 @@ export function DataTable() {
   const [riskTolerance, setRiskTolerance] = React.useState<'conservative' | 'optimistic' | 'aggressive'>('conservative')
   const [customLowerQuantile, setCustomLowerQuantile] = React.useState<string | null>(null)
   const [customUpperQuantile, setCustomUpperQuantile] = React.useState<string | null>(null)
+  const [customLowerChartValue, setCustomLowerChartValue] = React.useState<string | null>(null)
+  const [customUpperChartValue, setCustomUpperChartValue] = React.useState<string | null>(null)
 
   
   const [rowSelection, setRowSelection] = React.useState({})
@@ -572,6 +647,9 @@ export function DataTable() {
     // Reset custom quantiles when risk tolerance changes
     setCustomLowerQuantile(null)
     setCustomUpperQuantile(null)
+    // Reset custom chart values when risk tolerance changes
+    setCustomLowerChartValue(null)
+    setCustomUpperChartValue(null)
     // Force table to re-render with new columns
     table?.resetColumnFilters()
   }, [riskTolerance])
@@ -616,12 +694,17 @@ export function DataTable() {
                                  })
                                }
                                
+                               // Store forecast samples for dynamic quantile calculation
+                               const samples = data.allSamples?.[date]
+                               
                                transformedData.push({
                                  id: `${analysis.id}-${date}`,
                                  date: date,
                                  forecast: data.forecastValues[index],
                                  quantiles: Object.keys(quantiles).length > 0 ? quantiles : undefined,
                                  analysisId: analysis.id,
+                                 // Store samples for dynamic quantile calculation
+                                 samples: samples || undefined,
                                })
                              })
                            }
@@ -662,7 +745,7 @@ export function DataTable() {
 
   const table = useReactTable({
     data: forecastData,
-            columns: getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile),
+            columns: getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile, customLowerChartValue, customUpperChartValue, setCustomLowerChartValue, setCustomUpperChartValue),
     state: {
       sorting,
       columnVisibility,
@@ -731,41 +814,6 @@ export function DataTable() {
           ))}
         </TabsList>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <IconLayoutColumns className="mr-2 h-4 w-4" />
-                Customize Columns
-                <IconChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuCheckboxItem
-                key="conservative"
-                className="capitalize"
-                checked={riskTolerance === 'conservative'}
-                onCheckedChange={() => setRiskTolerance('conservative')}
-              >
-                Conservative
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                key="optimistic"
-                className="capitalize"
-                checked={riskTolerance === 'optimistic'}
-                onCheckedChange={() => setRiskTolerance('optimistic')}
-              >
-                Optimistic
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                key="aggressive"
-                className="capitalize"
-                checked={riskTolerance === 'aggressive'}
-                onCheckedChange={() => setRiskTolerance('aggressive')}
-              >
-                Aggressive
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <Button size="sm">
             <IconPlus className="mr-2 h-4 w-4" />
             Add Forecast
@@ -811,7 +859,7 @@ export function DataTable() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile).length}
+                      colSpan={getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile, customLowerChartValue, customUpperChartValue, setCustomLowerChartValue, setCustomUpperChartValue).length}
                       className="h-24 text-center"
                     >
                       No results.

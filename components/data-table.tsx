@@ -99,7 +99,14 @@ export const forecastSchema = z.object({
 
 
 
-const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive', quantileKeys?: string[]): ColumnDef<z.infer<typeof forecastSchema>>[] => {
+const getColumns = (
+  riskTolerance: 'conservative' | 'optimistic' | 'aggressive', 
+  quantileKeys?: string[],
+  setCustomLowerQuantile?: (quantile: string) => void,
+  setCustomUpperQuantile?: (quantile: string) => void,
+  customLowerQuantile?: string | null,
+  customUpperQuantile?: string | null
+): ColumnDef<z.infer<typeof forecastSchema>>[] => {
   const baseColumns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     {
       id: "select",
@@ -143,28 +150,49 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
       },
       enableHiding: false,
     },
-    {
-      accessorKey: "forecast",
-      header: "Forecast",
-      cell: ({ row }) => (
-        <div className="text-right">
-          {row.original.forecast.toLocaleString()}
-        </div>
-      ),
-    },
+      {
+    accessorKey: "forecast",
+    header: () => <div className="text-right">Forecast</div>,
+    cell: ({ row }) => (
+      <div className="text-right">
+        {row.original.forecast.toLocaleString()}
+      </div>
+    ),
+  },
   ]
 
   // Add quantile columns based on risk tolerance and available quantiles
   if (quantileKeys && quantileKeys.length > 0) {
     if (riskTolerance === 'conservative') {
-      // Show lowest and highest available quantiles (90% confidence)
-      const lowestQuantile = quantileKeys[0]
-      const highestQuantile = quantileKeys[quantileKeys.length - 1]
+      // Use custom quantiles if set, otherwise show lowest and highest available quantiles (90% confidence)
+      const lowestQuantile = customLowerQuantile || quantileKeys[0]
+      const highestQuantile = customUpperQuantile || quantileKeys[quantileKeys.length - 1]
       
       baseColumns.push(
         {
           accessorKey: `quantiles.${lowestQuantile}`,
-          header: `Lower (${(parseFloat(lowestQuantile) * 100).toFixed(0)}%)`,
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Lower ({(parseFloat(lowestQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomLowerQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[lowestQuantile] ? row.original.quantiles[lowestQuantile].toLocaleString() : 'N/A'}
@@ -173,7 +201,28 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
         },
         {
           accessorKey: `quantiles.${highestQuantile}`,
-          header: `Upper (${(parseFloat(highestQuantile) * 100).toFixed(0)}%)`,
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Upper ({(parseFloat(highestQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomUpperQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[highestQuantile] ? row.original.quantiles[highestQuantile].toLocaleString() : 'N/A'}
@@ -191,7 +240,7 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
       baseColumns.push(
         {
           accessorKey: `quantiles.${lowerQuantile}`,
-          header: `Lower (${(parseFloat(lowerQuantile) * 100).toFixed(0)}%)`,
+          header: () => <div className="text-right">Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
@@ -200,7 +249,7 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
         },
         {
           accessorKey: `quantiles.${upperQuantile}`,
-          header: `Upper (${(parseFloat(upperQuantile) * 100).toFixed(0)}%)`,
+          header: () => <div className="text-right">Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
@@ -218,7 +267,7 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
       baseColumns.push(
         {
           accessorKey: `quantiles.${lowerQuantile}`,
-          header: `Lower (${(parseFloat(lowerQuantile) * 100).toFixed(0)}%)`,
+          header: () => <div className="text-right">Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
@@ -227,7 +276,7 @@ const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive',
         },
         {
           accessorKey: `quantiles.${upperQuantile}`,
-          header: `Upper (${(parseFloat(upperQuantile) * 100).toFixed(0)}%)`,
+          header: () => <div className="text-right">Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%)</div>,
           cell: ({ row }) => (
             <div className="text-right">
               {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
@@ -282,13 +331,16 @@ function TableRowComponent({ row }: { row: Row<z.infer<typeof forecastSchema>> }
 
 export function DataTable() {
   const { selectedDataset } = useDataset()
-  const [analyses, setAnalyses] = React.useState<any[]>([])
+  const [analyses, setAnalyses] = React.useState<{ id: string; title?: string; name?: string }[]>([])
   const [selectedAnalysis, setSelectedAnalysis] = React.useState<string>("")
   const [forecastData, setForecastData] = React.useState<z.infer<typeof forecastSchema>[]>([])
   const [allForecastData, setAllForecastData] = React.useState<Record<string, z.infer<typeof forecastSchema>[]>>({})
   const [loading, setLoading] = React.useState(false)
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false)
   const [riskTolerance, setRiskTolerance] = React.useState<'conservative' | 'optimistic' | 'aggressive'>('conservative')
+  const [customLowerQuantile, setCustomLowerQuantile] = React.useState<string | null>(null)
+  const [customUpperQuantile, setCustomUpperQuantile] = React.useState<string | null>(null)
+
   
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -318,6 +370,9 @@ export function DataTable() {
 
   // Regenerate table when risk tolerance changes
   React.useEffect(() => {
+    // Reset custom quantiles when risk tolerance changes
+    setCustomLowerQuantile(null)
+    setCustomUpperQuantile(null)
     // Force table to re-render with new columns
     table?.resetColumnFilters()
   }, [riskTolerance])
@@ -341,7 +396,7 @@ export function DataTable() {
                    const forecasts: Record<string, z.infer<typeof forecastSchema>[]> = {}
                    
                    await Promise.all(
-                     analysesData.map(async (analysis: any) => {
+                     analysesData.map(async (analysis: { id: string; title?: string; name?: string }) => {
                        try {
                          const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
                          if (forecastResponse.ok) {
@@ -408,7 +463,7 @@ export function DataTable() {
 
   const table = useReactTable({
     data: forecastData,
-    columns: getColumns(riskTolerance, quantileKeys),
+            columns: getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile),
     state: {
       sorting,
       columnVisibility,
@@ -557,7 +612,7 @@ export function DataTable() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={getColumns(riskTolerance).length}
+                      colSpan={getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile).length}
                       className="h-24 text-center"
                     >
                       No results.

@@ -1,25 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from "@dnd-kit/core"
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -28,7 +10,6 @@ import {
   IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
-  IconGripVertical,
   IconLayoutColumns,
   IconLoader,
   IconPlus,
@@ -119,32 +100,9 @@ export const forecastSchema = z.object({
   analysisId: z.string(),
 })
 
-// Create a separate component for the drag handle
-function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  })
 
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0 data-[state=open]:bg-muted"
-      {...attributes}
-      {...listeners}
-    >
-      <IconGripVertical className="h-4 w-4" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  )
-}
 
 const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
   {
     id: "select",
     header: ({ table }) => (
@@ -175,7 +133,15 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     accessorKey: "date",
     header: "Date",
     cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />
+      const date = new Date(row.original.date);
+      return (
+        <div className="font-medium">
+          {new Intl.DateTimeFormat("en-US", {
+            year: "numeric",
+            month: "long",
+          }).format(date)}
+        </div>
+      );
     },
     enableHiding: false,
   },
@@ -183,10 +149,8 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     accessorKey: "forecast",
     header: "Forecast",
     cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.forecast.toLocaleString()}
-        </Badge>
+      <div className="text-right">
+        {row.original.forecast.toLocaleString()}
       </div>
     ),
   },
@@ -194,49 +158,39 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     accessorKey: "quantile_05",
     header: "5th Percentile",
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
+      <div className="text-right">
         {row.original.quantile_05 ? row.original.quantile_05.toLocaleString() : 'N/A'}
-      </Badge>
+      </div>
     ),
   },
   {
     accessorKey: "quantile_25",
     header: "25th Percentile",
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
+      <div className="text-right">
         {row.original.quantile_25 ? row.original.quantile_25.toLocaleString() : 'N/A'}
-      </Badge>
+      </div>
     ),
   },
   {
     accessorKey: "quantile_75",
     header: "75th Percentile",
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
+      <div className="text-right">
         {row.original.quantile_75 ? row.original.quantile_75.toLocaleString() : 'N/A'}
-      </Badge>
+      </div>
     ),
   },
   {
     accessorKey: "quantile_95",
     header: "95th Percentile",
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
+      <div className="text-right">
         {row.original.quantile_95 ? row.original.quantile_95.toLocaleString() : 'N/A'}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "analysisId",
-    header: "Analysis ID",
-    cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.analysisId}
-        </Badge>
       </div>
     ),
   },
+
   {
     id: "actions",
     header: () => null,
@@ -265,24 +219,9 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
   },
 ]
 
-function DraggableRow({ row }: { row: Row<z.infer<typeof forecastSchema>> }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
-      id: row.original.id,
-    })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
+function TableRowComponent({ row }: { row: Row<z.infer<typeof forecastSchema>> }) {
   return (
-    <TableRow
-      ref={setNodeRef}
-      style={style}
-      className={isDragging ? "opacity-50" : ""}
-      data-state={row.getIsSelected() && "selected"}
-    >
+    <TableRow data-state={row.getIsSelected() && "selected"}>
       {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -310,12 +249,6 @@ export function DataTable() {
     pageIndex: 0,
     pageSize: 10,
   })
-  const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
 
   // Load analyses when dataset changes
   React.useEffect(() => {
@@ -384,10 +317,7 @@ export function DataTable() {
     }
   }
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => forecastData?.map(({ id }) => id) || [],
-    [forecastData]
-  )
+
 
   const table = useReactTable({
     data: forecastData,
@@ -414,16 +344,7 @@ export function DataTable() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setForecastData((data) => {
-        const oldIndex = dataIds.indexOf(active.id)
-        const newIndex = dataIds.indexOf(over.id)
-        return arrayMove(data, oldIndex, newIndex)
-      })
-    }
-  }
+
 
   if (!selectedDataset) {
     return (
@@ -536,21 +457,9 @@ export function DataTable() {
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows?.length ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                  >
-                    <SortableContext
-                      items={dataIds}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {table.getRowModel().rows.map((row) => (
-                        <DraggableRow key={row.id} row={row} />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
+                  table.getRowModel().rows.map((row) => (
+                    <TableRowComponent key={row.id} row={row} />
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell
@@ -675,10 +584,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof forecastSchema> }) {
                 <Label htmlFor="forecast">Forecast Value</Label>
                 <Input id="forecast" defaultValue={item.forecast.toString()} />
               </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="analysisId">Analysis ID</Label>
-                <Input id="analysisId" defaultValue={item.analysisId} />
-              </div>
+
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">

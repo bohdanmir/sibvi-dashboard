@@ -94,8 +94,6 @@ export const forecastSchema = z.object({
   date: z.string(),
   forecast: z.number(),
   quantile_05: z.number().optional(),
-  quantile_25: z.number().optional(),
-  quantile_75: z.number().optional(),
   quantile_95: z.number().optional(),
   analysisId: z.string(),
 })
@@ -156,7 +154,7 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
   },
   {
     accessorKey: "quantile_05",
-    header: "5th Percentile",
+    header: "Lower",
     cell: ({ row }) => (
       <div className="text-right">
         {row.original.quantile_05 ? row.original.quantile_05.toLocaleString() : 'N/A'}
@@ -164,26 +162,8 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     ),
   },
   {
-    accessorKey: "quantile_25",
-    header: "25th Percentile",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.quantile_25 ? row.original.quantile_25.toLocaleString() : 'N/A'}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "quantile_75",
-    header: "75th Percentile",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.quantile_75 ? row.original.quantile_75.toLocaleString() : 'N/A'}
-      </div>
-    ),
-  },
-  {
     accessorKey: "quantile_95",
-    header: "95th Percentile",
+    header: "Upper",
     cell: ({ row }) => (
       <div className="text-right">
         {row.original.quantile_95 ? row.original.quantile_95.toLocaleString() : 'N/A'}
@@ -281,42 +261,40 @@ export function DataTable() {
           const firstAnalysisId = analysesData[0].id
           setSelectedAnalysis(firstAnalysisId)
           
-          // Preload all forecast data for all analyses
-          const forecasts: Record<string, z.infer<typeof forecastSchema>[]> = {}
-          
-          await Promise.all(
-            analysesData.map(async (analysis: any) => {
-              try {
-                const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
-                if (forecastResponse.ok) {
-                  const data = await forecastResponse.json()
-                  
-                  // Transform the forecast data
-                  const transformedData: z.infer<typeof forecastSchema>[] = []
-                  
-                  if (data.forecastValues && data.dates) {
-                    data.dates.forEach((date: string, index: number) => {
-                      transformedData.push({
-                        id: `${analysis.id}-${date}`,
-                        date: date,
-                        forecast: data.forecastValues[index],
-                        quantile_05: data.quantile05?.[index] || undefined,
-                        quantile_25: data.quantile25?.[index] || undefined,
-                        quantile_75: data.quantile75?.[index] || undefined,
-                        quantile_95: data.quantile95?.[index] || undefined,
-                        analysisId: analysis.id,
-                      })
-                    })
-                  }
-                  
-                  forecasts[analysis.id] = transformedData
-                }
-              } catch (error) {
-                console.error(`Error loading forecast for analysis ${analysis.id}:`, error)
-                forecasts[analysis.id] = []
-              }
-            })
-          )
+                             // Preload all forecast data for all analyses
+                   const forecasts: Record<string, z.infer<typeof forecastSchema>[]> = {}
+                   
+                   await Promise.all(
+                     analysesData.map(async (analysis: any) => {
+                       try {
+                         const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
+                         if (forecastResponse.ok) {
+                           const data = await forecastResponse.json()
+                           
+                           // Transform the forecast data
+                           const transformedData: z.infer<typeof forecastSchema>[] = []
+                           
+                           if (data.forecastValues && data.dates) {
+                             data.dates.forEach((date: string, index: number) => {
+                               transformedData.push({
+                                 id: `${analysis.id}-${date}`,
+                                 date: date,
+                                 forecast: data.forecastValues[index],
+                                 quantile_05: data.quantile05?.[index] || undefined,
+                                 quantile_95: data.quantile95?.[index] || undefined,
+                                 analysisId: analysis.id,
+                               })
+                             })
+                           }
+                           
+                           forecasts[analysis.id] = transformedData
+                         }
+                       } catch (error) {
+                         console.error(`Error loading forecast for analysis ${analysis.id}:`, error)
+                         forecasts[analysis.id] = []
+                       }
+                     })
+                   )
           
           setAllForecastData(forecasts)
           
@@ -607,21 +585,11 @@ function TableCellViewer({ item }: { item: z.infer<typeof forecastSchema> }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_05">5th Percentile</Label>
+                <Label htmlFor="quantile_05">Lower (5th Percentile)</Label>
                 <Input id="quantile_05" defaultValue={item.quantile_05?.toString() || ''} />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_25">25th Percentile</Label>
-                <Input id="quantile_25" defaultValue={item.quantile_25?.toString() || ''} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_75">75th Percentile</Label>
-                <Input id="quantile_75" defaultValue={item.quantile_75?.toString() || ''} />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_95">95th Percentile</Label>
+                <Label htmlFor="quantile_95">Upper (95th Percentile)</Label>
                 <Input id="quantile_95" defaultValue={item.quantile_95?.toString() || ''} />
               </div>
             </div>

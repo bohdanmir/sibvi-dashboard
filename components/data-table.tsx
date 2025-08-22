@@ -93,85 +93,152 @@ export const forecastSchema = z.object({
   id: z.string(),
   date: z.string(),
   forecast: z.number(),
-  quantile_05: z.number().optional(),
-  quantile_95: z.number().optional(),
+  quantiles: z.record(z.string(), z.number()).optional(),
   analysisId: z.string(),
 })
 
 
 
-const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => {
-      const date = new Date(row.original.date);
-      return (
-        <div className="font-medium">
-          {new Intl.DateTimeFormat("en-US", {
-            year: "numeric",
-            month: "long",
-          }).format(date)}
+const getColumns = (riskTolerance: 'conservative' | 'optimistic' | 'aggressive', quantileKeys?: string[]): ColumnDef<z.infer<typeof forecastSchema>>[] => {
+  const baseColumns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
         </div>
-      );
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
     },
-    enableHiding: false,
-  },
-  {
-    accessorKey: "forecast",
-    header: "Forecast",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.forecast.toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "quantile_05",
-    header: "Lower",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.quantile_05 ? row.original.quantile_05.toLocaleString() : 'N/A'}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "quantile_95",
-    header: "Upper",
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.quantile_95 ? row.original.quantile_95.toLocaleString() : 'N/A'}
-      </div>
-    ),
-  },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.date);
+        return (
+          <div className="font-medium">
+            {new Intl.DateTimeFormat("en-US", {
+              year: "numeric",
+              month: "long",
+            }).format(date)}
+          </div>
+        );
+      },
+      enableHiding: false,
+    },
+    {
+      accessorKey: "forecast",
+      header: "Forecast",
+      cell: ({ row }) => (
+        <div className="text-right">
+          {row.original.forecast.toLocaleString()}
+        </div>
+      ),
+    },
+  ]
 
-  {
+  // Add quantile columns based on risk tolerance and available quantiles
+  if (quantileKeys && quantileKeys.length > 0) {
+    if (riskTolerance === 'conservative') {
+      // Show lowest and highest available quantiles (90% confidence)
+      const lowestQuantile = quantileKeys[0]
+      const highestQuantile = quantileKeys[quantileKeys.length - 1]
+      
+      baseColumns.push(
+        {
+          accessorKey: `quantiles.${lowestQuantile}`,
+          header: `Lower (${(parseFloat(lowestQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[lowestQuantile] ? row.original.quantiles[lowestQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        },
+        {
+          accessorKey: `quantiles.${highestQuantile}`,
+          header: `Upper (${(parseFloat(highestQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[highestQuantile] ? row.original.quantiles[highestQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        }
+      )
+    } else if (riskTolerance === 'optimistic') {
+      // Show 20% and 80% position quantiles (80% confidence)
+      const lowerIndex = Math.floor(quantileKeys.length * 0.2)
+      const upperIndex = Math.floor(quantileKeys.length * 0.8)
+      const lowerQuantile = quantileKeys[lowerIndex]
+      const upperQuantile = quantileKeys[upperIndex]
+      
+      baseColumns.push(
+        {
+          accessorKey: `quantiles.${lowerQuantile}`,
+          header: `Lower (${(parseFloat(lowerQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        },
+        {
+          accessorKey: `quantiles.${upperQuantile}`,
+          header: `Upper (${(parseFloat(upperQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        }
+      )
+    } else if (riskTolerance === 'aggressive') {
+      // Show 40% and 60% position quantiles (50% confidence)
+      const lowerIndex = Math.floor(quantileKeys.length * 0.4)
+      const upperIndex = Math.floor(quantileKeys.length * 0.6)
+      const lowerQuantile = quantileKeys[lowerIndex]
+      const upperQuantile = quantileKeys[upperIndex]
+      
+      baseColumns.push(
+        {
+          accessorKey: `quantiles.${lowerQuantile}`,
+          header: `Lower (${(parseFloat(lowerQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[lowerQuantile] ? row.original.quantiles[lowerQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        },
+        {
+          accessorKey: `quantiles.${upperQuantile}`,
+          header: `Upper (${(parseFloat(upperQuantile) * 100).toFixed(0)}%)`,
+          cell: ({ row }) => (
+            <div className="text-right">
+              {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
+            </div>
+          ),
+        }
+      )
+    }
+  }
+
+  baseColumns.push({
     id: "actions",
     header: () => null,
     cell: ({ row }) => (
@@ -196,8 +263,10 @@ const columns: ColumnDef<z.infer<typeof forecastSchema>>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
-  },
-]
+  })
+
+  return baseColumns
+}
 
 function TableRowComponent({ row }: { row: Row<z.infer<typeof forecastSchema>> }) {
   return (
@@ -219,6 +288,7 @@ export function DataTable() {
   const [allForecastData, setAllForecastData] = React.useState<Record<string, z.infer<typeof forecastSchema>[]>>({})
   const [loading, setLoading] = React.useState(false)
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false)
+  const [riskTolerance, setRiskTolerance] = React.useState<'conservative' | 'optimistic' | 'aggressive'>('conservative')
   
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -245,6 +315,12 @@ export function DataTable() {
       setForecastData(allForecastData[selectedAnalysis])
     }
   }, [selectedAnalysis, allForecastData])
+
+  // Regenerate table when risk tolerance changes
+  React.useEffect(() => {
+    // Force table to re-render with new columns
+    table?.resetColumnFilters()
+  }, [riskTolerance])
 
   const loadAnalysesAndForecasts = async () => {
     if (!selectedDataset) return
@@ -276,12 +352,21 @@ export function DataTable() {
                            
                            if (data.forecastValues && data.dates) {
                              data.dates.forEach((date: string, index: number) => {
+                               // Create quantiles object from all available quantile data
+                               const quantiles: Record<string, number> = {}
+                               if (data.allQuantiles) {
+                                 Object.entries(data.allQuantiles).forEach(([quantileKey, quantileValues]) => {
+                                   if (quantileValues && Array.isArray(quantileValues) && quantileValues[index] !== null) {
+                                     quantiles[quantileKey] = quantileValues[index] as number
+                                   }
+                                 })
+                               }
+                               
                                transformedData.push({
                                  id: `${analysis.id}-${date}`,
                                  date: date,
                                  forecast: data.forecastValues[index],
-                                 quantile_05: data.quantile05?.[index] || undefined,
-                                 quantile_95: data.quantile95?.[index] || undefined,
+                                 quantiles: Object.keys(quantiles).length > 0 ? quantiles : undefined,
                                  analysisId: analysis.id,
                                })
                              })
@@ -316,9 +401,14 @@ export function DataTable() {
 
 
 
+  // Get quantile keys from the first forecast data item if available
+  const quantileKeys = forecastData.length > 0 && forecastData[0].quantiles 
+    ? Object.keys(forecastData[0].quantiles).sort((a, b) => parseFloat(a) - parseFloat(b))
+    : []
+
   const table = useReactTable({
     data: forecastData,
-    columns,
+    columns: getColumns(riskTolerance, quantileKeys),
     state: {
       sorting,
       columnVisibility,
@@ -396,23 +486,30 @@ export function DataTable() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
+              <DropdownMenuCheckboxItem
+                key="conservative"
+                className="capitalize"
+                checked={riskTolerance === 'conservative'}
+                onCheckedChange={() => setRiskTolerance('conservative')}
+              >
+                Conservative
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                key="optimistic"
+                className="capitalize"
+                checked={riskTolerance === 'optimistic'}
+                onCheckedChange={() => setRiskTolerance('optimistic')}
+              >
+                Optimistic
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                key="aggressive"
+                className="capitalize"
+                checked={riskTolerance === 'aggressive'}
+                onCheckedChange={() => setRiskTolerance('aggressive')}
+              >
+                Aggressive
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button size="sm">
@@ -460,7 +557,7 @@ export function DataTable() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={getColumns(riskTolerance).length}
                       className="h-24 text-center"
                     >
                       No results.
@@ -583,16 +680,24 @@ function TableCellViewer({ item }: { item: z.infer<typeof forecastSchema> }) {
               </div>
 
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_05">Lower (5th Percentile)</Label>
-                <Input id="quantile_05" defaultValue={item.quantile_05?.toString() || ''} />
+            {item.quantiles && Object.keys(item.quantiles).length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="lower-quantile">Lower Bound</Label>
+                  <Input 
+                    id="lower-quantile" 
+                    defaultValue={Object.values(item.quantiles)[0]?.toString() || ''} 
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="upper-quantile">Upper Bound</Label>
+                  <Input 
+                    id="upper-quantile" 
+                    defaultValue={Object.values(item.quantiles)[Object.keys(item.quantiles).length - 1]?.toString() || ''} 
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="quantile_95">Upper (95th Percentile)</Label>
-                <Input id="quantile_95" defaultValue={item.quantile_95?.toString() || ''} />
-              </div>
-            </div>
+            )}
           </form>
         </div>
         <DrawerFooter>

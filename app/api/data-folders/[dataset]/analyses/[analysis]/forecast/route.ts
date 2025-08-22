@@ -23,10 +23,7 @@ export async function GET(
     if (forecastSeries && typeof forecastSeries === 'object') {
       const forecastValues: number[] = []
       const dates: string[] = []
-      const quantile05: (number | null)[] = []
-      const quantile25: (number | null)[] = []
-      const quantile75: (number | null)[] = []
-      const quantile95: (number | null)[] = []
+      const allQuantiles: Record<string, (number | null)[]> = {}
       
       // Sort dates and extract forecast values
       Object.entries(forecastSeries)
@@ -38,23 +35,37 @@ export async function GET(
               dates.push(date)
               forecastValues.push(forecastValue)
               
-              // Extract quantile values if available
+              // Extract all available quantile values dynamically
               const quantileData = (data as any).quantile_forecast
-              quantile05.push(quantileData?.['0.05'] || quantileData?.['0.1'] || null)
-              quantile25.push(quantileData?.['0.25'] || null)
-              quantile75.push(quantileData?.['0.75'] || null)
-              quantile95.push(quantileData?.['0.95'] || quantileData?.['0.9'] || null)
+              if (quantileData && typeof quantileData === 'object') {
+                Object.entries(quantileData).forEach(([quantileKey, quantileValue]) => {
+                  if (typeof quantileValue === 'number') {
+                    if (!allQuantiles[quantileKey]) {
+                      allQuantiles[quantileKey] = new Array(dates.length - 1).fill(null)
+                    }
+                    allQuantiles[quantileKey].push(quantileValue)
+                  }
+                })
+              }
+              
+              // Fill null for any quantiles that don't have data for this date
+              Object.keys(allQuantiles).forEach(quantileKey => {
+                if (allQuantiles[quantileKey].length < dates.length) {
+                  allQuantiles[quantileKey].push(null)
+                }
+              })
             }
           }
         })
       
+      // Sort quantile keys numerically for consistent ordering
+      const sortedQuantileKeys = Object.keys(allQuantiles).sort((a, b) => parseFloat(a) - parseFloat(b))
+      
       return NextResponse.json({
         forecastValues,
         dates,
-        quantile05,
-        quantile25,
-        quantile75,
-        quantile95,
+        allQuantiles,
+        sortedQuantileKeys,
         totalPoints: forecastValues.length
       })
     }

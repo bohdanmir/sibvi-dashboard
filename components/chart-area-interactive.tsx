@@ -30,6 +30,13 @@ import {
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
 
+// Custom CSS for legend spacing
+const legendStyles = `
+  .recharts-legend-wrapper .recharts-legend-item {
+    margin-right: 24px !important;
+  }
+`
+
 export const description = "An interactive multi-series line chart with forecasts"
 
 interface ChartDataPoint {
@@ -65,6 +72,7 @@ export function ChartAreaInteractive() {
   const [fileName, setFileName] = React.useState<string>("")
   const [analyses, setAnalyses] = React.useState<Analysis[]>([])
   const [availableAnalyses, setAvailableAnalyses] = React.useState<string[]>([])
+  const [hiddenSeries, setHiddenSeries] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     if (isMobile) {
@@ -361,6 +369,7 @@ export function ChartAreaInteractive() {
 
   return (
     <Card className="@container/card">
+      <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
       <CardHeader>
         <div className="flex flex-col gap-2">
           <CardTitle className="flex items-center gap-2">
@@ -495,6 +504,18 @@ export function ChartAreaInteractive() {
                 verticalAlign="bottom" 
                 align="left"
                 wrapperStyle={{ paddingTop: '20px' }}
+                onClick={(entry) => {
+                  const seriesName = entry.dataKey as string
+                  setHiddenSeries(prev => {
+                    const newSet = new Set(prev)
+                    if (newSet.has(seriesName)) {
+                      newSet.delete(seriesName)
+                    } else {
+                      newSet.add(seriesName)
+                    }
+                    return newSet
+                  })
+                }}
               />
               
               {/* Historical Data Line */}
@@ -507,6 +528,7 @@ export function ChartAreaInteractive() {
                 activeDot={{ r: 4 }}
                 name="Historical Data"
                 strokeDasharray="0" // Solid line for historical data
+                hide={hiddenSeries.has('historical')}
               />
               
               {/* Forecast Lines */}
@@ -525,7 +547,8 @@ export function ChartAreaInteractive() {
                     strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
                     dot={{ fill: "#ffffff", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
                     activeDot={{ r: 4 }}
-                    name={`${analysis?.name || `Analysis ${analysisId}`} (Forecast)`}
+                    name={`${analysis?.name || `${analysisId}`}`}
+                    hide={hiddenSeries.has(dataKey)}
                   />
                 )
               })}

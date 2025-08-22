@@ -329,6 +329,23 @@ function TableRowComponent({ row }: { row: Row<z.infer<typeof forecastSchema>> }
   )
 }
 
+// Helper function to find the closest quantile in a list
+const findClosestQuantile = (targetQuantile: string, availableQuantiles: string[]): string => {
+  const target = parseFloat(targetQuantile)
+  let closest = availableQuantiles[0]
+  let minDiff = Math.abs(parseFloat(closest) - target)
+  
+  for (const quantile of availableQuantiles) {
+    const diff = Math.abs(parseFloat(quantile) - target)
+    if (diff < minDiff) {
+      minDiff = diff
+      closest = quantile
+    }
+  }
+  
+  return closest
+}
+
 export function DataTable() {
   const { selectedDataset } = useDataset()
   const [analyses, setAnalyses] = React.useState<{ id: string; title?: string; name?: string }[]>([])
@@ -365,8 +382,25 @@ export function DataTable() {
   React.useEffect(() => {
     if (selectedAnalysis && allForecastData[selectedAnalysis]) {
       setForecastData(allForecastData[selectedAnalysis])
+      
+      // Get quantiles for the new analysis
+      const newData = allForecastData[selectedAnalysis]
+      if (newData.length > 0 && newData[0].quantiles) {
+        const newQuantileKeys = Object.keys(newData[0].quantiles).sort((a, b) => parseFloat(a) - parseFloat(b))
+        
+        // Find closest quantiles for custom selections if they don't exist in the new dataset
+        if (customLowerQuantile && !newQuantileKeys.includes(customLowerQuantile)) {
+          const closestLower = findClosestQuantile(customLowerQuantile, newQuantileKeys)
+          setCustomLowerQuantile(closestLower)
+        }
+        
+        if (customUpperQuantile && !newQuantileKeys.includes(customUpperQuantile)) {
+          const closestUpper = findClosestQuantile(customUpperQuantile, newQuantileKeys)
+          setCustomUpperQuantile(closestUpper)
+        }
+      }
     }
-  }, [selectedAnalysis, allForecastData])
+  }, [selectedAnalysis, allForecastData, customLowerQuantile, customUpperQuantile])
 
   // Regenerate table when risk tolerance changes
   React.useEffect(() => {

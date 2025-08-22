@@ -17,7 +17,10 @@ export async function GET(
     const forecastData = JSON.parse(fileContent)
     
     // Extract forecast values from the forecast_series
-    if (forecastData.forecast_series && typeof forecastData.forecast_series === 'object') {
+    // Handle both direct forecast_series and nested data.forecast_series structures
+    const forecastSeries = forecastData.forecast_series || forecastData.data?.forecast_series
+    
+    if (forecastSeries && typeof forecastSeries === 'object') {
       const forecastValues: number[] = []
       const dates: string[] = []
       const quantile05: (number | null)[] = []
@@ -26,7 +29,7 @@ export async function GET(
       const quantile95: (number | null)[] = []
       
       // Sort dates and extract forecast values
-      Object.entries(forecastData.forecast_series)
+      Object.entries(forecastSeries)
         .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
         .forEach(([date, data]) => {
           if (data && typeof data === 'object' && 'forecast' in data) {

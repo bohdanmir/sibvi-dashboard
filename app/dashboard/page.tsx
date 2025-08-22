@@ -32,7 +32,7 @@ function DashboardContent() {
           <div className="px-4 lg:px-6">
             <WorldMapSection key={selectedDataset?.title || 'no-dataset'} />
           </div>
-          <DataTable data={data} />
+          <DataTable />
         </div>
       </div>
     </div>

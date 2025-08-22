@@ -20,6 +20,10 @@ export async function GET(
     if (forecastData.forecast_series && typeof forecastData.forecast_series === 'object') {
       const forecastValues: number[] = []
       const dates: string[] = []
+      const quantile05: (number | null)[] = []
+      const quantile25: (number | null)[] = []
+      const quantile75: (number | null)[] = []
+      const quantile95: (number | null)[] = []
       
       // Sort dates and extract forecast values
       Object.entries(forecastData.forecast_series)
@@ -30,6 +34,13 @@ export async function GET(
             if (typeof forecastValue === 'number') {
               dates.push(date)
               forecastValues.push(forecastValue)
+              
+              // Extract quantile values if available
+              const quantileData = (data as any).quantile_forecast
+              quantile05.push(quantileData?.['0.05'] || quantileData?.['0.1'] || null)
+              quantile25.push(quantileData?.['0.25'] || null)
+              quantile75.push(quantileData?.['0.75'] || null)
+              quantile95.push(quantileData?.['0.95'] || quantileData?.['0.9'] || null)
             }
           }
         })
@@ -37,6 +48,10 @@ export async function GET(
       return NextResponse.json({
         forecastValues,
         dates,
+        quantile05,
+        quantile25,
+        quantile75,
+        quantile95,
         totalPoints: forecastValues.length
       })
     }

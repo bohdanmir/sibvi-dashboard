@@ -228,6 +228,58 @@ const getColumns = (
               {row.original.quantiles?.[highestQuantile] ? row.original.quantiles[highestQuantile].toLocaleString() : 'N/A'}
             </div>
           ),
+        },
+        {
+          accessorKey: "discrete-lower",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Lower (Chart Scale) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {generateDiscreteValues().map((value, index) => (
+                    <DropdownMenuItem
+                      key={`${value}-${index}`}
+                      onClick={() => setCustomLowerQuantile?.(value.toString())}
+                      className="text-right"
+                    >
+                      {value.toLocaleString()}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
+        },
+        {
+          accessorKey: "discrete-upper",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Upper (Chart Scale) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {generateDiscreteValues().map((value, index) => (
+                    <DropdownMenuItem
+                      key={`${value}-${index}`}
+                      onClick={() => setCustomUpperQuantile?.(value.toString())}
+                      className="text-right"
+                    >
+                      {value.toLocaleString()}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
         }
       )
     } else if (riskTolerance === 'optimistic') {
@@ -255,6 +307,58 @@ const getColumns = (
               {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
             </div>
           ),
+        },
+        {
+          accessorKey: "empty-lower-optimistic",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomLowerQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
+        },
+        {
+          accessorKey: "empty-upper-optimistic",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomUpperQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
         }
       )
     } else if (riskTolerance === 'aggressive') {
@@ -282,6 +386,58 @@ const getColumns = (
               {row.original.quantiles?.[upperQuantile] ? row.original.quantiles[upperQuantile].toLocaleString() : 'N/A'}
             </div>
           ),
+        },
+        {
+          accessorKey: "empty-lower-aggressive",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Lower ({(parseFloat(lowerQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomLowerQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
+        },
+        {
+          accessorKey: "empty-upper-aggressive",
+          header: () => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 font-normal">
+                    Upper ({(parseFloat(upperQuantile) * 100).toFixed(0)}%) ▼
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {quantileKeys?.map((quantile) => (
+                    <DropdownMenuItem
+                      key={quantile}
+                      onClick={() => setCustomUpperQuantile?.(quantile)}
+                      className="text-right"
+                    >
+                      {(parseFloat(quantile) * 100).toFixed(0)}%
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ),
+          cell: () => <div className="text-right">-</div>,
         }
       )
     }
@@ -344,6 +500,15 @@ const findClosestQuantile = (targetQuantile: string, availableQuantiles: string[
   }
   
   return closest
+}
+
+// Helper function to generate static discrete values from 0 to 1,600,000 with 100,000 steps
+const generateDiscreteValues = (): number[] => {
+  const values: number[] = []
+  for (let i = 0; i <= 16; i++) {
+    values.push(i * 100000)
+  }
+  return values
 }
 
 export function DataTable() {

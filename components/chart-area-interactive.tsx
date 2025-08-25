@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { useTheme } from "next-themes"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
@@ -53,7 +54,7 @@ interface Analysis {
 }
 
 const chartConfig = {
-  // Historical data uses hardcoded black color for consistency with drivers info card
+  // Chart now supports light/dark themes with dynamic colors
 } satisfies ChartConfig
 
 // Colors for different forecast series
@@ -65,6 +66,7 @@ const forecastColors = [
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
   const { selectedDataset } = useDataset()
+  const { theme } = useTheme()
   const [timeRange, setTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
   const [loading, setLoading] = React.useState(false)
@@ -459,13 +461,14 @@ export function ChartAreaInteractive() {
           ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filteredData}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
               <XAxis
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
+                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
                 tickFormatter={(value) => {
                   const date = new Date(value)
                   return date.toLocaleDateString("en-US", {
@@ -479,6 +482,7 @@ export function ChartAreaInteractive() {
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
+                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
                 tickFormatter={(value) => {
                   return value.toLocaleString("en-US", {
                     minimumFractionDigits: 0,
@@ -522,10 +526,10 @@ export function ChartAreaInteractive() {
               <Line
                 type="monotone"
                 dataKey="historical"
-                stroke="#000000" // Dark black line like drivers info card
+                stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
                 strokeWidth={1}
-                dot={{ fill: "#ffffff", stroke: "#000000", strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 4 }}
+                dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000", strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 4, fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000" }}
                 name="Historical Data"
                 strokeDasharray="0" // Solid line for historical data
                 hide={hiddenSeries.has('historical')}
@@ -545,8 +549,8 @@ export function ChartAreaInteractive() {
                     stroke={color}
                     strokeWidth={1}
                     strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
-                    dot={{ fill: "#ffffff", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
-                    activeDot={{ r: 4 }}
+                    dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
+                    activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
                     name={`${analysis?.name || `${analysisId}`}`}
                     hide={hiddenSeries.has(dataKey)}
                   />

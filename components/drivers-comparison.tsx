@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Sparkline } from "@/components/ui/sparkline"
@@ -35,16 +36,18 @@ interface DriverCardProps {
 }
 
 function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData, analysisIndex, isExpanded }: DriverCardProps) {
+  const { theme } = useTheme()
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on-track":
-        return "text-green-600"
+        return "text-green-600 dark:text-green-400"
       case "at-risk":
-        return "text-yellow-600"
+        return "text-yellow-600 dark:text-yellow-400"
       case "behind":
-        return "text-red-600"
+        return "text-red-600 dark:text-red-400"
       default:
-        return "text-gray-600"
+        return "text-muted-foreground"
     }
   }
 
@@ -138,7 +141,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
         {/* Summary section showing total drivers */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-muted/30 rounded-lg border border-border/50">
           <span className="text-sm font-medium text-muted-foreground">Total Drivers</span>
           <Badge variant="outline" className="text-sm">
             {categories.reduce((total, cat) => total + cat.driverCount, 0)} total
@@ -159,8 +162,8 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                       variant="secondary" 
                       className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
                         category.driverCount > 0 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                          ? 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary dark:border-primary/30' 
+                          : 'bg-muted text-muted-foreground border-border'
                       }`}
                     >
                       {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
@@ -187,8 +190,8 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                         variant="secondary" 
                         className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
                           category.driverCount > 0 
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                            ? 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary dark:border-primary/30' 
+                            : 'bg-muted text-muted-foreground border-border'
                         }`}
                       >
                         {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
@@ -429,7 +432,7 @@ export function DriversComparison() {
         <div className="px-4 lg:px-6">
           <div className="flex gap-4 overflow-x-auto pb-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="w-80 h-48 bg-muted animate-pulse rounded-lg"></div>
+              <div key={i} className="w-80 h-48 bg-muted/50 dark:bg-muted/30 animate-pulse rounded-lg border border-border/50"></div>
             ))}
           </div>
         </div>

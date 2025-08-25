@@ -521,12 +521,12 @@ export function WorldMapSection() {
     return (
       <div className="w-full flex gap-4">
         <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>Please select a dataset to view drivers</p>
           </div>
         </Card>
         <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>Select a dataset to view details</p>
           </div>
         </Card>
@@ -539,7 +539,7 @@ export function WorldMapSection() {
     return (
       <div className="w-full flex gap-4">
         <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-red-500">
+          <div className="text-center text-destructive">
             <div className="text-lg font-semibold mb-2">Error Loading Data</div>
             <p className="text-sm">{error}</p>
             <Button 
@@ -572,7 +572,7 @@ export function WorldMapSection() {
           </div>
         </Card>
         <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>Error occurred while loading data</p>
           </div>
         </Card>
@@ -584,13 +584,13 @@ export function WorldMapSection() {
     return (
       <div className="w-full flex gap-4">
         <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <div className="text-center text-muted-foreground">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4"></div>
             <p>Loading drivers data...</p>
           </div>
         </Card>
         <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>Select a driver to view details</p>
           </div>
         </Card>
@@ -603,12 +603,12 @@ export function WorldMapSection() {
     return (
       <div className="w-full flex gap-4">
         <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>No analyses available for {selectedDataset.title}</p>
           </div>
         </Card>
         <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <p>No analyses found</p>
           </div>
         </Card>
@@ -621,10 +621,11 @@ export function WorldMapSection() {
       {/* Map Card - Left Side (2/3 width) */}
       <Card className="flex-1 h-[400px] md:h-[500px] overflow-hidden p-0">
         <div className="relative w-full h-full">
+          {/* Map Background */}
           <img 
             src="/map.svg" 
             alt="World Map" 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain dark:invert dark:brightness-0 dark:contrast-200"
             style={{ minWidth: '100%', minHeight: '100%' }}
           />
           
@@ -689,8 +690,8 @@ export function WorldMapSection() {
                           variant="outline" 
                           className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
                             selectedDriver?.id === driver.id
-                              ? 'border-blue-500 bg-blue-100 shadow-lg' 
-                              : 'border-gray-400 bg-gray-50 hover:border-gray-500 hover:bg-gray-100'
+                              ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/20 dark:bg-primary/30 dark:ring-primary/30' 
+                              : 'border-border bg-muted hover:border-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/60'
                           }`}
                         >
                           <div className={size.iconSize}>

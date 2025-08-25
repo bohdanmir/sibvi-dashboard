@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,94 +24,95 @@ const getCategoryIcon = (category: string) => {
   
   // Housing & Real Estate
   if (categoryLower.includes('housing') || categoryLower.includes('real estate') || categoryLower.includes('residential') || categoryLower.includes('property')) 
-    return <Home className="h-full w-full text-gray-500" />
+    return <Home className="h-full w-full text-muted-foreground" />
   
   // Construction & Infrastructure
   if (categoryLower.includes('construction') || categoryLower.includes('infrastructure') || categoryLower.includes('building') || categoryLower.includes('development') || categoryLower.includes('engineering') || categoryLower.includes('contracting')) 
-    return <HardHat className="h-full w-full text-gray-500" />
+    return <HardHat className="h-full w-full text-muted-foreground" />
   
   // Climate & Environment
   if (categoryLower.includes('climate') || categoryLower.includes('weather') || categoryLower.includes('environment') || categoryLower.includes('temperature') || categoryLower.includes('global warming') || categoryLower.includes('pollution') || categoryLower.includes('sustainability') || categoryLower.includes('green')) 
-    return <ThermometerSun className="h-full w-full text-gray-500" />
+    return <ThermometerSun className="h-full w-full text-muted-foreground" />
   
   // Supply Chain & Trade
   if (categoryLower.includes('supply') || categoryLower.includes('trade') || categoryLower.includes('logistics') || categoryLower.includes('transport')) 
-    return <Truck className="h-full w-full text-gray-500" />
+    return <Truck className="h-full w-full text-muted-foreground" />
   
   // Energy & Power
   if (categoryLower.includes('energy') || categoryLower.includes('power') || categoryLower.includes('electricity')) 
-    return <Zap className="h-full w-full text-gray-500" />
+    return <Zap className="h-full w-full text-muted-foreground" />
   
   // Labor Market & Employment
   if (categoryLower.includes('labour') || categoryLower.includes('employment') || categoryLower.includes('jobs') || categoryLower.includes('hiring') || categoryLower.includes('unemployment') || categoryLower.includes('wages') || categoryLower.includes('salary') || categoryLower.includes('job market') || categoryLower.includes('workforce')) 
-    return <IdCardLanyard className="h-full w-full text-gray-500" />
+    return <IdCardLanyard className="h-full w-full text-muted-foreground" />
   
   // Workforce & Human Resources
   if (categoryLower.includes('workforce') || categoryLower.includes('hr') || categoryLower.includes('human resources') || categoryLower.includes('personnel') || categoryLower.includes('staffing') || categoryLower.includes('talent') || categoryLower.includes('recruitment')) 
-    return <Users className="h-full w-full text-gray-500" />
+    return <Users className="h-full w-full text-muted-foreground" />
   
   // Manufacturing & Production
   if (categoryLower.includes('volume') || categoryLower.includes('production') || categoryLower.includes('manufacturing') || categoryLower.includes('industry')) 
-    return <Factory className="h-full w-full text-gray-500" />
+    return <Factory className="h-full w-full text-muted-foreground" />
   
   // Finance & Economics
   if (categoryLower.includes('price') || categoryLower.includes('inflation') || categoryLower.includes('finance') || categoryLower.includes('economy') || categoryLower.includes('gdp')) 
-    return <DollarSign className="h-full w-full text-gray-500" />
+    return <DollarSign className="h-full w-full text-muted-foreground" />
   
   // Data & Analytics
   if (categoryLower.includes('data') || categoryLower.includes('analytics') || categoryLower.includes('statistics')) 
-    return <Database className="h-full w-full text-gray-500" />
+    return <Database className="h-full w-full text-muted-foreground" />
   
   // Global & International
   if (categoryLower.includes('global') || categoryLower.includes('international') || categoryLower.includes('world')) 
-    return <Globe className="h-full w-full text-gray-500" />
+    return <Globe className="h-full w-full text-muted-foreground" />
   
   // Chemicals & Pharmaceuticals
   if (categoryLower.includes('chemical') || categoryLower.includes('pharmaceutical') || categoryLower.includes('medicine') || categoryLower.includes('drug') || categoryLower.includes('compound')) 
-    return <FlaskConical className="h-full w-full text-gray-500" />
+    return <FlaskConical className="h-full w-full text-muted-foreground" />
   
   // Food & Agriculture
   if (categoryLower.includes('food') || categoryLower.includes('processed') || categoryLower.includes('agriculture') || categoryLower.includes('farming') || categoryLower.includes('crop') || categoryLower.includes('grain') || categoryLower.includes('dairy') || categoryLower.includes('meat')) 
-    return <Utensils className="h-full w-full text-gray-500" />
+    return <Utensils className="h-full w-full text-muted-foreground" />
   
   // Income & Wealth
   if (categoryLower.includes('income') || categoryLower.includes('wealth') || categoryLower.includes('salary') || categoryLower.includes('wage') || categoryLower.includes('earnings') || categoryLower.includes('revenue')) 
-    return <Wallet className="h-full w-full text-gray-500" />
+    return <Wallet className="h-full w-full text-muted-foreground" />
   
   // Consumption & Retail
   if (categoryLower.includes('consumption') || categoryLower.includes('retail') || categoryLower.includes('shopping') || categoryLower.includes('spending') || categoryLower.includes('purchases') || categoryLower.includes('demand')) 
-    return <ShoppingCart className="h-full w-full text-gray-500" />
+    return <ShoppingCart className="h-full w-full text-muted-foreground" />
   
   // Living Conditions & Quality of Life
   if (categoryLower.includes('living') || categoryLower.includes('quality') || categoryLower.includes('wellbeing') || categoryLower.includes('health') || categoryLower.includes('social') || categoryLower.includes('welfare') || categoryLower.includes('happiness')) 
-    return <Heart className="h-full w-full text-gray-500" />
+    return <Heart className="h-full w-full text-muted-foreground" />
   
   // Minerals & Mining
   if (categoryLower.includes('mineral') || categoryLower.includes('mining') || categoryLower.includes('ore') || categoryLower.includes('metal') || categoryLower.includes('coal') || categoryLower.includes('gold') || categoryLower.includes('copper') || categoryLower.includes('iron') || categoryLower.includes('aluminum') || categoryLower.includes('lithium')) 
-    return <Mountain className="h-full w-full text-gray-500" />
+    return <Mountain className="h-full w-full text-muted-foreground" />
   
   // Textiles & Fibers
   if (categoryLower.includes('textile') || categoryLower.includes('fiber') || categoryLower.includes('fabric') || categoryLower.includes('cloth') || categoryLower.includes('cotton') || categoryLower.includes('wool') || categoryLower.includes('silk') || categoryLower.includes('synthetic') || categoryLower.includes('garment') || categoryLower.includes('apparel')) 
-    return <Shirt className="h-full w-full text-gray-500" />
+    return <Shirt className="h-full w-full text-muted-foreground" />
   
   // Crafts & Artisan
   if (categoryLower.includes('craft') || categoryLower.includes('artisan') || categoryLower.includes('handmade') || categoryLower.includes('artistic') || categoryLower.includes('creative') || categoryLower.includes('design') || categoryLower.includes('pottery') || categoryLower.includes('woodwork') || categoryLower.includes('jewelry')) 
-    return <Drill className="h-full w-full text-gray-500" />
+    return <Drill className="h-full w-full text-muted-foreground" />
   
   // Population & Demographics
   if (categoryLower.includes('population') || categoryLower.includes('demographic') || categoryLower.includes('census') || categoryLower.includes('birth') || categoryLower.includes('death') || categoryLower.includes('migration') || categoryLower.includes('immigration') || categoryLower.includes('age') || categoryLower.includes('gender') || categoryLower.includes('ethnicity')) 
-    return <Users2 className="h-full w-full text-gray-500" />
+    return <Users2 className="h-full w-full text-muted-foreground" />
   
   // Market Indices & Trading
   if (categoryLower.includes('market') || categoryLower.includes('index') || categoryLower.includes('indices') || categoryLower.includes('trading') || categoryLower.includes('stock') || categoryLower.includes('equity') || categoryLower.includes('s&p') || categoryLower.includes('nasdaq') || categoryLower.includes('dow') || categoryLower.includes('ftse') || categoryLower.includes('candlestick')) 
-    return <ChartCandlestick className="h-full w-full text-gray-500" />
+    return <ChartCandlestick className="h-full w-full text-muted-foreground" />
   
   // Default fallback
-  return <BarChart3 className="h-full w-full text-gray-500" />
+  return <BarChart3 className="h-full w-full text-muted-foreground" />
 }
 
 export function WorldMapSection() {
   const { selectedDataset } = useDataset()
+  const { theme } = useTheme()
   const [drivers, setDrivers] = useState<DriverData[]>([])
   const [selectedDriver, setSelectedDriver] = useState<DriverData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -703,12 +705,12 @@ export function WorldMapSection() {
                 </TooltipTrigger>
                 <TooltipContent 
                   side="top" 
-                  className="max-w-xs text-xs bg-white text-gray-900 border border-gray-200 shadow-lg"
+                  className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
                 >
                   <div className="space-y-1">
                     <div className="font-medium">{index + 1}. {driver.name}</div>
-                    <div className="text-gray-600">{driver.category}</div>
-                    <div className="text-gray-500">
+                    <div className="text-muted-foreground">{driver.category}</div>
+                    <div className="text-muted-foreground">
                       ({driver.coordinates.x.toFixed(1)}%, {driver.coordinates.y.toFixed(1)}%)
                     </div>
                   </div>
@@ -730,7 +732,7 @@ export function WorldMapSection() {
               <div className="flex flex-col items-start gap-3 pb-3 border-b">
                 <Badge 
                   variant="outline" 
-                  className="w-10 h-10 rounded-full p-0 border border-gray-200 bg-gray-100"
+                  className="w-10 h-10 rounded-full p-0 border-border bg-muted"
                 >
                   <div className="w-5 h-5">
                     {getCategoryIcon(selectedDriver.category)}
@@ -740,29 +742,29 @@ export function WorldMapSection() {
                   {selectedDriver.name.length > 60 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="font-bold text-gray-900 text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
+                        <h4 className="font-bold text-foreground text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
                       </TooltipTrigger>
                       <TooltipContent 
                         side="top" 
-                        className="max-w-xs text-xs bg-white text-gray-900 border border-gray-200 shadow-lg"
+                        className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
                       >
                         <div className="font-medium">{selectedDriver.name}</div>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <h4 className="font-bold text-gray-900 text-base">{selectedDriver.name}</h4>
+                    <h4 className="font-bold text-foreground text-base">{selectedDriver.name}</h4>
                   )}
-                  <p className="text-xs text-blue-600 flex items-center gap-1">
-                    <span className="h-3 w-3 text-gray-800">{getCategoryIcon(selectedDriver.category)}</span>
+                  <p className="text-xs text-primary flex items-center gap-1">
+                    <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(selectedDriver.category)}</span>
                     {selectedDriver.category}
                   </p>
-                  <p className="text-xs text-gray-600">{selectedDriver.region.join(' > ')}</p>
+                  <p className="text-xs text-muted-foreground">{selectedDriver.region.join(' > ')}</p>
                 </div>
               </div>
 
               {/* Key Metrics */}
               <div className="text-left">
-                <div className="text-4xl font-bold text-gray-900">
+                <div className="text-4xl font-bold text-foreground">
                   {(() => {
                     // Use the same calculation as drivers comparison cards
                     let importance = 0
@@ -779,7 +781,7 @@ export function WorldMapSection() {
                     return importance > 0 ? `${importance}%` : `${selectedDriver.importance.toFixed(1)}%`
                   })()}
                 </div>
-                <div className="text-xs text-gray-600">Importance Score</div>
+                <div className="text-xs text-muted-foreground">Importance Score</div>
               </div>
 
               {/* Direction and Lag Information */}
@@ -850,14 +852,14 @@ export function WorldMapSection() {
                           console.log('Tooltip data:', { date, value, label })
                           
                           return (
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
-                              <div className="text-sm font-medium text-gray-900">
+                            <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+                              <div className="text-sm font-medium text-popover-foreground">
                                 {date instanceof Date ? date.toLocaleDateString("en-US", {
                                   month: "long",
                                   year: "numeric",
                                 }) : 'Unknown Date'}
                               </div>
-                              <div className="text-sm text-gray-600">
+                              <div className="text-sm text-muted-foreground">
                                 Performance: {typeof value === 'number' ? value.toFixed(3) : value}
                               </div>
                             </div>
@@ -876,19 +878,19 @@ export function WorldMapSection() {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 This driver shows {selectedDriver.direction > 0 ? 'positive' : 'negative'} correlation 
                 with the target variable, with an importance score of {selectedDriver.importance.toFixed(1)}% 
                 and a lag of {selectedDriver.lag}.
               </p>
             </div>
           ) : (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-muted-foreground py-8">
               <Badge 
                 variant="outline" 
-                className="w-16 h-16 mx-auto mb-4 rounded-full p-0 bg-gray-100 border-gray-300"
+                className="w-16 h-16 mx-auto mb-4 rounded-full p-0 bg-muted border-border"
               >
-                <BarChart3 className="h-8 w-8 text-gray-300" />
+                <BarChart3 className="h-8 w-8 text-muted-foreground" />
               </Badge>
               <p className="text-sm">Select a driver from the map to view details</p>
               <p className="text-xs mt-2">Click on any icon to explore driver data</p>

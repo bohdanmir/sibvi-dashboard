@@ -1,6 +1,7 @@
 "use client"
 
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { useTheme } from "next-themes"
 import { useDataset } from "@/lib/dataset-context"
 
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +16,7 @@ import {
 
 export function SectionCards() {
   const { selectedDataset } = useDataset()
+  const { theme } = useTheme()
 
   if (!selectedDataset) {
     return (
@@ -124,13 +126,13 @@ export function SectionCards() {
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="space-y-2 text-left w-full">
             <div className="space-y-1">
-              <div className="text-xs font-medium text-green-600">All-time High: {selectedDataset.description?.dataCharacteristics?.allTimeHigh || '--'}</div>
+              <div className="text-xs font-medium text-green-600 dark:text-green-400">All-time High: {selectedDataset.description?.dataCharacteristics?.allTimeHigh || '--'}</div>
               <div className="text-xs text-muted-foreground">
                 {selectedDataset.description?.dataCharacteristics?.highDescription || 'Peak performance period'}
               </div>
             </div>
             <div className="space-y-1">
-              <div className="text-xs font-medium text-red-600">All-time Low: {selectedDataset.description?.dataCharacteristics?.allTimeLow || '--'}</div>
+              <div className="text-xs font-medium text-red-600 dark:text-red-400">All-time Low: {selectedDataset.description?.dataCharacteristics?.allTimeLow || '--'}</div>
               <div className="text-xs text-muted-foreground">
                 {selectedDataset.description?.dataCharacteristics?.lowDescription || 'Lowest performance period'}
               </div>

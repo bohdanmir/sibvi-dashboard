@@ -47,7 +47,7 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sibvi-cyan-200 data-[state=open]:text-sibvi-cyan-900 hover:bg-sibvi-cyan-700 active:bg-sibvi-cyan-600"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -55,7 +55,7 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="text-muted-foreground truncate text-xs">
+                <span className="text-sibvi-cyan-300 truncate text-xs">
                   {user.email}
                 </span>
               </div>
@@ -76,7 +76,7 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="text-muted-foreground truncate text-xs">
+                  <span className="text-sibvi-cyan-300 truncate text-xs">
                     {user.email}
                   </span>
                 </div>

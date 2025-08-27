@@ -36,7 +36,7 @@ export function NavMain({
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Add dataset"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+              className="bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300 active:bg-sibvi-cyan-400 min-w-8 duration-200 ease-linear"
             >
               <IconCirclePlusFilled />
               <span>Add dataset</span>
@@ -57,7 +57,7 @@ export function NavMain({
               <SidebarMenuButton 
                 tooltip={item.title}
                 onClick={item.onClick}
-                className={item.isActive ? "bg-accent text-accent-foreground" : ""}
+                className={item.isActive ? "bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300" : "hover:bg-sibvi-cyan-700 active:bg-sibvi-cyan-600"}
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
@@ -71,7 +71,7 @@ export function NavMain({
                         <SidebarMenuButton 
                           tooltip={subItem.title}
                           onClick={subItem.onClick}
-                          className={subItem.isActive ? "bg-accent text-accent-foreground" : ""}
+                          className={subItem.isActive ? "bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300" : "hover:bg-sibvi-cyan-700 active:bg-sibvi-cyan-600"}
                         >
                           {subItem.icon && <subItem.icon />}
                           <span>{subItem.title}</span>

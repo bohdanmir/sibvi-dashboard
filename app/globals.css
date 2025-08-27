@@ -15,7 +15,7 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
+  --color-sidebar: var(--sibvi-cyan-800);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -118,7 +118,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: var(--sibvi-cyan-50);
+  --sidebar: var(--sibvi-cyan-800);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -128,13 +128,13 @@
   --sidebar-ring: oklch(0.708 0 0);
   --sibvi-cyan-50: oklch(98.71% 0.006 202.1);
   --sibvi-cyan-100: oklch(96.09% 0.011 201.9);
-  --sibvi-cyan-200: oklch(91.93% 0.036 203.1);
-  --sibvi-cyan-300: oklch(87.28% 0.039 203.2);
-  --sibvi-cyan-400: oklch(81.46% 0.047 203.8);
+  --sibvi-cyan-200: oklch(0.918 0.089 203.6);
+  --sibvi-cyan-300: oklch(0.874 0.098 202.8);
+  --sibvi-cyan-400: oklch(0.816 0.118 203.3);
   --sibvi-cyan-500: oklch(73.93% 0.046 204.2);
   --sibvi-cyan-600: oklch(63.77% 0.04 204.2);
   --sibvi-cyan-700: oklch(52.69% 0.03 203.7);
-  --sibvi-cyan-800: oklch(40.57% 0.023 203.6);
+  --sibvi-cyan-800: oklch(0.340 0.026 203.8);
   --sibvi-cyan-900: oklch(25.4% 0.007 203.1);
   --sibvi-purple--50: oklch(0.964 0.021 304.0);
   --sibvi-purple--100: oklch(0.933 0.039 303.4);
@@ -218,6 +218,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Force sidebar background color */
+  [data-sidebar="sidebar"] {
+    background-color: var(--sibvi-cyan-800) !important;
   }
 }
 

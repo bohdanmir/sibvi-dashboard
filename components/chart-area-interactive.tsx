@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { useTheme } from "next-themes"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
@@ -16,7 +17,6 @@ import {
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import {
@@ -31,32 +31,50 @@ import {
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
 
-export const description = "An interactive area chart"
+// Custom CSS for legend spacing
+const legendStyles = `
+  .recharts-legend-wrapper .recharts-legend-item {
+    margin-right: 24px !important;
+  }
+`
+
+export const description = "An interactive multi-series line chart with forecasts"
 
 interface ChartDataPoint {
   date: string
-  value: number
+  historical?: number
+  [key: string]: string | number | undefined // For dynamic forecast series
+}
+
+interface Analysis {
+  id: string
+  name: string
+  path: string
+  metadata?: Record<string, unknown>
 }
 
 const chartConfig = {
-  value: {
-    label: "Value",
-    color: "var(--primary)",
-  },
-  extra: {
-    label: "Extra",
-    color: "#ff6b6b",
-  },
+  // Chart now supports light/dark themes with dynamic colors
 } satisfies ChartConfig
+
+// Colors for different forecast series
+const forecastColors = [
+  "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1",
+  "#d084d0", "#ff8042", "#00c49f", "#ffbb28", "#ff6b6b"
+]
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
   const { selectedDataset } = useDataset()
+  const { theme } = useTheme()
   const [timeRange, setTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [fileName, setFileName] = React.useState<string>("")
+  const [analyses, setAnalyses] = React.useState<Analysis[]>([])
+  const [availableAnalyses, setAvailableAnalyses] = React.useState<string[]>([])
+  const [hiddenSeries, setHiddenSeries] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     if (isMobile) {
@@ -64,51 +82,143 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  // Load chart data when selected dataset changes
+  // Load all data (analyses, forecasts, and chart data) when selected dataset changes
+  // This prevents the chart from flickering by loading everything in one operation
+  // and only rendering when all data is ready
   React.useEffect(() => {
     if (!selectedDataset) return
 
-    const loadChartData = async () => {
+    const loadAllData = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        // Get folder information to find the CSV file
+        // Step 1: Load analyses and check for forecast availability
+        const analysesResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses`)
+        if (!analysesResponse.ok) {
+          throw new Error('Failed to load analyses')
+        }
+        
+        const analysesData = await analysesResponse.json()
+        setAnalyses(analysesData)
+        
+        // Step 2: Check which analyses have forecast data
+        const availableForecastsSet = new Set<string>()
+        const analysesWithForecasts = await Promise.all(
+          analysesData.map(async (analysis: Analysis) => {
+            try {
+              const forecastResponse = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset.title)}/analyses/${analysis.id}/forecast`)
+              if (forecastResponse.ok) {
+                availableForecastsSet.add(analysis.id)
+                return analysis.id
+              }
+              return null
+            } catch {
+              return null
+            }
+          })
+        )
+        
+        const availableAnalysesList = analysesWithForecasts.filter(id => id !== null) as string[]
+        setAvailableAnalyses(availableAnalysesList)
+        
+        // Step 3: Get folder information to find the CSV file
         const folderResponse = await fetch('/api/data-folders')
         if (!folderResponse.ok) {
           throw new Error('Failed to get folder information')
         }
         
         const folders = await folderResponse.json()
-        const currentFolder = folders.find((f: any) => f.title === selectedDataset.title)
+        const currentFolder = folders.find((f: { title: string; files?: string[] }) => f.title === selectedDataset.title)
         
         if (!currentFolder || !currentFolder.files || currentFolder.files.length === 0) {
           throw new Error('No CSV files found in selected folder')
         }
         
-        // Use the first CSV file in the folder
+        // Step 4: Load historical data
         const csvFileName = currentFolder.files[0]
         const csvPath = `/data/${encodeURIComponent(selectedDataset.title)}/${encodeURIComponent(csvFileName)}`
         
-        const response = await fetch(csvPath)
-        if (!response.ok) {
-          throw new Error(`Failed to load data: ${response.status}`)
+        const csvResponse = await fetch(csvPath)
+        if (!csvResponse.ok) {
+          throw new Error(`Failed to load CSV data: ${csvResponse.status}`)
         }
         
-        const csvText = await response.text()
-        const parsedData = parseCSV(csvText)
-        setChartData(parsedData)
+        const csvText = await csvResponse.text()
+        const historicalData = parseCSV(csvText)
+        
+        // Step 5: Load forecast data for all available analyses
+        const forecastData = availableAnalysesList.length > 0 
+          ? await loadForecastData(availableAnalysesList)
+          : {}
+        
+        console.log('Historical data:', historicalData)
+        console.log('Forecast data:', forecastData)
+        
+        // Step 6: Combine all data and set state
+        const combinedData = combineData(historicalData, forecastData)
+        console.log('Combined data:', combinedData)
+        
+        setChartData(combinedData)
         setFileName(csvFileName)
         setLoading(false)
       } catch (error) {
-        console.error('Error loading chart data:', error)
+        console.error('Error loading all data:', error)
         setError(error instanceof Error ? error.message : 'Failed to load data')
         setLoading(false)
       }
     }
 
-    loadChartData()
+    loadAllData()
   }, [selectedDataset])
+
+  const loadForecastData = async (analysisIds: string[]) => {
+    const forecasts: { [key: string]: { dates: string[]; forecastValues: number[]; totalPoints: number } } = {}
+    
+    for (const analysisId of analysisIds) {
+      try {
+        const response = await fetch(`/api/data-folders/${encodeURIComponent(selectedDataset!.title)}/analyses/${analysisId}/forecast`)
+        if (response.ok) {
+          const data = await response.json()
+          forecasts[analysisId] = data
+        } else {
+          console.warn(`Analysis ${analysisId} has no forecast data (${response.status})`)
+        }
+      } catch (error) {
+        console.error(`Error loading forecast for analysis ${analysisId}:`, error)
+      }
+    }
+    
+    return forecasts
+  }
+
+  const combineData = (historical: ChartDataPoint[], forecasts: { [key: string]: { dates: string[]; forecastValues: number[]; totalPoints: number } }) => {
+    const combined: { [key: string]: ChartDataPoint } = {}
+    
+    console.log('Combining data - historical:', historical.length, 'forecasts:', Object.keys(forecasts))
+    
+    // Add historical data
+    historical.forEach(item => {
+      combined[item.date] = { ...item }
+    })
+    
+    // Add forecast data
+    Object.entries(forecasts).forEach(([analysisId, forecastData]) => {
+      console.log(`Processing forecast for analysis ${analysisId}:`, forecastData)
+      if (forecastData.dates && forecastData.forecastValues) {
+        forecastData.dates.forEach((date: string, index: number) => {
+          if (!combined[date]) {
+            combined[date] = { date }
+          }
+          combined[date][`forecast_${analysisId}`] = forecastData.forecastValues[index]
+        })
+      }
+    })
+    
+    const result = Object.values(combined).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    console.log('Final combined data:', result)
+    return result
+  }
 
   const parseCSV = (csvText: string): ChartDataPoint[] => {
     const lines = csvText.split('\n').filter(line => line.trim())
@@ -117,17 +227,26 @@ export function ChartAreaInteractive() {
       const baseValue = parseFloat(values[1]) || 0
       return {
         date: values[0],
-        value: baseValue,
-        extra: baseValue * 0.8 + Math.random() * 100000 // Simple variation for second line
+        historical: parseFloat(values[1]) || 0
       }
-    }).filter(item => item.date && !isNaN(item.value))
+    }).filter(item => item.date && !isNaN(item.historical!))
   }
 
   const filteredData = chartData.filter((item) => {
     if (timeRange === "All") return true
     
     const date = new Date(item.date)
-    const referenceDate = new Date("2025-06-01") // You might want to make this dynamic
+    
+    // Always include forecast data (future dates)
+    const hasForecastData = availableAnalyses.some(analysisId => 
+      item[`forecast_${analysisId}`] !== undefined
+    )
+    if (hasForecastData) {
+      console.log('Including item with forecast data:', item.date, item)
+      return true
+    }
+    
+    // For historical data, apply time range filtering
     let monthsToSubtract = 12 // Default to 1 year
     
     switch (timeRange) {
@@ -147,10 +266,21 @@ export function ChartAreaInteractive() {
         monthsToSubtract = 12
     }
     
+    // Use current date as reference for historical data filtering
+    const referenceDate = new Date()
     const startDate = new Date(referenceDate)
     startDate.setMonth(startDate.getMonth() - monthsToSubtract)
-    return date >= startDate
+    
+    const shouldInclude = date >= startDate
+    if (!shouldInclude) {
+      console.log('Filtering out historical item:', item.date, 'startDate:', startDate)
+    }
+    return shouldInclude
   })
+
+  console.log('Filtered data:', filteredData)
+
+
 
   if (!selectedDataset) {
     return (
@@ -171,11 +301,24 @@ export function ChartAreaInteractive() {
     return (
       <Card className="@container/card">
         <CardHeader>
-          <CardTitle>Loading Chart Data...</CardTitle>
+          <CardTitle>{selectedDataset.title}</CardTitle>
+          <CardDescription>
+            <span className="hidden @[540px]/card:block">
+              Loading data and forecasts...
+            </span>
+            <span className="@[540px]/card:hidden">
+              Loading...
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex items-center justify-center h-[250px]">
-            <div className="text-muted-foreground">Loading data from {selectedDataset.title}...</div>
+          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="w-8 h-8 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+              <div className="text-muted-foreground text-sm">
+                Loading {selectedDataset.title} data and forecasts...
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -197,17 +340,63 @@ export function ChartAreaInteractive() {
     )
   }
 
-  return (
-    <Card className="@container/card">
-      <CardHeader>
-        <div className="flex flex-col gap-2">
+  // Don't render chart until we have data and analyses loaded
+  // This ensures no flickering between historical-only and historical+forecast views
+  if (!chartData.length || !analyses.length) {
+    return (
+      <Card className="@container/card">
+        <CardHeader>
           <CardTitle>{selectedDataset.title}</CardTitle>
           <CardDescription>
             <span className="hidden @[540px]/card:block">
+              Preparing chart data...
+            </span>
+            <span className="@[540px]/card:hidden">
+              Preparing...
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+              <div className="text-muted-foreground text-sm">
+                Preparing chart...
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="@container/card">
+      <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
+      <CardHeader>
+        <div className="flex flex-col gap-2">
+          <CardTitle className="flex items-center gap-2">
+            {selectedDataset.title}
+            {loading && (
+              <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+            )}
+          </CardTitle>
+          <CardDescription>
+            <span className="hidden @[540px]/card:block">
               {fileName ? `Data from: ${fileName}` : "Dataset information"}
+              {loading && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  • Loading forecasts...
+                </span>
+              )}
             </span>
             <span className="@[540px]/card:hidden">
               {fileName ? fileName : "Dataset info"}
+              {loading && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  • Loading...
+                </span>
+              )}
             </span>
           </CardDescription>
         </div>
@@ -217,19 +406,21 @@ export function ChartAreaInteractive() {
             value={timeRange}
             onValueChange={setTimeRange}
             variant="outline"
+            disabled={loading}
             className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
           >
-            <ToggleGroupItem value="6m">6m</ToggleGroupItem>
-            <ToggleGroupItem value="1y">1y</ToggleGroupItem>
-            <ToggleGroupItem value="3y">3y</ToggleGroupItem>
-            <ToggleGroupItem value="5y">5y</ToggleGroupItem>
-            <ToggleGroupItem value="All">All</ToggleGroupItem>
+            <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
+            <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
+            <ToggleGroupItem value="3y" disabled={loading}>3y</ToggleGroupItem>
+            <ToggleGroupItem value="5y" disabled={loading}>5y</ToggleGroupItem>
+            <ToggleGroupItem value="All" disabled={loading}>All</ToggleGroupItem>
           </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={timeRange} onValueChange={setTimeRange} disabled={loading}>
             <SelectTrigger
               className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
               size="sm"
               aria-label="Select a value"
+              disabled={loading}
             >
               <SelectValue placeholder="1 year" />
             </SelectTrigger>
@@ -253,80 +444,122 @@ export function ChartAreaInteractive() {
           </Select>
         </CardAction>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
+              <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-[400px] w-full"
         >
-          <LineChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-value)"
-                  stopOpacity={1.0}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-value)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                })
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                return value.toLocaleString("en-US", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
-              }}
-            />
-            <Tooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Line
-              dataKey="value"
-              type="natural"
-              stroke="var(--color-value)"
-            />
-            {/* Simple second line for testing */}
-            <Line
-              dataKey="extra"
-              type="natural"
-              stroke="var(--color-extra)"
-              strokeDasharray="5 5"
-            />
-          </LineChart>
+          {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
+          {loading ? (
+            <div className="w-full h-full bg-muted/20 rounded-lg flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
+                <div className="text-muted-foreground text-sm">
+                  Preparing chart...
+                </div>
+              </div>
+            </div>
+          ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={filteredData}>
+              <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "2-digit",
+                  })
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                tickFormatter={(value) => {
+                  return value.toLocaleString("en-US", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })
+                }}
+              />
+              <Tooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      })
+                    }}
+                    indicator="dot"
+                  />
+                }
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                align="left"
+                wrapperStyle={{ paddingTop: '20px' }}
+                onClick={(entry) => {
+                  const seriesName = entry.dataKey as string
+                  setHiddenSeries(prev => {
+                    const newSet = new Set(prev)
+                    if (newSet.has(seriesName)) {
+                      newSet.delete(seriesName)
+                    } else {
+                      newSet.add(seriesName)
+                    }
+                    return newSet
+                  })
+                }}
+              />
+              
+              {/* Historical Data Line */}
+              <Line
+                type="monotone"
+                dataKey="historical"
+                stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
+                strokeWidth={1}
+                dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000", strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 4, fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+                name="Historical Data"
+                strokeDasharray="0" // Solid line for historical data
+                hide={hiddenSeries.has('historical')}
+              />
+              
+              {/* Forecast Lines */}
+              {availableAnalyses.map((analysisId: string, index: number) => {
+                const analysis = analyses.find(a => a.id === analysisId)
+                const color = forecastColors[index % forecastColors.length]
+                const dataKey = `forecast_${analysisId}`
+                
+                return (
+                  <Line
+                    key={analysisId}
+                    type="monotone"
+                    dataKey={dataKey}
+                    stroke={color}
+                    strokeWidth={1}
+                    strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
+                    dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
+                    activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+                    name={`${analysis?.name || `${analysisId}`}`}
+                    hide={hiddenSeries.has(dataKey)}
+                  />
+                )
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+          )}
         </ChartContainer>
       </CardContent>
     </Card>

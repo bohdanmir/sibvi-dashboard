@@ -46,6 +46,12 @@ const data = {
       url: "#",
       icon: IconDashboard,
     },
+    {
+      title: "Datasets",
+      url: "#",
+      icon: IconDatabase,
+      items: [], // Will be populated dynamically
+    },
   ],
   navClouds: [
     {
@@ -136,17 +142,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Create dataset navigation items with click handlers
   const datasetNavItems = availableDatasets.map(dataset => ({
-    ...dataset,
-    icon: IconFolder,
+    title: dataset.title,
+    url: "#",
     onClick: () => setSelectedDataset(dataset),
     isActive: selectedDataset?.title === dataset.title
   }))
 
-  // Combine static navMain with dynamic dataset items
-  const allNavItems = [
-    ...data.navMain,
-    ...datasetNavItems
-  ]
+  // Populate the Datasets menu item with actual datasets
+  const navMainWithDatasets = data.navMain.map(item => {
+    if (item.title === "Datasets") {
+      return {
+        ...item,
+        items: datasetNavItems
+      }
+    }
+    return item
+  })
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -166,8 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={allNavItems} />
-        <NavDocuments items={data.documents} />
+        <NavMain items={navMainWithDatasets} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

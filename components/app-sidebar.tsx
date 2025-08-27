@@ -166,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-1.5 text-sibvi-cyan-50 hover:bg-sibvi-cyan-700 hover:text-sibvi-cyan-50 active:bg-sibvi-cyan-600"
             >
               <a href="#">
                 <img src="/logo-sibvi-2colours.svg" alt="Sibvi Logo" className="h-7 w-auto" />

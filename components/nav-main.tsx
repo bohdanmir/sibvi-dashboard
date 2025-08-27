@@ -20,6 +20,13 @@ export function NavMain({
     icon?: Icon
     onClick?: () => void
     isActive?: boolean
+    items?: {
+      title: string
+      url: string
+      icon?: Icon
+      onClick?: () => void
+      isActive?: boolean
+    }[]
   }[]
 }) {
   return (
@@ -28,11 +35,11 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
-              tooltip="Quick Create"
+              tooltip="Add dataset"
               className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
             >
               <IconCirclePlusFilled />
-              <span>Quick Create</span>
+              <span>Add dataset</span>
             </SidebarMenuButton>
             <Button
               size="icon"
@@ -55,6 +62,25 @@ export function NavMain({
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>
+              {item.items && item.items.length > 0 && (
+                <div className="relative">
+                  <div className="absolute left-4 top-0 bottom-0 w-px bg-border"></div>
+                  <SidebarMenu>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuItem key={subItem.title} className="ml-6">
+                        <SidebarMenuButton 
+                          tooltip={subItem.title}
+                          onClick={subItem.onClick}
+                          className={subItem.isActive ? "bg-accent text-accent-foreground" : ""}
+                        >
+                          {subItem.icon && <subItem.icon />}
+                          <span>{subItem.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </div>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

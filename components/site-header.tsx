@@ -1,7 +1,5 @@
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
 import { useDataset } from "@/lib/dataset-context"
 import {
   Select,
@@ -88,13 +86,7 @@ export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = fals
               </SelectContent>
             </Select>
           </div>
-          <Button 
-            size="sm"
-            className="bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300 active:bg-sibvi-cyan-400 duration-200 ease-linear"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Forecast
-          </Button>
+
         </div>
       </div>
     </header>

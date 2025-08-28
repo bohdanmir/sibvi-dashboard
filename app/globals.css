@@ -223,12 +223,4 @@
 
 }
 
-@layer components {
-  .borderless-card {
-    @apply bg-sibvi-yellow-50 rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] hover:shadow-[0_2px_8px_0_rgba(0,0,0,0.08)] transition-shadow duration-200;
-  }
-  
-  .borderless-content {
-    @apply bg-muted/30 min-h-screen;
-  }
-}
+

@@ -155,14 +155,14 @@ const getColumns = (
       enableHiding: false,
     },
       {
-    accessorKey: "forecast",
-    header: () => <div className="text-right">Forecast</div>,
-    cell: ({ row }) => (
-      <div className="text-right">
-        {row.original.forecast.toLocaleString()}
-      </div>
-    ),
-  },
+        accessorKey: "forecast",
+        header: () => <div className="text-right">Forecast</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {row.original.forecast.toLocaleString()}
+          </div>
+        ),
+      },
   ]
 
   // Add quantile columns based on risk tolerance and available quantiles
@@ -743,9 +743,11 @@ export function DataTable() {
     ? Object.keys(forecastData[0].quantiles).sort((a, b) => parseFloat(a) - parseFloat(b))
     : []
 
+  const columns = getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile, customLowerChartValue, customUpperChartValue, setCustomLowerChartValue, setCustomUpperChartValue);
+  
   const table = useReactTable({
     data: forecastData,
-            columns: getColumns(riskTolerance, quantileKeys, setCustomLowerQuantile, setCustomUpperQuantile, customLowerQuantile, customUpperQuantile, customLowerChartValue, customUpperChartValue, setCustomLowerChartValue, setCustomUpperChartValue),
+    columns: columns,
     state: {
       sorting,
       columnVisibility,

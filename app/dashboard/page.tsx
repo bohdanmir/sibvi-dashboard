@@ -19,7 +19,7 @@ function DashboardContent() {
   const { selectedDataset } = useDataset()
   
   return (
-    <div className="flex flex-1 flex-col borderless-content">
+    <div className="flex flex-1 flex-col bg-background">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 md:gap-6">
           <SectionCards />

@@ -144,22 +144,22 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
         <div className="flex-1 space-y-4">
           {categories.map((category) => (
             <div key={category.id} className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
                   <span className="text-muted-foreground truncate" title={category.name}>
                     {category.name}
                   </span>
                   {/* Add badge showing number of drivers */}
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-[11px] flex-shrink-0 rounded-full border-0 ${
-                      category.driverCount > 0 
-                        ? 'bg-sibvi-yellow-100 text-sibvi-yellow-500' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {category.driverCount}
-                  </Badge>
+                                      <Badge 
+                      variant="secondary" 
+                      className={`text-[11px] flex-shrink-0 rounded-full border-0 mr-3 ${
+                        category.driverCount > 0 
+                          ? 'bg-sibvi-yellow-100 text-sibvi-yellow-500' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {category.driverCount}
+                    </Badge>
                 </div>
                 <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
               </div>

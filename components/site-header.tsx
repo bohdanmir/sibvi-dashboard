@@ -1,6 +1,8 @@
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import { useDataset } from "@/lib/dataset-context"
 
 export function SiteHeader() {
@@ -26,6 +28,10 @@ export function SiteHeader() {
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Forecast
+          </Button>
           <ThemeToggle />
         </div>
       </div>

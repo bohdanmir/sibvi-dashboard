@@ -815,12 +815,7 @@ export function DataTable() {
             </TabsTrigger>
           ))}
         </TabsList>
-        <div className="flex items-center gap-2">
-          <Button size="sm">
-            <IconPlus className="mr-2 h-4 w-4" />
-            Add Forecast
-          </Button>
-        </div>
+
       </div>
       <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6">
         {!initialLoadComplete ? (

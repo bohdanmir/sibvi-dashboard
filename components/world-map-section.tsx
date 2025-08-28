@@ -723,7 +723,7 @@ export function WorldMapSection() {
       </div>
 
       {/* Drivers Card - Right Side (1/3 width) */}
-      <Card className="w-80 h-[400px] md:h-[500px] overflow-y-auto">
+      <Card className="w-80 h-auto min-h-[400px] md:min-h-[500px]">
 
         
         <CardContent>

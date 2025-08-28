@@ -618,8 +618,8 @@ export function WorldMapSection() {
 
   return (
     <div className="w-full flex gap-4">
-      {/* Map Card - Left Side (2/3 width) */}
-      <Card className="flex-1 h-[400px] md:h-[500px] overflow-hidden p-0">
+      {/* Map - Left Side (2/3 width) */}
+      <div className="flex-1 h-[400px] md:h-[500px] overflow-hidden p-0">
         <div className="relative w-full h-full">
           {/* Map Background */}
           <img 
@@ -720,7 +720,7 @@ export function WorldMapSection() {
             ))}
           </TooltipProvider>
         </div>
-      </Card>
+      </div>
 
       {/* Drivers Card - Right Side (1/3 width) */}
       <Card className="w-80 h-[400px] md:h-[500px] overflow-y-auto">

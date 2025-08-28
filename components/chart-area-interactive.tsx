@@ -7,19 +7,6 @@ import { useTheme } from "next-themes"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,6 +17,11 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
 
 // Custom CSS for legend spacing
 const legendStyles = `
@@ -284,59 +276,38 @@ export function ChartAreaInteractive() {
 
   if (!selectedDataset) {
     return (
-      <Card className="@container/card">
-        <CardHeader>
-          <CardTitle>No Dataset Selected</CardTitle>
-        </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex items-center justify-center h-[250px]">
-            <div className="text-muted-foreground">Please select a dataset from the sidebar</div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-[250px]">
+        <div className="text-muted-foreground">Please select a dataset from the sidebar</div>
+      </div>
     )
   }
 
   if (loading) {
     return (
-      <Card className="@container/card">
-        <CardHeader>
-          <CardTitle>{selectedDataset.title}</CardTitle>
-          <CardDescription>
-            <span className="hidden @[540px]/card:block">
-              Loading data and forecasts...
-            </span>
-            <span className="@[540px]/card:hidden">
-              Loading...
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <div className="w-8 h-8 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
-              <div className="text-muted-foreground text-sm">
-                Loading {selectedDataset.title} data and forecasts...
-              </div>
-            </div>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-2xl font-semibold flex items-center gap-2">
+            {selectedDataset.title}
+            {loading && (
+              <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+        </div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <Card className="@container/card">
-        <CardHeader>
-          <CardTitle>Error Loading Data</CardTitle>
-        </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex items-center justify-center h-[250px]">
-            <div className="text-destructive">Error: {error}</div>
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <div className="text-2xl font-semibold mb-4">Error Loading Data</div>
+        <div className="flex items-center justify-center h-[250px]">
+          <div className="text-destructive">Error: {error}</div>
+        </div>
+      </div>
     )
   }
 
@@ -344,70 +315,35 @@ export function ChartAreaInteractive() {
   // This ensures no flickering between historical-only and historical+forecast views
   if (!chartData.length || !analyses.length) {
     return (
-      <Card className="@container/card">
-        <CardHeader>
-          <CardTitle>{selectedDataset.title}</CardTitle>
-          <CardDescription>
-            <span className="hidden @[540px]/card:block">
-              Preparing chart data...
-            </span>
-            <span className="@[540px]/card:hidden">
-              Preparing...
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="aspect-auto h-[400px] w-full bg-muted/20 rounded-lg flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
-              <div className="text-muted-foreground text-sm">
-                Preparing chart...
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-2xl font-semibold">{selectedDataset.title}</div>
+        </div>
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className="@container/card">
+    <div>
       <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
-      <CardHeader>
-        <div className="flex flex-col gap-2">
-          <CardTitle className="flex items-center gap-2">
-            {selectedDataset.title}
-            {loading && (
-              <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
-            )}
-          </CardTitle>
-          <CardDescription>
-            <span className="hidden @[540px]/card:block">
-              {fileName ? `Data from: ${fileName}` : "Dataset information"}
-              {loading && (
-                <span className="ml-2 text-blue-600 dark:text-blue-400">
-                  • Loading forecasts...
-                </span>
-              )}
-            </span>
-            <span className="@[540px]/card:hidden">
-              {fileName ? fileName : "Dataset info"}
-              {loading && (
-                <span className="ml-2 text-blue-600 dark:text-blue-400">
-                  • Loading...
-                </span>
-              )}
-            </span>
-          </CardDescription>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-2xl font-semibold flex items-center gap-2">
+          {selectedDataset.title}
+          {loading && (
+            <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+          )}
         </div>
-        <CardAction>
+                <div className="flex">
           <ToggleGroup
             type="single"
             value={timeRange}
             onValueChange={setTimeRange}
             variant="outline"
             disabled={loading}
-            className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
+            className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]:flex"
           >
             <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
             <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
@@ -417,7 +353,7 @@ export function ChartAreaInteractive() {
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange} disabled={loading}>
             <SelectTrigger
-              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
+              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]:hidden"
               size="sm"
               aria-label="Select a value"
               disabled={loading}
@@ -442,126 +378,119 @@ export function ChartAreaInteractive() {
               </SelectItem>
             </SelectContent>
           </Select>
-        </CardAction>
-      </CardHeader>
-              <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[400px] w-full"
-        >
-          {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
-          {loading ? (
-            <div className="w-full h-full bg-muted/20 rounded-lg flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin mx-auto"></div>
-                <div className="text-muted-foreground text-sm">
-                  Preparing chart...
-                </div>
-              </div>
-            </div>
-          ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={filteredData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
-                tickFormatter={(value) => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "2-digit",
-                  })
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
-                tickFormatter={(value) => {
-                  return value.toLocaleString("en-US", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })
-                }}
-              />
-              <Tooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) => {
-                      return new Date(value).toLocaleDateString("en-US", {
-                        month: "long",
-                        year: "numeric",
-                      })
-                    }}
-                    indicator="dot"
-                  />
-                }
-              />
-              <Legend 
-                verticalAlign="bottom" 
-                align="left"
-                wrapperStyle={{ paddingTop: '20px' }}
-                onClick={(entry) => {
-                  const seriesName = entry.dataKey as string
-                  setHiddenSeries(prev => {
-                    const newSet = new Set(prev)
-                    if (newSet.has(seriesName)) {
-                      newSet.delete(seriesName)
-                    } else {
-                      newSet.add(seriesName)
-                    }
-                    return newSet
-                  })
-                }}
-              />
+        </div>
+      </div>
+      <ChartContainer
+        config={chartConfig}
+        className="aspect-auto h-[400px] w-full"
+      >
+        {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={filteredData}>
+            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                return date.toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                })
+              }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+              tickFormatter={(value) => {
+                return value.toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })
+              }}
+            />
+            <Tooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    return new Date(value).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })
+                  }}
+                  indicator="dot"
+                />
+              }
+            />
+            <Legend 
+              verticalAlign="bottom" 
+              align="left"
+              wrapperStyle={{ paddingTop: '20px' }}
+              onClick={(entry) => {
+                const seriesName = entry.dataKey as string
+                setHiddenSeries(prev => {
+                  const newSet = new Set(prev)
+                  if (newSet.has(seriesName)) {
+                    newSet.delete(seriesName)
+                  } else {
+                    newSet.add(seriesName)
+                  }
+                  return newSet
+                })
+              }}
+            />
+            
+            {/* Historical Data Line */}
+            <Line
+              type="monotone"
+              dataKey="historical"
+              stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
+              strokeWidth={1}
+              dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000", strokeWidth: 1, r: 3 }}
+              activeDot={{ r: 4, fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+              name="Historical Data"
+              strokeDasharray="0" // Solid line for historical data
+              hide={hiddenSeries.has('historical')}
+            />
+            
+            {/* Forecast Lines */}
+            {availableAnalyses.map((analysisId: string, index: number) => {
+              const analysis = analyses.find(a => a.id === analysisId)
+              const color = forecastColors[index % forecastColors.length]
+              const dataKey = `forecast_${analysisId}`
               
-              {/* Historical Data Line */}
-              <Line
-                type="monotone"
-                dataKey="historical"
-                stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
-                strokeWidth={1}
-                dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000", strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 4, fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000" }}
-                name="Historical Data"
-                strokeDasharray="0" // Solid line for historical data
-                hide={hiddenSeries.has('historical')}
-              />
-              
-              {/* Forecast Lines */}
-              {availableAnalyses.map((analysisId: string, index: number) => {
-                const analysis = analyses.find(a => a.id === analysisId)
-                const color = forecastColors[index % forecastColors.length]
-                const dataKey = `forecast_${analysisId}`
-                
-                return (
-                  <Line
-                    key={analysisId}
-                    type="monotone"
-                    dataKey={dataKey}
-                    stroke={color}
-                    strokeWidth={1}
-                    strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
-                    dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
-                    activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
-                    name={`${analysis?.name || `${analysisId}`}`}
-                    hide={hiddenSeries.has(dataKey)}
-                  />
-                )
-              })}
-            </LineChart>
-          </ResponsiveContainer>
-          )}
-        </ChartContainer>
-      </CardContent>
-    </Card>
+              return (
+                <Line
+                  key={analysisId}
+                  type="monotone"
+                  dataKey={dataKey}
+                  stroke={color}
+                  strokeWidth={1}
+                  strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
+                  dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
+                  activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+                  name={`${analysis?.name || `${analysisId}`}`}
+                  hide={hiddenSeries.has(dataKey)}
+                />
+              )
+            })}
+          </LineChart>
+        </ResponsiveContainer>
+        )}
+      </ChartContainer>
+    </div>
   )
 }

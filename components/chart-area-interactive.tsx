@@ -304,14 +304,6 @@ export function ChartAreaInteractive({
   if (loading) {
     return (
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-2xl font-semibold flex items-center gap-2">
-            {selectedDataset.title}
-            {loading && (
-              <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
-            )}
-          </div>
-        </div>
         <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
         </div>
@@ -322,7 +314,6 @@ export function ChartAreaInteractive({
   if (error) {
     return (
       <div>
-        <div className="text-2xl font-semibold mb-4">Error Loading Data</div>
         <div className="flex items-center justify-center h-[250px]">
           <div className="text-destructive">Error: {error}</div>
         </div>
@@ -335,9 +326,6 @@ export function ChartAreaInteractive({
   if (!chartData.length || !analyses.length) {
     return (
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-2xl font-semibold">{selectedDataset.title}</div>
-        </div>
         <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
         </div>
@@ -348,14 +336,7 @@ export function ChartAreaInteractive({
   return (
     <div>
       <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-2xl font-semibold flex items-center gap-2">
-          {selectedDataset.title}
-          {loading && (
-            <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
-          )}
-        </div>
-      </div>
+
       <ChartContainer
         config={chartConfig}
         className="aspect-auto h-[400px] w-full"

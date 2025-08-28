@@ -28,7 +28,10 @@ export function SiteHeader() {
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline">
+          <Button 
+            size="sm"
+            className="bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300 active:bg-sibvi-cyan-400 duration-200 ease-linear"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Forecast
           </Button>

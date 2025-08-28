@@ -154,13 +154,13 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                     {/* Add badge showing number of drivers */}
                     <Badge 
                       variant="secondary" 
-                      className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                      className={`text-[11px] flex-shrink-0 rounded-full border-0 ${
                         category.driverCount > 0 
-                          ? 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary dark:border-primary/30' 
-                          : 'bg-muted text-muted-foreground border-border'
+                          ? 'bg-sibvi-yellow-100 text-sibvi-yellow-500' 
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
-                      {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
+                      {category.driverCount}
                     </Badge>
                   </div>
                   <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
@@ -182,13 +182,13 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                       {/* Add badge showing number of drivers */}
                       <Badge 
                         variant="secondary" 
-                        className={`text-xs px-1.5 py-0.5 flex-shrink-0 ${
+                        className={`text-[11px] flex-shrink-0 rounded-full border-0 ${
                           category.driverCount > 0 
-                            ? 'bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary dark:border-primary/30' 
-                            : 'bg-muted text-muted-foreground border-border'
+                            ? 'bg-sibvi-yellow-100 text-sibvi-yellow-500' 
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
-                        {category.driverCount} driver{category.driverCount !== 1 ? 's' : ''}
+                        {category.driverCount}
                       </Badge>
                     </div>
                     <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>

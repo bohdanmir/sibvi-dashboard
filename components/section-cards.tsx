@@ -22,7 +22,7 @@ export function SectionCards() {
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <div className="@container/card rounded-lg p-4">
+      <div className="@container/card rounded-lg px-0 py-6">
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Dataset</div>
@@ -38,7 +38,7 @@ export function SectionCards() {
           {selectedDataset.description?.description || 'Dataset information not available'}
         </div>
       </div>
-      <div className="@container/card rounded-lg p-4">
+      <div className="@container/card rounded-lg px-0 py-6">
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Data Characteristics</div>
@@ -69,7 +69,7 @@ export function SectionCards() {
           </div>
         </div>
       </div>
-      <div className="@container/card rounded-lg p-4">
+      <div className="@container/card rounded-lg px-0 py-6">
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Business Implications</div>
@@ -89,7 +89,7 @@ export function SectionCards() {
           ))}
         </div>
       </div>
-      <div className="@container/card rounded-lg p-4">
+      <div className="@container/card rounded-lg px-0 py-6">
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Highs/Lows</div>

@@ -140,13 +140,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
         </div>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
-        {/* Summary section showing total drivers */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 dark:bg-muted/30 rounded-lg border border-border/50">
-          <span className="text-sm font-medium text-muted-foreground">Total Drivers</span>
-          <Badge variant="outline" className="text-sm">
-            {categories.reduce((total, cat) => total + cat.driverCount, 0)} total
-          </Badge>
-        </div>
+
         
         <div className="flex-1 space-y-4">
           {isExpanded ? (
@@ -460,7 +454,7 @@ export function DriversComparison() {
                 <DriverCard
                   key={folder.id}
                   title={folder.name}
-                  description={`Analysis folder: ${folder.id}`}
+                  description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
                   categories={categories}
                   overallStatus={mockData.overallStatus}
                   trend={mockData.trend}

@@ -26,7 +26,7 @@ export function SectionCards() {
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Dataset</div>
-            <div className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
               {selectedDataset.title}
             </div>
           </div>
@@ -42,7 +42,7 @@ export function SectionCards() {
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Data Characteristics</div>
-            <div className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
               {selectedDataset.description?.dataCharacteristics?.seasonalitySummary || '--'}
             </div>
           </div>
@@ -73,7 +73,7 @@ export function SectionCards() {
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Business Implications</div>
-            <div className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
               Applications
             </div>
           </div>
@@ -93,7 +93,7 @@ export function SectionCards() {
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <div className="text-sm text-muted-foreground">Highs/Lows</div>
-            <div className="text-lg font-semibold tabular-nums @[250px]/card:text-xl">
+            <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
               Critical Events
             </div>
           </div>

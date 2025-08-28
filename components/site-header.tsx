@@ -50,7 +50,7 @@ export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = fals
               onValueChange={onTimeRangeChange}
               variant="outline"
               disabled={loading}
-              className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]:flex"
+              className="hidden md:flex"
             >
               <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
               <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
@@ -60,7 +60,7 @@ export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = fals
             </ToggleGroup>
             <Select value={timeRange} onValueChange={onTimeRangeChange} disabled={loading}>
               <SelectTrigger
-                className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]:hidden"
+                className="flex w-40 md:hidden"
                 size="sm"
                 aria-label="Select a value"
                 disabled={loading}

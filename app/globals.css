@@ -225,7 +225,8 @@
 
 @layer components {
   .borderless-card {
-    @apply bg-card rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] hover:shadow-[0_2px_8px_0_rgba(0,0,0,0.08)] transition-shadow duration-200;
+    background-color: var(--sibvi-yellow-50);
+    @apply rounded-xl;
   }
   
   .borderless-content {

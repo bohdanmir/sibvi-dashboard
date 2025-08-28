@@ -149,17 +149,15 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                   <span className="text-muted-foreground truncate" title={category.name}>
                     {category.name}
                   </span>
-                  {/* Add badge showing number of drivers */}
-                                      <Badge 
-                      variant="secondary" 
-                      className={`text-[11px] flex-shrink-0 rounded-full border-0 mr-3 ${
-                        category.driverCount > 0 
-                          ? 'bg-sibvi-yellow-100 text-sibvi-yellow-500' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {category.driverCount}
-                    </Badge>
+                                      {/* Add badge showing number of drivers */}
+                    {category.driverCount > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="text-[11px] flex-shrink-0 rounded-full border-0 mr-3 bg-sibvi-yellow-100 text-sibvi-yellow-500"
+                      >
+                        {category.driverCount}
+                      </Badge>
+                    )}
                 </div>
                 <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
               </div>

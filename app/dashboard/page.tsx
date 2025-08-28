@@ -12,10 +12,19 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { DatasetProvider, useDataset } from "@/lib/dataset-context"
+import { useState } from "react"
 
 import data from "./data.json"
 
-function DashboardContent() {
+function DashboardContent({ 
+  timeRange, 
+  setTimeRange,
+  setLoading 
+}: { 
+  timeRange: string; 
+  setTimeRange: (value: string) => void;
+  setLoading: (loading: boolean) => void;
+}) {
   const { selectedDataset } = useDataset()
   
   return (
@@ -24,7 +33,11 @@ function DashboardContent() {
         <div className="flex flex-col gap-4 md:gap-6">
           <SectionCards />
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
+            <ChartAreaInteractive 
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+              onLoadingChange={setLoading}
+            />
           </div>
           <div className="">
            <DriversComparison />
@@ -40,6 +53,9 @@ function DashboardContent() {
 }
 
 export default function Page() {
+  const [timeRange, setTimeRange] = useState("1y")
+  const [loading, setLoading] = useState(false)
+  
   return (
     <DatasetProvider>
       <SidebarProvider
@@ -52,8 +68,16 @@ export default function Page() {
       >
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader />
-          <DashboardContent />
+          <SiteHeader 
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+            loading={loading}
+          />
+          <DashboardContent 
+            timeRange={timeRange} 
+            setTimeRange={setTimeRange}
+            setLoading={setLoading}
+          />
         </SidebarInset>
       </SidebarProvider>
     </DatasetProvider>

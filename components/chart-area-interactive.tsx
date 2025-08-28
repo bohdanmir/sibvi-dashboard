@@ -55,11 +55,19 @@ const forecastColors = [
   "#d084d0", "#ff8042", "#00c49f", "#ffbb28", "#ff6b6b"
 ]
 
-export function ChartAreaInteractive() {
+export function ChartAreaInteractive({ 
+  timeRange, 
+  onTimeRangeChange,
+  onLoadingChange
+}: { 
+  timeRange?: string
+  onTimeRangeChange?: (value: string) => void
+  onLoadingChange?: (loading: boolean) => void
+}) {
   const isMobile = useIsMobile()
   const { selectedDataset } = useDataset()
   const { theme } = useTheme()
-  const [timeRange, setTimeRange] = React.useState("1y")
+  const [localTimeRange, setLocalTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -68,11 +76,22 @@ export function ChartAreaInteractive() {
   const [availableAnalyses, setAvailableAnalyses] = React.useState<string[]>([])
   const [hiddenSeries, setHiddenSeries] = React.useState<Set<string>>(new Set())
 
+  // Use external timeRange if provided, otherwise use local state
+  const currentTimeRange = timeRange || localTimeRange
+  const setCurrentTimeRange = onTimeRangeChange || setLocalTimeRange
+
   React.useEffect(() => {
     if (isMobile) {
-      setTimeRange("6m")
+      setCurrentTimeRange("6m")
     }
-  }, [isMobile])
+  }, [isMobile, setCurrentTimeRange])
+
+  // Notify parent component of loading state changes
+  React.useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loading)
+    }
+  }, [loading, onLoadingChange])
 
   // Load all data (analyses, forecasts, and chart data) when selected dataset changes
   // This prevents the chart from flickering by loading everything in one operation
@@ -225,7 +244,7 @@ export function ChartAreaInteractive() {
   }
 
   const filteredData = chartData.filter((item) => {
-    if (timeRange === "All") return true
+    if (currentTimeRange === "All") return true
     
     const date = new Date(item.date)
     
@@ -241,7 +260,7 @@ export function ChartAreaInteractive() {
     // For historical data, apply time range filtering
     let monthsToSubtract = 12 // Default to 1 year
     
-    switch (timeRange) {
+    switch (currentTimeRange) {
       case "6m":
         monthsToSubtract = 6
         break
@@ -335,49 +354,6 @@ export function ChartAreaInteractive() {
           {loading && (
             <div className="w-4 h-4 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
           )}
-        </div>
-                <div className="flex">
-          <ToggleGroup
-            type="single"
-            value={timeRange}
-            onValueChange={setTimeRange}
-            variant="outline"
-            disabled={loading}
-            className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]:flex"
-          >
-            <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
-            <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
-            <ToggleGroupItem value="3y" disabled={loading}>3y</ToggleGroupItem>
-            <ToggleGroupItem value="5y" disabled={loading}>5y</ToggleGroupItem>
-            <ToggleGroupItem value="All" disabled={loading}>All</ToggleGroupItem>
-          </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange} disabled={loading}>
-            <SelectTrigger
-              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]:hidden"
-              size="sm"
-              aria-label="Select a value"
-              disabled={loading}
-            >
-              <SelectValue placeholder="1 year" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="6m" className="rounded-lg">
-                6 months
-              </SelectItem>
-              <SelectItem value="1y" className="rounded-lg">
-                1 year
-              </SelectItem>
-              <SelectItem value="3y" className="rounded-lg">
-                3 years
-              </SelectItem>
-              <SelectItem value="5y" className="rounded-lg">
-                5 years
-              </SelectItem>
-              <SelectItem value="All" className="rounded-lg">
-                All data
-              </SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
       <ChartContainer

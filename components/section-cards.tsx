@@ -21,7 +21,7 @@ export function SectionCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <div className="@container/card rounded-lg px-0 py-6">
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
@@ -30,7 +30,7 @@ export function SectionCards() {
               {selectedDataset.title}
             </div>
           </div>
-          <Badge variant="outline">
+          <Badge variant="default">
             {selectedDataset.description?.unit || '--'}
           </Badge>
         </div>
@@ -46,7 +46,7 @@ export function SectionCards() {
               {selectedDataset.description?.dataCharacteristics?.seasonalitySummary || '--'}
             </div>
           </div>
-          <Badge variant="outline">
+          <Badge variant="default">
             {selectedDataset.description?.dataType || '--'}
           </Badge>
         </div>
@@ -77,7 +77,7 @@ export function SectionCards() {
               Applications
             </div>
           </div>
-          <Badge variant="outline">
+          <Badge variant="default">
             {selectedDataset.description?.implications?.length || 0} areas
           </Badge>
         </div>
@@ -97,7 +97,7 @@ export function SectionCards() {
               Critical Events
             </div>
           </div>
-          <Badge variant="outline">
+          <Badge variant="default">
             Peak & Valley
           </Badge>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Skeleton } from "@/components/ui/skeleton"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
 import {
   ChartConfig,
@@ -18,6 +19,40 @@ import {
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from "recharts"
 import { fetchDriversData, discoverAnalyses, DriverData, AnalysisInfo } from "@/lib/drivers-data"
 import { useDataset } from "@/lib/dataset-context"
+
+// Stable Analysis Toggle Component
+const AnalysisToggle = React.memo(({ 
+  analyses, 
+  currentAnalysis, 
+  onAnalysisChange 
+}: { 
+  analyses: AnalysisInfo[]
+  currentAnalysis: string | null
+  onAnalysisChange: (analysisId: string) => void
+}) => {
+  return (
+    <div className="absolute top-2 left-2">
+      <ToggleGroup
+        type="single"
+        value={currentAnalysis || ""}
+        onValueChange={onAnalysisChange}
+        variant="outline"
+        className="w-auto"
+      >
+        {analyses.map((analysis) => (
+          <ToggleGroupItem 
+            key={analysis.id} 
+            value={analysis.id}
+            className="px-3 py-1"
+          >
+            {analysis.name}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  )
+})
+AnalysisToggle.displayName = 'AnalysisToggle'
 
 // Icon mapping based on category
 const getCategoryIcon = (category: string) => {
@@ -465,9 +500,9 @@ export function WorldMapSection() {
     setSelectedDriver(driver)
   }
 
-  const handleAnalysisChange = (analysisId: string) => {
+  const handleAnalysisChange = useCallback((analysisId: string) => {
     setCurrentAnalysis(analysisId)
-  }
+  }, [])
 
   const getCurrentAnalysis = () => availableAnalyses.find(a => a.id === currentAnalysis)
 
@@ -516,6 +551,9 @@ export function WorldMapSection() {
       return highest
     }, null as DriverData | null)
   }
+
+  // Memoize analyses to prevent unnecessary re-renders
+  const memoizedAnalyses = useMemo(() => availableAnalyses, [availableAnalyses])
 
   // Don't render if no dataset is selected
   if (!selectedDataset) {
@@ -581,24 +619,6 @@ export function WorldMapSection() {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="w-full flex gap-4">
-        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4"></div>
-            <p>Loading drivers data...</p>
-          </div>
-        </Card>
-        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <p>Select a driver to view details</p>
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
   // Don't render if no analyses are available
   if (availableAnalyses.length === 0) {
     return (
@@ -630,109 +650,133 @@ export function WorldMapSection() {
             style={{ minWidth: '100%', minHeight: '100%' }}
           />
           
-
+          {/* Analysis Navigation - Always visible */}
+          <AnalysisToggle 
+            analyses={memoizedAnalyses} 
+            currentAnalysis={currentAnalysis} 
+            onAnalysisChange={handleAnalysisChange} 
+          />
           
-
+          {/* Loading Overlay - Only when loading */}
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-sibvi-cyan-700">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
+                <p>Loading drivers data...</p>
+              </div>
+            </div>
+          )}
           
-          {/* Analysis Navigation */}
-          <div className="absolute top-2 left-2">
-            <ToggleGroup
-              type="single"
-              value={currentAnalysis || ""}
-              onValueChange={handleAnalysisChange}
-              variant="outline"
-              className="w-auto"
-            >
-              {availableAnalyses.map((analysis) => (
-                <ToggleGroupItem 
-                  key={analysis.id} 
-                  value={analysis.id}
-                  className="text-xs px-3 py-1"
-                >
-                  {analysis.name}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-          
-
-          
-          {/* Driver Icons */}
-          <TooltipProvider>
-            {drivers
-              .filter(driver => {
-                // Filter out drivers with 0 importance
-                let importance = 0
-                if (driver.rawImportance && typeof driver.rawImportance === 'object') {
-                  const importanceObj = driver.rawImportance as any
-                  if (importanceObj.overall && typeof importanceObj.overall === 'object') {
-                    const overall = importanceObj.overall as any
-                    if (typeof overall.mean === 'number') {
-                      importance = overall.mean
+          {/* Driver Icons - Only when not loading */}
+          {!loading && (
+            <TooltipProvider>
+              {drivers
+                .filter(driver => {
+                  // Filter out drivers with 0 importance
+                  let importance = 0
+                  if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+                    const importanceObj = driver.rawImportance as any
+                    if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+                      const overall = importanceObj.overall as any
+                      if (typeof overall.mean === 'number') {
+                        importance = overall.mean
+                      }
                     }
                   }
-                }
-                if (importance === 0) {
-                  importance = driver.importance
-                }
-                return importance > 0
-              })
-              .map((driver, index) => (
-              <Tooltip key={driver.id}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => handleDriverClick(driver)}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none"
-                    style={{
-                      left: `${driver.coordinates.x}%`,
-                      top: `${driver.coordinates.y}%`
-                    }}
-                  >
-                    {(() => {
-                      const size = getBadgeSize(driver, drivers)
-                      return (
-                        <Badge 
-                          variant="outline" 
-                          className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
-                            selectedDriver?.id === driver.id
-                              ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/20 dark:bg-primary/30 dark:ring-primary/30' 
-                              : 'border-border bg-muted hover:border-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/60'
-                          }`}
-                        >
-                          <div className={size.iconSize}>
-                            {getCategoryIcon(driver.category)}
-                          </div>
-                        </Badge>
-                      )
-                    })()}
-                    
+                  if (importance === 0) {
+                    importance = driver.importance
+                  }
+                  return importance > 0
+                })
+                .map((driver, index) => (
+                <Tooltip key={driver.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => handleDriverClick(driver)}
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none"
+                      style={{
+                        left: `${driver.coordinates.x}%`,
+                        top: `${driver.coordinates.y}%`
+                      }}
+                    >
+                      {(() => {
+                        const size = getBadgeSize(driver, drivers)
+                        return (
+                          <Badge 
+                            variant="outline" 
+                            className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
+                              selectedDriver?.id === driver.id
+                                ? 'border-primary bg-primary/20 shadow-lg ring-2 ring-primary/20 dark:bg-primary/30 dark:ring-primary/30' 
+                                : 'border-border bg-muted hover:border-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/60'
+                            }`}
+                          >
+                            <div className={size.iconSize}>
+                              {getCategoryIcon(driver.category)}
+                            </div>
+                          </Badge>
+                        )
+                      })()}
+                      
 
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="top" 
-                  className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
-                >
-                  <div className="space-y-1">
-                    <div className="font-medium">{index + 1}. {driver.name}</div>
-                    <div className="text-muted-foreground">{driver.category}</div>
-                    <div className="text-muted-foreground">
-                      ({driver.coordinates.x.toFixed(1)}%, {driver.coordinates.y.toFixed(1)}%)
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="top" 
+                    className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
+                  >
+                    <div className="space-y-1">
+                      <div className="font-medium">{index + 1}. {driver.name}</div>
+                      <div className="text-muted-foreground">{driver.category}</div>
+                      <div className="text-muted-foreground">
+                        ({driver.coordinates.x.toFixed(1)}%, {driver.coordinates.y.toFixed(1)}%)
+                      </div>
                     </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+          )}
         </div>
       </div>
 
       {/* Drivers Card - Right Side (1/3 width) */}
       <Card className="w-80 h-auto min-h-[400px] md:min-h-[500px]">
-
-        
         <CardContent>
-          {selectedDriver ? (
+          {loading ? (
+            <div className="space-y-4 py-4">
+              {/* Category skeleton */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              
+              {/* Title skeleton */}
+              <Skeleton className="h-6 w-full" />
+              
+              {/* Region skeleton */}
+              <Skeleton className="h-3 w-24" />
+              
+              {/* Importance score skeleton */}
+              <Skeleton className="h-12 w-20" />
+              
+              {/* Badge and lag skeleton */}
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              
+              {/* Chart skeleton */}
+              <div className="space-y-2">
+                <Skeleton className="h-32 w-full" />
+              </div>
+              
+              {/* Description skeleton */}
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            </div>
+          ) : selectedDriver ? (
             <div className="space-y-2">
               {/* Driver Header */}
               <div className="flex flex-col items-start gap-3 pb-1">

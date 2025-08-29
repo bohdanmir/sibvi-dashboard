@@ -739,7 +739,7 @@ export function WorldMapSection() {
                   {selectedDriver.name.length > 60 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="font-normal font-mono text-foreground text-base line-clamp-2 cursor-help">{selectedDriver.name}</h4>
+                        <h4 className="font-normal font-mono text-foreground text-lg line-clamp-2 cursor-help">{selectedDriver.name}</h4>
                       </TooltipTrigger>
                       <TooltipContent 
                         side="top" 
@@ -749,7 +749,7 @@ export function WorldMapSection() {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <h4 className="font-normal font-mono text-foreground text-base">{selectedDriver.name}</h4>
+                    <h4 className="font-normal font-mono text-foreground text-lg">{selectedDriver.name}</h4>
                   )}
 
                   <p className="text-xs text-muted-foreground">{selectedDriver.region.filter(region => region !== 'World').join(' → ')}</p>
@@ -781,8 +781,11 @@ export function WorldMapSection() {
               {/* Direction and Lag Information */}
               <div className="flex items-center justify-between">
                 <Badge 
-                  variant={selectedDriver.direction > 0 ? "default" : "destructive"}
-                  className="flex items-center gap-2"
+                  className={`flex items-center gap-2 ${
+                    selectedDriver.direction > 0 
+                      ? 'bg-sibvi-green-500 text-white' 
+                      : 'bg-sibvi-red-400 text-white'
+                  }`}
                 >
                   {selectedDriver.direction > 0 ? (
                     <TrendingUp className="h-3 w-3" />
@@ -864,7 +867,7 @@ export function WorldMapSection() {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm leading-relaxed">
                 This driver shows {selectedDriver.direction > 0 ? 'positive' : 'negative'} correlation 
                 with the target variable, with an importance score of {selectedDriver.importance.toFixed(1)}% 
                 and a lag of {selectedDriver.lag}.

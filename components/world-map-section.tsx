@@ -60,90 +60,90 @@ const getCategoryIcon = (category: string) => {
   
   // Housing & Real Estate
   if (categoryLower.includes('housing') || categoryLower.includes('real estate') || categoryLower.includes('residential') || categoryLower.includes('property')) 
-    return <Home className="h-full w-full text-sibvi-cyan-50" />
+    return <Home className="h-full w-full" />
   
   // Construction & Infrastructure
   if (categoryLower.includes('construction') || categoryLower.includes('infrastructure') || categoryLower.includes('building') || categoryLower.includes('development') || categoryLower.includes('engineering') || categoryLower.includes('contracting')) 
-    return <HardHat className="h-full w-full text-sibvi-cyan-50" />
+    return <HardHat className="h-full w-full" />
   
   // Climate & Environment
   if (categoryLower.includes('climate') || categoryLower.includes('weather') || categoryLower.includes('environment') || categoryLower.includes('temperature') || categoryLower.includes('global warming') || categoryLower.includes('pollution') || categoryLower.includes('sustainability') || categoryLower.includes('green')) 
-    return <ThermometerSun className="h-full w-full text-sibvi-cyan-50" />
+    return <ThermometerSun className="h-full w-full" />
   
   // Supply Chain & Trade
   if (categoryLower.includes('supply') || categoryLower.includes('trade') || categoryLower.includes('logistics') || categoryLower.includes('transport')) 
-    return <Truck className="h-full w-full text-sibvi-cyan-50" />
+    return <Truck className="h-full w-full" />
   
   // Energy & Power
   if (categoryLower.includes('energy') || categoryLower.includes('power') || categoryLower.includes('electricity')) 
-    return <Zap className="h-full w-full text-sibvi-cyan-50" />
+    return <Zap className="h-full w-full" />
   
   // Labor Market & Employment
   if (categoryLower.includes('labour') || categoryLower.includes('employment') || categoryLower.includes('jobs') || categoryLower.includes('hiring') || categoryLower.includes('unemployment') || categoryLower.includes('wages') || categoryLower.includes('salary') || categoryLower.includes('job market') || categoryLower.includes('workforce')) 
-    return <IdCardLanyard className="h-full w-full text-sibvi-cyan-50" />
+    return <IdCardLanyard className="h-full w-full" />
   
   // Workforce & Human Resources
   if (categoryLower.includes('workforce') || categoryLower.includes('hr') || categoryLower.includes('human resources') || categoryLower.includes('personnel') || categoryLower.includes('staffing') || categoryLower.includes('talent') || categoryLower.includes('recruitment')) 
-    return <Users className="h-full w-full text-sibvi-cyan-50" />
+    return <Users className="h-full w-full" />
   
   // Manufacturing & Production
   if (categoryLower.includes('volume') || categoryLower.includes('production') || categoryLower.includes('manufacturing') || categoryLower.includes('industry')) 
-    return <Factory className="h-full w-full text-sibvi-cyan-50" />
+    return <Factory className="h-full w-full" />
   
   // Finance & Economics
   if (categoryLower.includes('price') || categoryLower.includes('inflation') || categoryLower.includes('finance') || categoryLower.includes('economy') || categoryLower.includes('gdp')) 
-    return <DollarSign className="h-full w-full text-sibvi-cyan-50" />
+    return <DollarSign className="h-full w-full" />
   
   // Data & Analytics
   if (categoryLower.includes('data') || categoryLower.includes('analytics') || categoryLower.includes('statistics')) 
-    return <Database className="h-full w-full text-sibvi-cyan-50" />
+    return <Database className="h-full w-full" />
   
   // Global & International
   if (categoryLower.includes('global') || categoryLower.includes('international') || categoryLower.includes('world')) 
-    return <Globe className="h-full w-full text-sibvi-cyan-50" />
+    return <Globe className="h-full w-full" />
   
   // Chemicals & Pharmaceuticals
   if (categoryLower.includes('chemical') || categoryLower.includes('pharmaceutical') || categoryLower.includes('medicine') || categoryLower.includes('drug') || categoryLower.includes('compound')) 
-    return <FlaskConical className="h-full w-full text-sibvi-cyan-50" />
+    return <FlaskConical className="h-full w-full" />
   
   // Food & Agriculture
   if (categoryLower.includes('food') || categoryLower.includes('processed') || categoryLower.includes('agriculture') || categoryLower.includes('farming') || categoryLower.includes('crop') || categoryLower.includes('grain') || categoryLower.includes('dairy') || categoryLower.includes('meat')) 
-    return <Utensils className="h-full w-full text-sibvi-cyan-50" />
+    return <Utensils className="h-full w-full" />
   
   // Income & Wealth
   if (categoryLower.includes('income') || categoryLower.includes('wealth') || categoryLower.includes('salary') || categoryLower.includes('wage') || categoryLower.includes('earnings') || categoryLower.includes('revenue')) 
-    return <Wallet className="h-full w-full text-sibvi-cyan-50" />
+    return <Wallet className="h-full w-full" />
   
   // Consumption & Retail
   if (categoryLower.includes('consumption') || categoryLower.includes('retail') || categoryLower.includes('shopping') || categoryLower.includes('spending') || categoryLower.includes('purchases') || categoryLower.includes('demand')) 
-    return <ShoppingCart className="h-full w-full text-sibvi-cyan-50" />
+    return <ShoppingCart className="h-full w-full" />
   
   // Living Conditions & Quality of Life
   if (categoryLower.includes('living') || categoryLower.includes('quality') || categoryLower.includes('wellbeing') || categoryLower.includes('health') || categoryLower.includes('social') || categoryLower.includes('welfare') || categoryLower.includes('happiness')) 
-    return <Heart className="h-full w-full text-sibvi-cyan-50" />
+    return <Heart className="h-full w-full" />
   
   // Minerals & Mining
   if (categoryLower.includes('mineral') || categoryLower.includes('mining') || categoryLower.includes('ore') || categoryLower.includes('metal') || categoryLower.includes('coal') || categoryLower.includes('gold') || categoryLower.includes('copper') || categoryLower.includes('iron') || categoryLower.includes('aluminum') || categoryLower.includes('lithium')) 
-    return <Mountain className="h-full w-full text-sibvi-cyan-50" />
+    return <Mountain className="h-full w-full" />
   
   // Textiles & Fibers
   if (categoryLower.includes('textile') || categoryLower.includes('fiber') || categoryLower.includes('fabric') || categoryLower.includes('cloth') || categoryLower.includes('cotton') || categoryLower.includes('wool') || categoryLower.includes('silk') || categoryLower.includes('synthetic') || categoryLower.includes('garment') || categoryLower.includes('apparel')) 
-    return <Shirt className="h-full w-full text-sibvi-cyan-50" />
+    return <Shirt className="h-full w-full" />
   
   // Crafts & Artisan
   if (categoryLower.includes('craft') || categoryLower.includes('artisan') || categoryLower.includes('handmade') || categoryLower.includes('artistic') || categoryLower.includes('creative') || categoryLower.includes('design') || categoryLower.includes('pottery') || categoryLower.includes('woodwork') || categoryLower.includes('jewelry')) 
-    return <Drill className="h-full w-full text-sibvi-cyan-50" />
+    return <Drill className="h-full w-full" />
   
   // Population & Demographics
   if (categoryLower.includes('population') || categoryLower.includes('demographic') || categoryLower.includes('census') || categoryLower.includes('birth') || categoryLower.includes('death') || categoryLower.includes('migration') || categoryLower.includes('immigration') || categoryLower.includes('age') || categoryLower.includes('gender') || categoryLower.includes('ethnicity')) 
-    return <Users2 className="h-full w-full text-sibvi-cyan-50" />
+    return <Users2 className="h-full w-full" />
   
   // Market Indices & Trading
   if (categoryLower.includes('market') || categoryLower.includes('index') || categoryLower.includes('indices') || categoryLower.includes('trading') || categoryLower.includes('stock') || categoryLower.includes('equity') || categoryLower.includes('s&p') || categoryLower.includes('nasdaq') || categoryLower.includes('dow') || categoryLower.includes('ftse') || categoryLower.includes('candlestick')) 
-    return <ChartCandlestick className="h-full w-full text-sibvi-cyan-50" />
+    return <ChartCandlestick className="h-full w-full" />
   
   // Default fallback
-  return <BarChart3 className="h-full w-full text-sibvi-cyan-50" />
+  return <BarChart3 className="h-full w-full" />
 }
 
 export function WorldMapSection() {
@@ -302,10 +302,10 @@ export function WorldMapSection() {
     const sizeIndex = Math.floor(normalizedImportance * 4) // 0, 1, 2, 3, 4
     
     const sizes = [
-      { width: 'w-6', height: 'h-6', iconSize: 'w-2 h-2', borderWidth: 'border-2 border-background' },      // 24px - Very small
-      { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border-2 border-background' },    // 32px - Small
-      { width: 'w-10', height: 'h-10', iconSize: 'w-4 h-4', borderWidth: 'border-3 border-background' },  // 40px - Medium
-      { width: 'w-12', height: 'h-12', iconSize: 'w-5 h-5', borderWidth: 'border-3 border-background' },  // 48px - Large
+      { width: 'w-8', height: 'h-8', iconSize: 'w-4 h-4', borderWidth: 'border-2 border-background' },      // 24px - Very small
+      { width: 'w-8', height: 'h-8', iconSize: 'w-4 h-4', borderWidth: 'border-2 border-background' },    // 32px - Small
+      { width: 'w-12', height: 'h-12', iconSize: 'w-4 h-4', borderWidth: 'border-3 border-background' },  // 40px - Medium
+      { width: 'w-12', height: 'h-12', iconSize: 'w-6 h-6', borderWidth: 'border-3 border-background' },  // 48px - Large
       { width: 'w-14', height: 'h-14', iconSize: 'w-6 h-6', borderWidth: 'border-3 border-background' }   // 56px - Very large
     ]
     
@@ -706,8 +706,8 @@ export function WorldMapSection() {
                             variant="outline" 
                             className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
                               selectedDriver?.id === driver.id
-                                ? 'bg-sibvi-cyan-400 shadow-lg ring-1 ring-sibvi-cyan-200 dark:bg-primary/30 dark:ring-primary/30' 
-                                : 'bg-sibvi-cyan-700 hover:-sibvi-cyan-800 dark:hover:bg-muted/60'
+                                ? 'bg-sibvi-yellow-100 shadow-lg ring-2 ring-sibvi-yellow-600 dark:bg-primary/30 dark:ring-primary/30 text-sibvi-yellow-600' 
+                                : 'bg-sibvi-yellow-50 hover:-sibvi-cyan-800 dark:hover:bg-muted/60 text-sibvi-yellow-600'
                             }`}
                           >
                             <div className={size.iconSize}>

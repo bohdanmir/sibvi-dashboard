@@ -804,10 +804,10 @@ export function WorldMapSection() {
                   console.log('Chart data being passed to LineChart:', chartData)
                   return null
                 })()}
-                <ChartContainer config={driverChartConfig} className="h-46 w-full -ml-2 mt-2 mb-2">
+                <ChartContainer config={driverChartConfig} className="h-46 w-full -ml-2">
                   <LineChart 
                     data={generateDriverChartData(selectedDriver)}
-                    margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                    margin={{ left: 8, right: 8, top: 8, bottom: -20 }}
                   >
                     <CartesianGrid vertical={false} />
                     <XAxis
@@ -825,6 +825,7 @@ export function WorldMapSection() {
                       tickMargin={0}
                       minTickGap={0}
                       width={0}
+                      domain={['dataMin', 'dataMax']}
                     />
                     <RechartsTooltip
                       cursor={false}

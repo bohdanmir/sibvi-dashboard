@@ -827,7 +827,7 @@ export function DataTable() {
         </ToggleGroup>
 
       </div>
-      <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6">
+      <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6 pb-6">
         {!initialLoadComplete ? (
           <div className="flex items-center justify-center p-8">
             <IconLoader className="mr-2 h-4 w-4 animate-spin" />
@@ -838,7 +838,7 @@ export function DataTable() {
             <p className="text-muted-foreground">No forecast data available for this analysis</p>
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-md border bg-gray-50">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

@@ -728,9 +728,9 @@ export function WorldMapSection() {
         
         <CardContent>
           {selectedDriver ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {/* Driver Header */}
-              <div className="flex flex-col items-start gap-3 pb-3">
+              <div className="flex flex-col items-start gap-3 pb-1">
                 <div className="flex-1 space-y-2">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(selectedDriver.category)}</span>
@@ -775,7 +775,7 @@ export function WorldMapSection() {
                     return importance > 0 ? `${importance}%` : `${selectedDriver.importance.toFixed(1)}%`
                   })()}
                 </div>
-                <div className="text-xs text-muted-foreground">Importance Score</div>
+                {/* <div className="text-xs text-muted-foreground">Importance Score</div> */}
               </div>
 
               {/* Direction and Lag Information */}
@@ -804,36 +804,27 @@ export function WorldMapSection() {
                   console.log('Chart data being passed to LineChart:', chartData)
                   return null
                 })()}
-                <ChartContainer config={driverChartConfig} className="h-60 w-full -ml-4">
+                <ChartContainer config={driverChartConfig} className="h-46 w-full -ml-2 mt-2 mb-2">
                   <LineChart 
                     data={generateDriverChartData(selectedDriver)}
-                    margin={{ left: 10, right: 0, top: 5, bottom: 5 }}
+                    margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
                   >
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="date"
                       tickLine={false}
                       axisLine={false}
-                      tickMargin={4}
-                      minTickGap={20}
-                      tickFormatter={(value) => {
-                        const date = new Date(value)
-                        return date.toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "2-digit",
-                        })
-                      }}
+                      tick={false}
+                      tickMargin={0}
+                      minTickGap={0}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
+                      tick={false}
                       tickMargin={0}
-                      minTickGap={20}
-                      domain={[0, 1]}
-                      tickFormatter={(value) => {
-                        return value.toFixed(2)
-                      }}
-                      width={40}
+                      minTickGap={0}
+                      width={0}
                     />
                     <RechartsTooltip
                       cursor={false}

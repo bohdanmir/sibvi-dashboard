@@ -730,28 +730,29 @@ export function WorldMapSection() {
           {selectedDriver ? (
             <div className="space-y-4">
               {/* Driver Header */}
-              <div className="flex flex-col items-start gap-3 pb-3 border-b">
+              <div className="flex flex-col items-start gap-3 pb-3">
                 <div className="flex-1 space-y-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(selectedDriver.category)}</span>
+                    <span className="line-clamp-1">{selectedDriver.category}</span>
+                  </p>
                   {selectedDriver.name.length > 60 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="font-normal font-mono text-foreground text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
+                        <h4 className="font-normal font-mono text-foreground text-base line-clamp-2 cursor-help">{selectedDriver.name}</h4>
                       </TooltipTrigger>
                       <TooltipContent 
                         side="top" 
                         className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
                       >
-                        <div className="font-medium">{selectedDriver.name}</div>
+                        <div className="font-normal font-mono">{selectedDriver.name}</div>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <h4 className="font-bold font-mono text-foreground text-base">{selectedDriver.name}</h4>
+                    <h4 className="font-normal font-mono text-foreground text-base">{selectedDriver.name}</h4>
                   )}
-                  <p className="text-xs text-primary flex items-center gap-1">
-                    <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(selectedDriver.category)}</span>
-                    {selectedDriver.category}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{selectedDriver.region.join(' > ')}</p>
+
+                  <p className="text-xs text-muted-foreground">{selectedDriver.region.filter(region => region !== 'World').join(' → ')}</p>
                 </div>
               </div>
 

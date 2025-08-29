@@ -52,11 +52,11 @@ export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = fals
               disabled={loading}
               className="hidden md:flex"
             >
-              <ToggleGroupItem value="6m" disabled={loading}>6m</ToggleGroupItem>
-              <ToggleGroupItem value="1y" disabled={loading}>1y</ToggleGroupItem>
-              <ToggleGroupItem value="3y" disabled={loading}>3y</ToggleGroupItem>
-              <ToggleGroupItem value="5y" disabled={loading}>5y</ToggleGroupItem>
-              <ToggleGroupItem value="All" disabled={loading}>All</ToggleGroupItem>
+              <ToggleGroupItem value="6m" disabled={loading} className="px-3 py-2">6m</ToggleGroupItem>
+              <ToggleGroupItem value="1y" disabled={loading} className="px-3 py-2">1y</ToggleGroupItem>
+              <ToggleGroupItem value="3y" disabled={loading} className="px-3 py-2">3y</ToggleGroupItem>
+              <ToggleGroupItem value="5y" disabled={loading} className="px-3 py-2">5y</ToggleGroupItem>
+              <ToggleGroupItem value="All" disabled={loading} className="px-3 py-2">All</ToggleGroupItem>
             </ToggleGroup>
             <Select value={timeRange} onValueChange={onTimeRangeChange} disabled={loading}>
               <SelectTrigger

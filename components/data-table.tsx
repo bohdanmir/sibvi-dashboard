@@ -85,6 +85,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group"
 import { useDataset } from "@/lib/dataset-context"
 
 // New schema for forecast data
@@ -808,13 +812,19 @@ export function DataTable() {
             ))}
           </SelectContent>
         </Select>
-        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
+        <ToggleGroup
+          type="single"
+          value={selectedAnalysis}
+          onValueChange={setSelectedAnalysis}
+          variant="outline"
+          className="hidden @4xl/main:flex"
+        >
           {analyses.map((analysis) => (
-            <TabsTrigger key={analysis.id} value={analysis.id}>
+            <ToggleGroupItem key={analysis.id} value={analysis.id} className="px-3 py-2">
               {analysis.name || `Analysis ${analysis.id}`}
-            </TabsTrigger>
+            </ToggleGroupItem>
           ))}
-        </TabsList>
+        </ToggleGroup>
 
       </div>
       <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6">

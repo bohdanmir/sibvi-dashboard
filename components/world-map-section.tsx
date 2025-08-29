@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
 import {
   ChartConfig,
@@ -635,19 +636,23 @@ export function WorldMapSection() {
           
           {/* Analysis Navigation */}
           <div className="absolute top-2 left-2">
-            <Tabs value={currentAnalysis || ""} onValueChange={handleAnalysisChange} className="w-auto">
-              <TabsList className="w-auto">
-                {availableAnalyses.map((analysis) => (
-                  <TabsTrigger 
-                    key={analysis.id} 
-                    value={analysis.id}
-                    className="text-xs px-3 py-1"
-                  >
-                    {analysis.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <ToggleGroup
+              type="single"
+              value={currentAnalysis || ""}
+              onValueChange={handleAnalysisChange}
+              variant="outline"
+              className="w-auto"
+            >
+              {availableAnalyses.map((analysis) => (
+                <ToggleGroupItem 
+                  key={analysis.id} 
+                  value={analysis.id}
+                  className="text-xs px-3 py-1"
+                >
+                  {analysis.name}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
           
 

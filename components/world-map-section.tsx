@@ -731,19 +731,11 @@ export function WorldMapSection() {
             <div className="space-y-4">
               {/* Driver Header */}
               <div className="flex flex-col items-start gap-3 pb-3 border-b">
-                <Badge 
-                  variant="outline" 
-                  className="w-10 h-10 rounded-full p-0 border-border bg-muted"
-                >
-                  <div className="w-5 h-5">
-                    {getCategoryIcon(selectedDriver.category)}
-                  </div>
-                </Badge>
                 <div className="flex-1 space-y-2">
                   {selectedDriver.name.length > 60 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <h4 className="font-bold text-foreground text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
+                        <h4 className="font-normal font-mono text-foreground text-base line-clamp-3 cursor-help">{selectedDriver.name}</h4>
                       </TooltipTrigger>
                       <TooltipContent 
                         side="top" 
@@ -753,7 +745,7 @@ export function WorldMapSection() {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <h4 className="font-bold text-foreground text-base">{selectedDriver.name}</h4>
+                    <h4 className="font-bold font-mono text-foreground text-base">{selectedDriver.name}</h4>
                   )}
                   <p className="text-xs text-primary flex items-center gap-1">
                     <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(selectedDriver.category)}</span>

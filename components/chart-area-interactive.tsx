@@ -76,6 +76,11 @@ export function ChartAreaInteractive({
   const [availableAnalyses, setAvailableAnalyses] = React.useState<string[]>([])
   const [hiddenSeries, setHiddenSeries] = React.useState<Set<string>>(new Set())
 
+  // Pin state and functionality
+  const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage
+  const [isDraggingPin, setIsDraggingPin] = React.useState(false)
+  const chartRef = React.useRef<HTMLDivElement>(null)
+
   // Use external timeRange if provided, otherwise use local state
   const currentTimeRange = timeRange || localTimeRange
   const setCurrentTimeRange = onTimeRangeChange || setLocalTimeRange
@@ -92,6 +97,54 @@ export function ChartAreaInteractive({
       onLoadingChange(loading)
     }
   }, [loading, onLoadingChange])
+
+  // Handle pin dragging
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingPin || !chartRef.current) return
+
+      const chartRect = chartRef.current.getBoundingClientRect()
+      const chartLeft = chartRect.left
+      const chartWidth = chartRect.width
+
+      // Calculate relative position within chart
+      const relativeX = e.clientX - chartLeft
+      const percentage = Math.max(0, Math.min(100, (relativeX / chartWidth) * 100))
+
+      // Snap to monthly steps (assuming 12 months = 100%, so each month is ~8.33%)
+      const monthStep = 100 / 12
+      const snappedPercentage = Math.round(percentage / monthStep) * monthStep
+
+      setPinPosition(snappedPercentage)
+    }
+
+    const handleMouseUp = () => {
+      setIsDraggingPin(false)
+    }
+
+    if (isDraggingPin) {
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [isDraggingPin])
+
+  // Start pin dragging
+  const startPinDrag = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsDraggingPin(true)
+  }
+
+  // Get current month label for pin position
+  const getPinMonthLabel = () => {
+    const monthIndex = Math.round((pinPosition / 100) * 11) // 0-11 months
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return months[monthIndex] || "Jan"
+  }
 
   // Load all data (analyses, forecasts, and chart data) when selected dataset changes
   // This prevents the chart from flickering by loading everything in one operation
@@ -310,8 +363,6 @@ export function ChartAreaInteractive({
 
   console.log('Filtered data:', filteredData)
 
-
-
   if (!selectedDataset) {
     return (
       <div className="flex items-center justify-center h-[250px]">
@@ -404,9 +455,34 @@ export function ChartAreaInteractive({
         </div>
       </div>
 
+      {/* Draggable Pin */}
+      <div className="relative mb-2">
+        {/* Pin Element */}
+        <div 
+          className="absolute top-0 bottom-0 h-92 w-0.5 bg-blue-500 cursor-ew-resize z-10"
+          style={{ left: `${pinPosition}%` }}
+          onMouseDown={startPinDrag}
+        >
+          {/* Pin Head */}
+          <div 
+            className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-grab active:cursor-grabbing"
+            onMouseDown={startPinDrag}
+          />
+          
+          {/* Pin Label */}
+          <div 
+            className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg"
+            style={{ left: '50%' }}
+          >
+            {getPinMonthLabel()}
+          </div>
+        </div>
+      </div>
+
       <ChartContainer
         config={chartConfig}
         className="aspect-auto h-[400px] w-full"
+        ref={chartRef}
       >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
@@ -480,31 +556,6 @@ export function ChartAreaInteractive({
               }}
             />
             
-            {/* Historical Data Line */}
-            <Line
-              key="historical"
-              type="monotone"
-              dataKey="historical"
-              stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
-              strokeWidth={1}
-              dot={(props) => {
-                const { index } = props
-                const historicalDataPoints = filteredData.filter(item => item.historical !== undefined)
-                if (historicalDataPoints.length > 0 && index === filteredData.indexOf(historicalDataPoints[historicalDataPoints.length - 1])) {
-                  return <circle cx={props.cx} cy={props.cy} r={3} fill={theme === "dark" ? "#ffffff" : "#000000"} />
-                }
-                return <></>
-              }}
-              activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
-              name="Historical Data"
-              strokeDasharray="0" // Solid line for historical data
-              hide={hiddenSeries.has('historical')}
-              isAnimationActive={true}
-              animationDuration={800}
-              animationBegin={0}
-              animationEasing="ease-out"
-            />
-            
             {/* Forecast Lines */}
             {availableAnalyses.map((analysisId: string, index: number) => {
               const analysis = analyses.find(a => a.id === analysisId)
@@ -537,6 +588,31 @@ export function ChartAreaInteractive({
                 />
               )
             })}
+            
+            {/* Historical Data Line */}
+            <Line
+              key="historical"
+              type="monotone"
+              dataKey="historical"
+              stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
+              strokeWidth={1}
+              dot={(props) => {
+                const { index } = props
+                const historicalDataPoints = filteredData.filter(item => item.historical !== undefined)
+                if (historicalDataPoints.length > 0 && index === filteredData.indexOf(historicalDataPoints[historicalDataPoints.length - 1])) {
+                  return <circle cx={props.cx} cy={props.cy} r={3} fill={theme === "dark" ? "#ffffff" : "#000000"} />
+                }
+                return <></>
+              }}
+              activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
+              name="Historical Data"
+              strokeDasharray="0" // Solid line for historical data
+              hide={hiddenSeries.has('historical')}
+              isAnimationActive={true}
+              animationDuration={800}
+              animationBegin={0}
+              animationEasing="ease-out"
+            />
           </LineChart>
         </ResponsiveContainer>
         )}

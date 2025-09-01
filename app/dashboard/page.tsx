@@ -68,11 +68,7 @@ export default function Page() {
       >
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader 
-            timeRange={timeRange}
-            onTimeRangeChange={setTimeRange}
-            loading={loading}
-          />
+          <SiteHeader />
           <DashboardContent 
             timeRange={timeRange} 
             setTimeRange={setTimeRange}

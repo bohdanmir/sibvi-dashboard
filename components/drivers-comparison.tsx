@@ -131,7 +131,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
               data={getForecastSparklineData()}
               width={60}
               height={24}
-              strokeWidth={1.5}
+              strokeWidth={1}
               showEndDot={true}
               strokeColor={getSparklineColor(overallStatus, analysisId, analysisIndex)}
               fillColor={getSparklineColor(overallStatus, analysisId, analysisIndex)}

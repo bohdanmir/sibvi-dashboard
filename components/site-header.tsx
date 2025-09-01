@@ -1,25 +1,12 @@
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useDataset } from "@/lib/dataset-context"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
 
 interface SiteHeaderProps {
-  timeRange?: string
-  onTimeRangeChange?: (value: string) => void
-  loading?: boolean
+  // No props needed for site header
 }
 
-export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = false }: SiteHeaderProps) {
+export function SiteHeader({}: SiteHeaderProps) {
   const { selectedDataset } = useDataset()
 
   return (
@@ -42,51 +29,7 @@ export function SiteHeader({ timeRange = "1y", onTimeRangeChange, loading = fals
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          {/* Chart Scale Controls */}
-          <div className="flex">
-            <ToggleGroup
-              type="single"
-              value={timeRange}
-              onValueChange={onTimeRangeChange}
-              variant="outline"
-              disabled={loading}
-              className="hidden md:flex"
-            >
-              <ToggleGroupItem value="6m" disabled={loading} className="px-3 py-2">6m</ToggleGroupItem>
-              <ToggleGroupItem value="1y" disabled={loading} className="px-3 py-2">1y</ToggleGroupItem>
-              <ToggleGroupItem value="3y" disabled={loading} className="px-3 py-2">3y</ToggleGroupItem>
-              <ToggleGroupItem value="5y" disabled={loading} className="px-3 py-2">5y</ToggleGroupItem>
-              <ToggleGroupItem value="All" disabled={loading} className="px-3 py-2">All</ToggleGroupItem>
-            </ToggleGroup>
-            <Select value={timeRange} onValueChange={onTimeRangeChange} disabled={loading}>
-              <SelectTrigger
-                className="flex w-40 md:hidden"
-                size="sm"
-                aria-label="Select a value"
-                disabled={loading}
-              >
-                <SelectValue placeholder="1 year" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="6m" className="rounded-lg">
-                  6 months
-                </SelectItem>
-                <SelectItem value="1y" className="rounded-lg">
-                  1 year
-                </SelectItem>
-                <SelectItem value="3y" className="rounded-lg">
-                  3 years
-                </SelectItem>
-                <SelectItem value="5y" className="rounded-lg">
-                  5 years
-                </SelectItem>
-                <SelectItem value="All" className="rounded-lg">
-                  All data
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+          {/* Chart Scale Controls moved to chart component */}
         </div>
       </div>
     </header>

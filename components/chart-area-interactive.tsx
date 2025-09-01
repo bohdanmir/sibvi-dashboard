@@ -337,6 +337,54 @@ export function ChartAreaInteractive({
     <div>
       <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
 
+      {/* Chart Header with Scale Controls */}
+      <div className="flex items-center justify-start mb-4">
+        {/* Chart Scale Controls */}
+        <div className="flex">
+          <ToggleGroup
+            type="single"
+            value={currentTimeRange}
+            onValueChange={setCurrentTimeRange}
+            variant="outline"
+            disabled={loading}
+            className="hidden md:flex"
+          >
+            <ToggleGroupItem value="6m" disabled={loading} className="px-3 py-2">6m</ToggleGroupItem>
+            <ToggleGroupItem value="1y" disabled={loading} className="px-3 py-2">1y</ToggleGroupItem>
+            <ToggleGroupItem value="3y" disabled={loading} className="px-3 py-2">3y</ToggleGroupItem>
+            <ToggleGroupItem value="5y" disabled={loading} className="px-3 py-2">5y</ToggleGroupItem>
+            <ToggleGroupItem value="All" disabled={loading} className="px-3 py-2">All</ToggleGroupItem>
+          </ToggleGroup>
+          <Select value={currentTimeRange} onValueChange={setCurrentTimeRange} disabled={loading}>
+            <SelectTrigger
+              className="flex w-40 md:hidden"
+              size="sm"
+              aria-label="Select a value"
+              disabled={loading}
+            >
+              <SelectValue placeholder="1 year" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="6m" className="rounded-lg">
+                6 months
+              </SelectItem>
+              <SelectItem value="1y" className="rounded-lg">
+                1 year
+              </SelectItem>
+              <SelectItem value="3y" className="rounded-lg">
+                3 years
+              </SelectItem>
+              <SelectItem value="5y" className="rounded-lg">
+                5 years
+              </SelectItem>
+              <SelectItem value="All" className="rounded-lg">
+                All data
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <ChartContainer
         config={chartConfig}
         className="aspect-auto h-[400px] w-full"

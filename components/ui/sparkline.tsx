@@ -12,6 +12,7 @@ interface SparklineProps extends React.HTMLAttributes<HTMLDivElement> {
   strokeColor?: string
   fillColor?: string
   showValue?: boolean
+  showEndDot?: boolean 
   valueFormatter?: (value: number) => string
 }
 
@@ -25,6 +26,7 @@ const Sparkline = React.forwardRef<HTMLDivElement, SparklineProps>(
     strokeColor = "hsl(var(--foreground))",
     fillColor = "hsl(var(--muted))",
     showValue = false,
+    showEndDot = false,
     valueFormatter = (value) => value.toString(),
     ...props 
   }, ref) => {
@@ -54,13 +56,18 @@ const Sparkline = React.forwardRef<HTMLDivElement, SparklineProps>(
       <div ref={ref} className={cn("flex items-center gap-2", className)} {...props}>
         <ResponsiveContainer width={width} height={height}>
           <LineChart data={chartData}>
-            <Line
+          <Line
               type="monotone"
               dataKey="value"
               stroke={finalStrokeColor}
               strokeWidth={strokeWidth}
-              dot={false}
-              activeDot={false}
+              dot={showEndDot ? true : false}
+              activeDot={showEndDot ? {
+                r: 3,
+                fill: finalStrokeColor,
+                stroke: "white",
+                strokeWidth: 1
+              } : false}
             />
           </LineChart>
         </ResponsiveContainer>

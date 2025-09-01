@@ -29,9 +29,10 @@ interface NewsData {
 interface SectionCardsProps {
   selectedMonth?: string // Format: "January 2025", "February 2025", etc.
   showFutureOutlook?: boolean // Default to true
+  onResetPin?: () => void // Callback to reset pin selection
 }
 
-export function SectionCards({ selectedMonth, showFutureOutlook = true }: SectionCardsProps) {
+export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetPin }: SectionCardsProps) {
   const { selectedDataset } = useDataset()
   const [newsData, setNewsData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -251,13 +252,34 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                 <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
                   {contentTitle || "Future Outlook"}
                 </div>
-                <Badge variant="default">
-                  {showFutureOutlook ? "Outlook" : selectedMonth ? "News" : "Outlook"}
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge variant="default">
+                    {showFutureOutlook ? "Outlook" : selectedMonth ? "News" : "Outlook"}
+                  </Badge>
+                  {selectedMonth && (
+                    <>
+                      <Badge variant="secondary" className="text-xs">
+                        📌 Pinned
+                      </Badge>
+                                              <button
+                          onClick={onResetPin}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          title="Reset to Future Outlook"
+                        >
+                          ↺
+                        </button>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="text-sm text-muted-foreground line-clamp-5">
                 {contentSummary || "Industry insights and market analysis not available"}
               </div>
+              {selectedMonth && (
+                <div className="text-xs text-muted-foreground mt-2">
+                  📍 Showing news for {selectedMonth} (drag the pin on the chart to change)
+                </div>
+              )}
             </div>
             
             {/* News Cards */}

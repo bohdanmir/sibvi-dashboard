@@ -25,6 +25,14 @@ export interface DatasetDescription {
   }
   implications?: string[]
   historicalEvents?: string[]
+  news?: Array<{
+    id: number
+    outlet: string
+    outletLogo: string
+    title: string
+    time: string
+    image: string
+  }>
 }
 
 export interface Dataset {

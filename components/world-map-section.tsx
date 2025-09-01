@@ -832,8 +832,8 @@ export function WorldMapSection() {
                 <Badge 
                   className={`flex items-center gap-2 ${
                     selectedDriver.direction > 0 
-                      ? 'bg-sibvi-green-500 text-white' 
-                      : 'bg-sibvi-red-400 text-white'
+                      ? 'bg-sibvi-green-100 text-sibvi-green-700' 
+                      : 'bg-sibvi-red-100 text-sibvi-red-600'
                   }`}
                 >
                   {selectedDriver.direction > 0 ? (

@@ -611,9 +611,9 @@ export function ChartAreaInteractive({
                     const { index } = props
                     const forecastDataPoints = filteredData.filter(item => item[`forecast_${analysisId}`] !== undefined)
                     if (forecastDataPoints.length > 0 && index === filteredData.indexOf(forecastDataPoints[forecastDataPoints.length - 1])) {
-                      return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />
+                      return <circle key={`forecast-dot-${analysisId}-${index}`} cx={props.cx} cy={props.cy} r={3} fill={color} />
                     }
-                    return <></>
+                    return <g key={`forecast-dot-empty-${analysisId}-${index}`} />
                   }}
                   activeDot={{ r: 6, fill: color, stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
                   name={`${analysis?.name || `${analysisId}`}`}
@@ -637,9 +637,9 @@ export function ChartAreaInteractive({
                 const { index } = props
                 const historicalDataPoints = filteredData.filter(item => item.historical !== undefined)
                 if (historicalDataPoints.length > 0 && index === filteredData.indexOf(historicalDataPoints[historicalDataPoints.length - 1])) {
-                  return <circle cx={props.cx} cy={props.cy} r={3} fill={theme === "dark" ? "#ffffff" : "#000000"} />
+                  return <circle key={`historical-dot-${index}`} cx={props.cx} cy={props.cy} r={3} fill={theme === "dark" ? "#ffffff" : "#000000"} />
                 }
-                return <></>
+                return <g key={`historical-dot-empty-${index}`} />
               }}
               activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
               name="Historical Data"

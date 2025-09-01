@@ -217,6 +217,25 @@ export function ChartAreaInteractive({
     Object.entries(forecasts).forEach(([analysisId, forecastData]) => {
       console.log(`Processing forecast for analysis ${analysisId}:`, forecastData)
       if (forecastData.dates && forecastData.forecastValues) {
+        // Add one extra data point one month earlier
+        const firstForecastDate = new Date(forecastData.dates[0])
+        const oneMonthEarlier = new Date(firstForecastDate)
+        oneMonthEarlier.setMonth(oneMonthEarlier.getMonth() - 1)
+        const oneMonthEarlierStr = oneMonthEarlier.toISOString().split('T')[0]
+        
+        // Find historical value for the same month
+        const historicalValue = historical.find(item => {
+          const itemDate = new Date(item.date)
+          return itemDate.getMonth() === oneMonthEarlier.getMonth() && itemDate.getFullYear() === oneMonthEarlier.getFullYear()
+        })?.historical
+        
+        if (historicalValue !== undefined) {
+          if (!combined[oneMonthEarlierStr]) {
+            combined[oneMonthEarlierStr] = { date: oneMonthEarlierStr }
+          }
+          combined[oneMonthEarlierStr][`forecast_${analysisId}`] = historicalValue
+        }
+        
         forecastData.dates.forEach((date: string, index: number) => {
           if (!combined[date]) {
             combined[date] = { date }
@@ -494,7 +513,7 @@ export function ChartAreaInteractive({
               
               return (
                 <Line
-                  key={analysisId}
+                  key={`forecast-${analysisId}`}
                   type="monotone"
                   dataKey={dataKey}
                   stroke={color}

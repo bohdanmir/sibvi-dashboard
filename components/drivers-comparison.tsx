@@ -153,12 +153,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                     {category.driverCount > 0 && (
                       <Badge 
                         variant="secondary" 
-                        className={`text-[11px] flex-shrink-0 rounded-full border-0 mr-3 ${
-                          analysisIndex === 0 ? 'bg-purple-100 text-purple-700' :
-                          analysisIndex === 1 ? 'bg-green-100 text-green-700' :
-                          analysisIndex === 2 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}
+                        className="text-[11px] flex-shrink-0 rounded-full border-0 mr-2 bg-gray-50 text-gray-400"
                       >
                         {category.driverCount}
                       </Badge>
@@ -168,12 +163,8 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
               </div>
                               <Progress 
                   value={category.importance} 
-                  className={`h-1.5 ${
-                    analysisIndex === 0 ? '[&>div]:bg-purple-600' :
-                    analysisIndex === 1 ? '[&>div]:bg-green-600' :
-                    analysisIndex === 2 ? '[&>div]:bg-yellow-600' :
-                    '[&>div]:bg-red-600'
-                  }`}
+                  className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+
                 />
             </div>
           ))}

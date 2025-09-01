@@ -396,7 +396,10 @@ export function ChartAreaInteractive({
           </div>
         ) : (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={filteredData}>
+          <LineChart 
+            data={filteredData}
+            key={currentTimeRange}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
             <XAxis
               dataKey="date"
@@ -469,6 +472,10 @@ export function ChartAreaInteractive({
               name="Historical Data"
               strokeDasharray="0" // Solid line for historical data
               hide={hiddenSeries.has('historical')}
+              isAnimationActive={true}
+              animationDuration={800}
+              animationBegin={0}
+              animationEasing="ease-out"
             />
             
             {/* Forecast Lines */}
@@ -489,6 +496,10 @@ export function ChartAreaInteractive({
                   activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
                   name={`${analysis?.name || `${analysisId}`}`}
                   hide={hiddenSeries.has(dataKey)}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationBegin={0}
+                  animationEasing="ease-out"
                 />
               )
             })}

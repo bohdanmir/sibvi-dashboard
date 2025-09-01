@@ -80,10 +80,54 @@ export function ChartAreaInteractive({
   const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage
   const [isDraggingPin, setIsDraggingPin] = React.useState(false)
   const chartRef = React.useRef<HTMLDivElement>(null)
+  // Measured plot area inside the chart (excludes Y axis & margins)
+  const [plotLeftPx, setPlotLeftPx] = React.useState<number>(0)
+  const [plotWidthPx, setPlotWidthPx] = React.useState<number>(0)
 
   // Use external timeRange if provided, otherwise use local state
   const currentTimeRange = timeRange || localTimeRange
   const setCurrentTimeRange = onTimeRangeChange || setLocalTimeRange
+
+  // Measure plot area (grid bounds) so the pin ignores Y-axis/legend width
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (!chartRef.current) return
+      const container = chartRef.current
+      const containerRect = container.getBoundingClientRect()
+      const grid = container.querySelector('.recharts-cartesian-grid') as SVGGElement | null
+      const surface = container.querySelector('svg.recharts-surface') as SVGSVGElement | null
+
+      // Prefer calculating from grid lines (most accurate plot rect)
+      const gridLines = grid?.querySelectorAll('line')
+      if (gridLines && gridLines.length > 0) {
+        let minLeft = Number.POSITIVE_INFINITY
+        let maxRight = Number.NEGATIVE_INFINITY
+        gridLines.forEach((line) => {
+          const r = (line as SVGLineElement).getBoundingClientRect()
+          minLeft = Math.min(minLeft, r.left)
+          maxRight = Math.max(maxRight, r.right)
+        })
+        if (isFinite(minLeft) && isFinite(maxRight) && maxRight > minLeft) {
+          setPlotLeftPx(Math.max(0, minLeft - containerRect.left))
+          setPlotWidthPx(Math.max(0, maxRight - minLeft))
+          return
+        }
+      }
+
+      if (surface) {
+        const sRect = surface.getBoundingClientRect()
+        setPlotLeftPx(Math.max(0, sRect.left - containerRect.left))
+        setPlotWidthPx(Math.max(0, sRect.width))
+      } else {
+        setPlotLeftPx(0)
+        setPlotWidthPx(containerRect.width)
+      }
+    }
+    // Defer to next frame to ensure Recharts has laid out the grid
+    const raf = requestAnimationFrame(measure)
+    window.addEventListener('resize', measure)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure) }
+  }, [chartData, currentTimeRange])
 
   React.useEffect(() => {
     if (isMobile) {
@@ -104,18 +148,26 @@ export function ChartAreaInteractive({
       if (!isDraggingPin || !chartRef.current) return
 
       const chartRect = chartRef.current.getBoundingClientRect()
-      const chartLeft = chartRect.left
-      const chartWidth = chartRect.width
+      const containerLeft = chartRect.left
+      const effectiveLeft = containerLeft + plotLeftPx
+      const effectiveWidth = plotWidthPx || chartRect.width
 
-      // Calculate relative position within chart
-      const relativeX = e.clientX - chartLeft
-      const percentage = Math.max(0, Math.min(100, (relativeX / chartWidth) * 100))
+      // Calculate relative position within plotted area (ignoring Y axis width)
+      const relativeX = e.clientX - effectiveLeft
+      const percentage = Math.max(0, Math.min(100, (relativeX / effectiveWidth) * 100))
 
-      // Snap to monthly steps (assuming 12 months = 100%, so each month is ~8.33%)
-      const monthStep = 100 / 12
-      const snappedPercentage = Math.round(percentage / monthStep) * monthStep
-
-      setPinPosition(snappedPercentage)
+      // Snap to nearest actual data point used on the X axis
+      // Recharts (with category scale) places points evenly by index
+      // so we snap to the closest index based on filteredData length
+      const totalPoints = filteredData.length
+      if (totalPoints > 1) {
+        const nearestIndex = Math.round((percentage / 100) * (totalPoints - 1))
+        const clampedIndex = Math.max(0, Math.min(totalPoints - 1, nearestIndex))
+        const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
+        setPinPosition(snappedPercentage)
+      } else {
+        setPinPosition(percentage)
+      }
     }
 
     const handleMouseUp = () => {
@@ -139,11 +191,18 @@ export function ChartAreaInteractive({
     setIsDraggingPin(true)
   }
 
-  // Get current month label for pin position
+  // Get current month label for pin position based on actual data on X axis
   const getPinMonthLabel = () => {
-    const monthIndex = Math.round((pinPosition / 100) * 11) // 0-11 months
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    return months[monthIndex] || "Jan"
+    if (!filteredData.length) return "Jan"
+    const totalPoints = filteredData.length
+    const index = Math.round((pinPosition / 100) * (totalPoints - 1))
+    const clampedIndex = Math.max(0, Math.min(totalPoints - 1, index))
+    const dataPoint = filteredData[clampedIndex]
+    if (dataPoint && dataPoint.date) {
+      const date = new Date(dataPoint.date)
+      return date.toLocaleDateString("en-US", { month: "short" })
+    }
+    return "Jan"
   }
 
   // Load all data (analyses, forecasts, and chart data) when selected dataset changes
@@ -455,35 +514,13 @@ export function ChartAreaInteractive({
         </div>
       </div>
 
-      {/* Draggable Pin */}
-      <div className="relative mb-2">
-        {/* Pin Element */}
-        <div 
-          className="absolute top-0 bottom-0 h-92 w-0.5 bg-blue-500 cursor-ew-resize z-10"
-          style={{ left: `${pinPosition}%` }}
-          onMouseDown={startPinDrag}
+      {/* Chart with overlay pin */}
+      <div className="relative">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-[400px] w-full"
+          ref={chartRef}
         >
-          {/* Pin Head */}
-          <div 
-            className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-grab active:cursor-grabbing"
-            onMouseDown={startPinDrag}
-          />
-          
-          {/* Pin Label */}
-          <div 
-            className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg"
-            style={{ left: '50%' }}
-          >
-            {getPinMonthLabel()}
-          </div>
-        </div>
-      </div>
-
-      <ChartContainer
-        config={chartConfig}
-        className="aspect-auto h-[400px] w-full"
-        ref={chartRef}
-      >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -616,7 +653,29 @@ export function ChartAreaInteractive({
           </LineChart>
         </ResponsiveContainer>
         )}
-      </ChartContainer>
+        </ChartContainer>
+
+        {/* Pin overlay positioned over the chart */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+        >
+          <div 
+            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+            style={{ left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0) }}
+          >
+            <div 
+              className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing"
+              onMouseDown={startPinDrag}
+            />
+            <div 
+              className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg pointer-events-auto"
+              style={{ left: '50%' }}
+            >
+              {getPinMonthLabel()}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

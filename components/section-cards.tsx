@@ -26,16 +26,26 @@ interface NewsData {
     }>
   }>
   futureOutlook: {
-    period: string
+    month: string
     summary: string
-    keyTrends: string[]
-    marketProjections: Record<string, string>
-    risks: string[]
-    opportunities: string[]
+    keyEvents: string[]
+    news: Array<{
+      id: string
+      outlet: string
+      outletLogo: string
+      title: string
+      time: string
+      image: string
+    }>
   }
 }
 
-export function SectionCards() {
+interface SectionCardsProps {
+  selectedMonth?: string // Format: "January 2024", "February 2024", etc.
+  showFutureOutlook?: boolean // Default to true
+}
+
+export function SectionCards({ selectedMonth, showFutureOutlook = true }: SectionCardsProps) {
   const { selectedDataset } = useDataset()
   const { theme } = useTheme()
   const [newsData, setNewsData] = useState<NewsData | null>(null)
@@ -79,34 +89,20 @@ export function SectionCards() {
     )
   }
 
-  // Get recent news from the loaded news data
-  const recentNews = newsData?.monthlySummaries?.[newsData.monthlySummaries.length - 1]?.news || []
+  // Get news based on selected month or default to future outlook
+  let displayContent: React.ReactNode | null = null
+  let contentTitle = ""
+  let contentSummary = ""
 
-  return (
-    <div className="grid grid-cols-1 gap-6 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <div className="@container/card rounded-lg px-0 py-6">
-        <div className="flex items-start justify-between mb-3">
-          <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
-            {selectedDataset.title}
-          </div>
-          <Badge variant="default">
-            {selectedDataset.description?.unit || '--'}
-          </Badge>
-        </div>
-        <div className="text-sm text-muted-foreground line-clamp-5">
-          {selectedDataset.description?.description || 'Dataset information not available'}
-        </div>
-      </div>
-      
-      {/* News Cards - dynamically loaded from news.json */}
-      {loading ? (
-        <div className="@container/card rounded-lg px-0 py-6">
-          <div className="text-center py-8 text-muted-foreground">
-            Loading industry news...
-          </div>
-        </div>
-      ) : recentNews.length > 0 ? (
-        recentNews.map((news) => (
+  if (showFutureOutlook && newsData?.futureOutlook) {
+    // Display Future Outlook
+    const outlook = newsData.futureOutlook
+    contentTitle = `Future Outlook: ${outlook.month}`
+    contentSummary = outlook.summary
+    
+    displayContent = (
+      <>
+        {outlook.news?.map((news) => (
           <Card key={news.id} className="overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
@@ -152,14 +148,105 @@ export function SectionCards() {
               </div>
             </CardContent>
           </Card>
-        ))
-      ) : (
-        <div className="@container/card rounded-lg px-0 py-6">
+        )) || []}
+      </>
+    )
+  } else if (selectedMonth && newsData?.monthlySummaries) {
+    // Display Monthly News
+    const monthlyData = newsData.monthlySummaries.find(
+      summary => summary.month === selectedMonth
+    )
+    
+    if (monthlyData) {
+      contentTitle = `${monthlyData.month} Summary`
+      contentSummary = monthlyData.summary
+      
+      displayContent = (
+        <>
+          {monthlyData.news?.map((news) => (
+            <Card key={news.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs bg-muted">
+                        <img 
+                          src={news.outletLogo} 
+                          alt={news.outlet}
+                          className="w-4 h-4 object-contain"
+                        />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      {news.outlet}
+                    </span>
+                  </div>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
+                    <IconDotsVertical className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <div className="flex-1 space-y-2">
+                    <a 
+                      href="#" 
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
+                    >
+                      {news.title}
+                    </a>
+                    <div className="text-xs text-muted-foreground">
+                      {news.time}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={news.image} 
+                      alt={news.title}
+                      className="w-16 h-16 rounded-md object-cover bg-muted"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )) || []}
+        </>
+      )
+    }
+  }
+
+    return (
+      <div className="px-4 lg:px-6">
+        {/* News Content - dynamically loaded from news.json */}
+        {loading ? (
           <div className="text-center py-8 text-muted-foreground">
-            No industry news available for this dataset
+            Loading industry news...
           </div>
-        </div>
-      )}
-    </div>
+        ) : displayContent ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Summary Card - First Card */}
+            <div className="@container/card rounded-lg px-0 py-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="text-lg font-mono font-normal tabular-nums @[250px]/card:text-xl">
+                  {contentTitle || "Future Outlook"}
+                </div>
+                <Badge variant="default">
+                  {showFutureOutlook ? "Outlook" : selectedMonth ? "News" : "Outlook"}
+                </Badge>
+              </div>
+              <div className="text-sm text-muted-foreground line-clamp-5">
+                {contentSummary || "Industry insights and market analysis not available"}
+              </div>
+            </div>
+            
+            {/* News Cards */}
+            {displayContent}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            {selectedMonth ? `No news available for ${selectedMonth}` : 'No future outlook available'}
+          </div>
+        )}
+      </div>
   )
 }

@@ -677,7 +677,7 @@ export function ChartAreaInteractive({
           style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute w-0.5 bg-blue-500 z-10 pointer-events-none"
+            className="absolute -left-[1px] w-0.5 bg-blue-500 z-10 pointer-events-none"
             style={{ 
               left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0),
               top: plotTopPx,
@@ -685,7 +685,7 @@ export function ChartAreaInteractive({
             }}
           >
             <div 
-              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
               onMouseDown={startPinDrag}
               aria-label="News pin"
             >

@@ -463,12 +463,20 @@ export function ChartAreaInteractive({
             
             {/* Historical Data Line */}
             <Line
+              key="historical"
               type="monotone"
               dataKey="historical"
               stroke={theme === "dark" ? "#ffffff" : "#000000"} // Dark black line like drivers info card
               strokeWidth={1}
-              dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000", strokeWidth: 1, r: 3 }}
-              activeDot={{ r: 4, fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+              dot={(props) => {
+                const { index } = props
+                const historicalDataPoints = filteredData.filter(item => item.historical !== undefined)
+                if (historicalDataPoints.length > 0 && index === filteredData.indexOf(historicalDataPoints[historicalDataPoints.length - 1])) {
+                  return <circle cx={props.cx} cy={props.cy} r={3} fill={theme === "dark" ? "#ffffff" : "#000000"} />
+                }
+                return <></>
+              }}
+              activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
               name="Historical Data"
               strokeDasharray="0" // Solid line for historical data
               hide={hiddenSeries.has('historical')}
@@ -492,8 +500,15 @@ export function ChartAreaInteractive({
                   stroke={color}
                   strokeWidth={1}
                   strokeDasharray="4 2" // Dashed line for forecasts - longer dashes with bigger gaps
-                  dot={{ fill: theme === "dark" ? "#374151" : "#f9fafb", stroke: color, strokeWidth: 1, r: 3, strokeDasharray: "0" }}
-                  activeDot={{ r: 4, fill: color, stroke: theme === "dark" ? "#ffffff" : "#000000" }}
+                  dot={(props) => {
+                    const { index } = props
+                    const forecastDataPoints = filteredData.filter(item => item[`forecast_${analysisId}`] !== undefined)
+                    if (forecastDataPoints.length > 0 && index === filteredData.indexOf(forecastDataPoints[forecastDataPoints.length - 1])) {
+                      return <circle cx={props.cx} cy={props.cy} r={3} fill={color} />
+                    }
+                    return <></>
+                  }}
+                  activeDot={{ r: 6, fill: color, stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
                   name={`${analysis?.name || `${analysisId}`}`}
                   hide={hiddenSeries.has(dataKey)}
                   isAnimationActive={true}

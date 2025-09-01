@@ -83,6 +83,8 @@ export function ChartAreaInteractive({
   // Measured plot area inside the chart (excludes Y axis & margins)
   const [plotLeftPx, setPlotLeftPx] = React.useState<number>(0)
   const [plotWidthPx, setPlotWidthPx] = React.useState<number>(0)
+  const [plotTopPx, setPlotTopPx] = React.useState<number>(0)
+  const [plotHeightPx, setPlotHeightPx] = React.useState<number>(0)
 
   // Use external timeRange if provided, otherwise use local state
   const currentTimeRange = timeRange || localTimeRange
@@ -102,14 +104,22 @@ export function ChartAreaInteractive({
       if (gridLines && gridLines.length > 0) {
         let minLeft = Number.POSITIVE_INFINITY
         let maxRight = Number.NEGATIVE_INFINITY
+        let minTop = Number.POSITIVE_INFINITY
+        let maxBottom = Number.NEGATIVE_INFINITY
         gridLines.forEach((line) => {
           const r = (line as SVGLineElement).getBoundingClientRect()
           minLeft = Math.min(minLeft, r.left)
           maxRight = Math.max(maxRight, r.right)
+          minTop = Math.min(minTop, r.top)
+          maxBottom = Math.max(maxBottom, r.bottom)
         })
         if (isFinite(minLeft) && isFinite(maxRight) && maxRight > minLeft) {
           setPlotLeftPx(Math.max(0, minLeft - containerRect.left))
           setPlotWidthPx(Math.max(0, maxRight - minLeft))
+          if (isFinite(minTop) && isFinite(maxBottom) && maxBottom > minTop) {
+            setPlotTopPx(Math.max(0, minTop - containerRect.top))
+            setPlotHeightPx(Math.max(0, maxBottom - minTop))
+          }
           return
         }
       }
@@ -118,9 +128,13 @@ export function ChartAreaInteractive({
         const sRect = surface.getBoundingClientRect()
         setPlotLeftPx(Math.max(0, sRect.left - containerRect.left))
         setPlotWidthPx(Math.max(0, sRect.width))
+        setPlotTopPx(Math.max(0, sRect.top - containerRect.top))
+        setPlotHeightPx(Math.max(0, sRect.height))
       } else {
         setPlotLeftPx(0)
         setPlotWidthPx(containerRect.width)
+        setPlotTopPx(0)
+        setPlotHeightPx(containerRect.height)
       }
     }
     // Defer to next frame to ensure Recharts has laid out the grid
@@ -658,10 +672,15 @@ export function ChartAreaInteractive({
         {/* Pin overlay positioned over the chart */}
         <div 
           className="absolute inset-0 pointer-events-none"
+          style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
-            style={{ left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0) }}
+            className="absolute w-0.5 bg-blue-500 z-10"
+            style={{ 
+              left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0),
+              top: plotTopPx,
+              height: plotHeightPx
+            }}
           >
             <div 
               className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing"

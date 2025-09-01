@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { useTheme } from "next-themes"
+import { Newspaper } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"
@@ -202,6 +203,7 @@ export function ChartAreaInteractive({
   // Start pin dragging
   const startPinDrag = (e: React.MouseEvent) => {
     e.stopPropagation()
+    e.preventDefault()
     setIsDraggingPin(true)
   }
 
@@ -530,11 +532,11 @@ export function ChartAreaInteractive({
 
       {/* Chart with overlay pin */}
       <div className="relative">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[400px] w-full"
-          ref={chartRef}
-        >
+              <ChartContainer
+        config={chartConfig}
+        className="aspect-auto h-[400px] w-full select-none"
+        ref={chartRef}
+      >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -669,13 +671,13 @@ export function ChartAreaInteractive({
         )}
         </ChartContainer>
 
-        {/* Pin overlay positioned over the chart */}
+        {/* Pin overlay positioned over the chart - completely non-interactive */}
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none select-none"
           style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute w-0.5 bg-blue-500 z-10"
+            className="absolute w-0.5 bg-blue-500 z-10 pointer-events-none"
             style={{ 
               left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0),
               top: plotTopPx,
@@ -683,14 +685,11 @@ export function ChartAreaInteractive({
             }}
           >
             <div 
-              className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
               onMouseDown={startPinDrag}
-            />
-            <div 
-              className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap shadow-lg pointer-events-auto"
-              style={{ left: '50%' }}
+              aria-label="News pin"
             >
-              {getPinMonthLabel()}
+              <Newspaper className="w-3 h-3 text-white" aria-hidden="true" />
             </div>
           </div>
         </div>

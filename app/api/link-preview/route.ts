@@ -83,12 +83,152 @@ export async function GET(request: NextRequest) {
              undefined,
     }
 
+    // If no OpenGraph image found, try to extract images from page content
+    if (!preview.image) {
+      // Look for images in the main content area, excluding common non-content images
+      const contentImages = $('img').filter((i, el) => {
+        const $img = $(el)
+        const src = $img.attr('src')
+        const alt = $img.attr('alt') || ''
+        const className = $img.attr('class') || ''
+        
+        // Skip common non-content images
+        if (!src || 
+            src.includes('logo') || 
+            src.includes('icon') || 
+            src.includes('avatar') ||
+            src.includes('profile') ||
+            src.includes('banner') ||
+            src.includes('header') ||
+            src.includes('footer') ||
+            src.includes('advertisement') ||
+            src.includes('ad-') ||
+            src.includes('favicon') ||
+            src.includes('webassets') ||
+            className.includes('logo') ||
+            className.includes('icon') ||
+            className.includes('avatar') ||
+            className.includes('banner') ||
+            className.includes('header') ||
+            className.includes('footer') ||
+            className.includes('ad') ||
+            className.includes('favicon') ||
+            alt.toLowerCase().includes('logo') ||
+            alt.toLowerCase().includes('icon') ||
+            alt.toLowerCase().includes('avatar') ||
+            alt.toLowerCase().includes('banner') ||
+            alt.toLowerCase().includes('header') ||
+            alt.toLowerCase().includes('footer') ||
+            alt.toLowerCase().includes('advertisement') ||
+            alt.toLowerCase().includes('favicon')) {
+          return false
+        }
+        
+        // Skip very small images (likely icons/logos)
+        const width = parseInt($img.attr('width') || '0')
+        const height = parseInt($img.attr('height') || '0')
+        if (width > 0 && height > 0 && (width < 100 || height < 100)) {
+          return false
+        }
+        
+        // Prefer images that are likely content images (have meaningful alt text or are in content areas)
+        return true
+      })
+      
+      // Get the first suitable image
+      if (contentImages.length > 0) {
+        const firstImage = contentImages.first()
+        const imageSrc = firstImage.attr('src')
+        if (imageSrc) {
+          preview.image = imageSrc
+        }
+      }
+    }
+
     // Clean up image URL - make it absolute if it's relative
     if (preview.image) {
       try {
         // Remove any query parameters or fragments that might cause issues
         const cleanImageUrl = preview.image.split('?')[0].split('#')[0]
-        preview.image = new URL(cleanImageUrl, url).href
+        const absoluteImageUrl = new URL(cleanImageUrl, url).href
+        
+        // Check if the image is likely a logo (even if it's from OpenGraph)
+        const imageUrlLower = absoluteImageUrl.toLowerCase()
+        const isLogo = imageUrlLower.includes('logo') || 
+                      imageUrlLower.includes('icon') || 
+                      imageUrlLower.includes('avatar') ||
+                      imageUrlLower.includes('profile') ||
+                      imageUrlLower.includes('banner') ||
+                      imageUrlLower.includes('header') ||
+                      imageUrlLower.includes('footer') ||
+                      imageUrlLower.includes('favicon') ||
+                      imageUrlLower.includes('webassets')
+        
+        if (isLogo) {
+          // If the OpenGraph image is a logo, try to find a better image from page content
+          const contentImages = $('img').filter((i, el) => {
+            const $img = $(el)
+            const src = $img.attr('src')
+            const alt = $img.attr('alt') || ''
+            const className = $img.attr('class') || ''
+            
+            // Skip common non-content images
+            if (!src || 
+                src.includes('logo') || 
+                src.includes('icon') || 
+                src.includes('avatar') ||
+                src.includes('profile') ||
+                src.includes('banner') ||
+                src.includes('header') ||
+                src.includes('footer') ||
+                src.includes('advertisement') ||
+                src.includes('ad-') ||
+                src.includes('favicon') ||
+                src.includes('webassets') ||
+                className.includes('logo') ||
+                className.includes('icon') ||
+                className.includes('avatar') ||
+                className.includes('banner') ||
+                className.includes('header') ||
+                className.includes('footer') ||
+                className.includes('ad') ||
+                className.includes('favicon') ||
+                alt.toLowerCase().includes('logo') ||
+                alt.toLowerCase().includes('icon') ||
+                alt.toLowerCase().includes('avatar') ||
+                alt.toLowerCase().includes('banner') ||
+                alt.toLowerCase().includes('header') ||
+                alt.toLowerCase().includes('footer') ||
+                alt.toLowerCase().includes('advertisement') ||
+                alt.toLowerCase().includes('favicon')) {
+              return false
+            }
+            
+            // Skip very small images (likely icons/logos)
+            const width = parseInt($img.attr('width') || '0')
+            const height = parseInt($img.attr('height') || '0')
+            if (width > 0 && height > 0 && (width < 100 || height < 100)) {
+              return false
+            }
+            
+            return true
+          })
+          
+          // Use the first suitable content image instead of the logo
+          if (contentImages.length > 0) {
+            const firstImage = contentImages.first()
+            const imageSrc = firstImage.attr('src')
+            if (imageSrc) {
+              preview.image = new URL(imageSrc, url).href
+            } else {
+              preview.image = undefined
+            }
+          } else {
+            preview.image = undefined
+          }
+        } else {
+          preview.image = absoluteImageUrl
+        }
       } catch {
         // If URL construction fails, remove the image
         preview.image = undefined

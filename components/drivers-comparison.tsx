@@ -8,6 +8,7 @@ import { Sparkline } from "@/components/ui/sparkline"
 import { Badge } from "@/components/ui/badge"
 import { useDataset } from "@/lib/dataset-context"
 import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 
 interface AnalysisFolder {
@@ -23,18 +24,45 @@ interface Category {
   driverCount: number // Add driver count to the category interface
 }
 
+interface Region {
+  id: number
+  name: string
+  parent_id: number | null
+  cumulativeImpact: number
+}
+
+interface Driver {
+  id: string
+  name: string
+  importance: number
+  category?: {
+    id: number
+    name: string
+  }
+}
+
+interface Scenario {
+  summary: string
+}
+
+type ViewMode = 'scenarios' | 'regions' | 'categories' | 'predictors'
+
 interface DriverCardProps {
   title: string
   description: string
-  categories: Category[]
+  categories?: Category[]
+  regions?: Region[]
+  drivers?: Driver[]
+  scenario?: Scenario
   overallStatus: "on-track" | "at-risk" | "behind"
   trend: "up" | "down" | "stable"
   analysisId: string
   forecastData: number[]
   analysisIndex: number
+  viewMode: ViewMode
 }
 
-function DriverCard({ title, description, categories, overallStatus, trend, analysisId, forecastData, analysisIndex }: DriverCardProps) {
+function DriverCard({ title, description, categories, regions, drivers, scenario, overallStatus, trend, analysisId, forecastData, analysisIndex, viewMode }: DriverCardProps) {
   const { theme } = useTheme()
   
   const getStatusColor = (status: string) => {
@@ -141,35 +169,88 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
         </div>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col">
-
-        
         <div className="flex-1 space-y-4">
-          {categories.map((category) => (
-            <div key={category.id} className="space-y-2">
-                              <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <span className="text-muted-foreground truncate" title={category.name}>
-                    {category.name}
-                  </span>
-                                      {/* Add badge showing number of drivers */}
-                    {category.driverCount > 0 && (
-                      <Badge 
-                        variant="secondary" 
-                        className="text-[11px] flex-shrink-0 rounded-full border-0 mr-2"
-                      >
-                        {category.driverCount}
-                      </Badge>
-                    )}
-                </div>
-                <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
+          {viewMode === 'scenarios' && scenario && (
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">
+                {scenario.summary || 'No scenario summary available'}
               </div>
-                              <Progress 
-                  value={category.importance} 
-                  className="h-1.5 [&>div]:bg-sibvi-cyan-700"
-
-                />
             </div>
-          ))}
+          )}
+          
+          {viewMode === 'scenarios' && !scenario && (
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">
+                Loading scenario data...
+              </div>
+            </div>
+          )}
+          
+          {viewMode === 'regions' && regions && (
+            <div className="space-y-2">
+              {regions.map((region) => (
+                <div key={region.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <span className="text-muted-foreground truncate" title={region.name}>
+                        {region.name}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground flex-shrink-0">{region.cumulativeImpact.toFixed(1)}%</span>
+                  </div>
+                  <Progress 
+                    value={region.cumulativeImpact} 
+                    className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {viewMode === 'categories' && categories && (
+            <div className="space-y-2">
+              {categories
+                .filter(category => category.driverCount > 0) // Filter out empty categories
+                .map((category) => (
+                  <div key={category.id} className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <span className="text-muted-foreground truncate" title={category.name}>
+                          {category.name}
+                        </span>
+                        {/* Badges are now hidden */}
+                      </div>
+                      <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
+                    </div>
+                    <Progress 
+                      value={category.importance} 
+                      className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                    />
+                  </div>
+                ))}
+            </div>
+          )}
+          
+          {viewMode === 'predictors' && drivers && (
+            <div className="space-y-2">
+              {drivers.map((driver) => (
+                <div key={driver.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <span className="text-muted-foreground truncate" title={driver.name}>
+                        {driver.name}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground flex-shrink-0">{driver.importance.toFixed(1)}%</span>
+                  </div>
+                  <Progress 
+                    value={driver.importance} 
+                    className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -183,6 +264,10 @@ export function DriversComparison() {
   const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
   const [allDatasetCategories, setAllDatasetCategories] = useState<Array<{ id: number; name: string }>>([])
   const [analysisForecasts, setAnalysisForecasts] = useState<Record<string, number[]>>({})
+  const [viewMode, setViewMode] = useState<ViewMode>('categories')
+  const [analysisScenarios, setAnalysisScenarios] = useState<Record<string, Scenario>>({})
+  const [analysisRegions, setAnalysisRegions] = useState<Record<string, Region[]>>({})
+  const [analysisDrivers, setAnalysisDrivers] = useState<Record<string, Driver[]>>({})
 
   const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
@@ -219,6 +304,111 @@ export function DriversComparison() {
       }
     } catch (error) {
       console.error(`Error fetching forecast data for ${analysisId}:`, error)
+    }
+    return []
+  }
+
+  const fetchScenarioData = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const url = `/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/scenario`
+      console.log(`Fetching scenario data from: ${url}`)
+      
+      const response = await fetch(url)
+      console.log(`Response status for ${analysisId}:`, response.status, response.ok)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log(`Scenario data for ${analysisId}:`, data)
+        const result = { summary: data.Summary || '' }
+        console.log(`Processed scenario result for ${analysisId}:`, result)
+        return result
+      } else {
+        console.error(`Failed to fetch scenario data for ${analysisId}:`, response.status, response.statusText)
+        const errorText = await response.text()
+        console.error(`Error response body:`, errorText)
+      }
+    } catch (error) {
+      console.error(`Error fetching scenario data for ${analysisId}:`, error)
+    }
+    return { summary: '' }
+  }
+
+  const fetchRegionData = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/drivers-report`)
+      if (response.ok) {
+        const data = await response.json()
+        const driversReport = data.driversReport || data
+        
+        // Extract regions and calculate cumulative impact
+        const regionMap = new Map<number, { name: string; parent_id: number | null; impact: number }>()
+        
+        if (driversReport && typeof driversReport === 'object') {
+          Object.values(driversReport).forEach((driver: any) => {
+            if (driver && driver.region && Array.isArray(driver.region)) {
+              driver.region.forEach((region: any) => {
+                if (region && typeof region.id === 'number' && typeof region.name === 'string') {
+                  const existing = regionMap.get(region.id)
+                  const importance = driver.importance?.overall?.mean || 0
+                  
+                  if (existing) {
+                    existing.impact += importance
+                  } else {
+                    regionMap.set(region.id, {
+                      name: region.name,
+                      parent_id: region.parent_id,
+                      impact: importance
+                    })
+                  }
+                }
+              })
+            }
+          })
+        }
+        
+        // Convert to array and sort by cumulative impact
+        return Array.from(regionMap.entries())
+          .map(([id, data]) => ({
+            id,
+            name: data.name,
+            parent_id: data.parent_id,
+            cumulativeImpact: data.impact
+          }))
+          .sort((a, b) => b.cumulativeImpact - a.cumulativeImpact)
+      }
+    } catch (error) {
+      console.error(`Error fetching region data for ${analysisId}:`, error)
+    }
+    return []
+  }
+
+  const fetchDriverData = async (datasetTitle: string, analysisId: string) => {
+    try {
+      const response = await fetch(`/api/data-folders/${encodeURIComponent(datasetTitle)}/analyses/${analysisId}/drivers-report`)
+      if (response.ok) {
+        const data = await response.json()
+        const driversReport = data.driversReport || data
+        
+        const drivers: Driver[] = []
+        
+        if (driversReport && typeof driversReport === 'object') {
+          Object.entries(driversReport).forEach(([driverId, driver]: [string, any]) => {
+            if (driver && driver.importance?.overall?.mean) {
+              drivers.push({
+                id: driverId,
+                name: driver.driver_name || driverId, // Use driver_name if available, fallback to ID
+                importance: driver.importance.overall.mean,
+                category: driver.category
+              })
+            }
+          })
+        }
+        
+        // Sort by importance
+        return drivers.sort((a, b) => b.importance - a.importance)
+      }
+    } catch (error) {
+      console.error(`Error fetching driver data for ${analysisId}:`, error)
     }
     return []
   }
@@ -278,6 +468,9 @@ export function DriversComparison() {
         setAnalysisCategories({})
         setAllDatasetCategories([])
         setAnalysisForecasts({})
+        setAnalysisScenarios({})
+        setAnalysisRegions({})
+        setAnalysisDrivers({})
         return
       }
 
@@ -292,21 +485,27 @@ export function DriversComparison() {
           const allCategories = await fetchAllDatasetCategories(selectedDataset.title)
           setAllDatasetCategories(allCategories)
           
-          // Fetch drivers report, forecast data, and driver counts for each analysis
+          // Fetch all data for each analysis
           const categories: Record<string, Category[]> = {}
           const forecasts: Record<string, number[]> = {}
+          const scenarios: Record<string, Scenario> = {}
+          const regions: Record<string, Region[]> = {}
+          const drivers: Record<string, Driver[]> = {}
           
           const promises = folders.map(async (folder: AnalysisFolder, index: number) => {
-            const [driversCategories, forecastData, driverCounts] = await Promise.all([
+            const [driversCategories, forecastData, driverCounts, scenarioData, regionData, driverData] = await Promise.all([
               fetchDriversReport(selectedDataset.title, folder.id),
               fetchForecastData(selectedDataset.title, folder.id),
-              countDriversPerCategory(selectedDataset.title, folder.id)
+              countDriversPerCategory(selectedDataset.title, folder.id),
+              fetchScenarioData(selectedDataset.title, folder.id),
+              fetchRegionData(selectedDataset.title, folder.id),
+              fetchDriverData(selectedDataset.title, folder.id)
             ])
-            return { id: folder.id, driversCategories, forecastData, driverCounts, index }
+            return { id: folder.id, driversCategories, forecastData, driverCounts, scenarioData, regionData, driverData, index }
           })
           
           const results = await Promise.all(promises)
-          results.forEach(({ id, driversCategories, forecastData, driverCounts, index }) => {
+          results.forEach(({ id, driversCategories, forecastData, driverCounts, scenarioData, regionData, driverData, index }) => {
             // Merge categories with driver counts
             const categoriesWithCounts = driversCategories.map((cat: any) => ({
               ...cat,
@@ -316,15 +515,32 @@ export function DriversComparison() {
             console.log(`Analysis ${id}:`, {
               categories: categoriesWithCounts,
               driverCounts: Object.fromEntries(driverCounts),
-              totalDrivers: Array.from(driverCounts.values()).reduce((sum: any, count: any) => sum + count, 0)
+              totalDrivers: Array.from(driverCounts.values()).reduce((sum: any, count: any) => sum + count, 0),
+              scenario: scenarioData,
+              regions: regionData,
+              drivers: driverData
             })
+            
+            // Debug scenario data specifically
+            if (viewMode === 'scenarios') {
+              console.log(`Scenario data for ${id}:`, scenarioData)
+            }
             
             categories[id] = categoriesWithCounts
             forecasts[id] = forecastData
+            scenarios[id] = scenarioData
+            regions[id] = regionData
+            drivers[id] = driverData
+            
+            // Debug scenario data being set
+            console.log(`Setting scenario data for ${id}:`, scenarioData)
           })
           
           setAnalysisCategories(categories)
           setAnalysisForecasts(forecasts)
+          setAnalysisScenarios(scenarios)
+          setAnalysisRegions(regions)
+          setAnalysisDrivers(drivers)
         } else {
           setAnalysisFolders([])
           setAnalysisCategories({})
@@ -416,6 +632,23 @@ export function DriversComparison() {
         </div>
       ) : (
         <>
+          {/* Toggle Group Header */}
+          <div className="px-4 lg:px-6 mb-4">
+            <div className="flex items-center">
+              <ToggleGroup 
+                type="single" 
+                value={viewMode} 
+                onValueChange={(value) => value && setViewMode(value as ViewMode)}
+                variant="outline"
+              >
+                <ToggleGroupItem value="scenarios" className="px-3 py-2">Scenarios</ToggleGroupItem>
+                <ToggleGroupItem value="regions" className="px-3 py-2">Regions</ToggleGroupItem>
+                <ToggleGroupItem value="categories" className="px-3 py-2">Categories</ToggleGroupItem>
+                <ToggleGroupItem value="predictors" className="px-3 py-2">Predictors</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
+          
           <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4 pr-8">
             {analysisFolders.map((folder, index) => {
               const mockData = generateMockData(index)
@@ -427,12 +660,20 @@ export function DriversComparison() {
                   key={folder.id}
                   title={folder.name}
                   description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
-                  categories={categories}
+                  categories={viewMode === 'categories' ? categories : undefined}
+                  regions={viewMode === 'regions' ? analysisRegions[folder.id] : undefined}
+                  drivers={viewMode === 'predictors' ? analysisDrivers[folder.id] : undefined}
+                  scenario={viewMode === 'scenarios' ? (() => {
+                    const scenario = analysisScenarios[folder.id]
+                    console.log(`Rendering scenario for ${folder.id}:`, scenario)
+                    return scenario
+                  })() : undefined}
                   overallStatus={mockData.overallStatus}
                   trend={mockData.trend}
                   analysisId={folder.id}
                   forecastData={analysisForecasts[folder.id] || []}
                   analysisIndex={index}
+                  viewMode={viewMode}
                 />
               )
             })}

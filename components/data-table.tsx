@@ -141,6 +141,9 @@ const getColumns = (
       ),
       enableSorting: false,
       enableHiding: false,
+      size: 50,
+      maxSize: 50,
+      minSize: 50,
     },
     {
       accessorKey: "date",
@@ -514,6 +517,9 @@ const getColumns = (
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 50,
+    maxSize: 50,
+    minSize: 50,
   })
 
   return baseColumns

@@ -162,54 +162,10 @@ export function ChartAreaInteractive({
 
 
 
-  // Handle pin dragging
-  React.useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingPin || !chartRef.current) return
 
-      const chartRect = chartRef.current.getBoundingClientRect()
-      const containerLeft = chartRect.left
-      const effectiveLeft = containerLeft + plotLeftPx
-      const effectiveWidth = plotWidthPx || chartRect.width
 
-      // Calculate relative position within plotted area (ignoring Y axis width)
-      const relativeX = e.clientX - effectiveLeft
-      const percentage = Math.max(0, Math.min(100, (relativeX / effectiveWidth) * 100))
-
-      // Snap to nearest actual data point used on the X axis
-      // Recharts (with category scale) places points evenly by index
-      // so we snap to the closest index based on filteredData length
-      const totalPoints = filteredData.length
-      if (totalPoints > 1) {
-        const nearestIndex = Math.round((percentage / 100) * (totalPoints - 1))
-        const clampedIndex = Math.max(0, Math.min(totalPoints - 1, nearestIndex))
-        const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
-        setPinPosition(snappedPercentage)
-      } else {
-        setPinPosition(percentage)
-      }
-      
-      // Mark that pin has been moved by user
-      setHasPinBeenMoved(true)
-    }
-
-    const handleMouseUp = () => {
-      setIsDraggingPin(false)
-    }
-
-    if (isDraggingPin) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [isDraggingPin])
-
-  // Start pin dragging
-  const startPinDrag = (e: React.MouseEvent) => {
+  // Start pin dragging (mouse and touch)
+  const startPinDrag = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
     setIsDraggingPin(true)
@@ -461,6 +417,133 @@ export function ChartAreaInteractive({
   })
 
   console.log('Filtered data:', filteredData)
+
+  // Handle pin dragging with smooth movement and month snapping
+  React.useEffect(() => {
+    let animationFrameId: number | null = null
+    let lastUpdateTime = 0
+    const updateInterval = 16 // ~60fps
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingPin || !chartRef.current) return
+
+      const now = performance.now()
+      if (now - lastUpdateTime < updateInterval) return
+      lastUpdateTime = now
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+
+      animationFrameId = requestAnimationFrame(() => {
+        const chartRect = chartRef.current!.getBoundingClientRect()
+        const containerLeft = chartRect.left
+        const effectiveLeft = containerLeft + plotLeftPx
+        const effectiveWidth = plotWidthPx || chartRect.width
+
+        // Calculate relative position within plotted area (ignoring Y axis width)
+        const relativeX = e.clientX - effectiveLeft
+        const percentage = Math.max(0, Math.min(100, (relativeX / effectiveWidth) * 100))
+
+        // Enhanced month snapping: snap to nearest month boundary
+        const totalPoints = filteredData.length
+        if (totalPoints > 1) {
+          const nearestIndex = Math.round((percentage / 100) * (totalPoints - 1))
+          const clampedIndex = Math.max(0, Math.min(totalPoints - 1, nearestIndex))
+          
+          // Get the date for this index to determine month boundaries
+          const dataPoint = filteredData[clampedIndex]
+          if (dataPoint && dataPoint.date) {
+            const currentDate = new Date(dataPoint.date)
+            const currentMonth = currentDate.getMonth()
+            const currentYear = currentDate.getFullYear()
+            
+            // Find the closest month boundary within the data range
+            let bestIndex = clampedIndex
+            let minDistance = Math.abs(clampedIndex - nearestIndex)
+            
+            // Check nearby data points for month boundaries
+            for (let i = Math.max(0, clampedIndex - 2); i <= Math.min(totalPoints - 1, clampedIndex + 2); i++) {
+              const point = filteredData[i]
+              if (point && point.date) {
+                const pointDate = new Date(point.date)
+                const pointMonth = pointDate.getMonth()
+                const pointYear = pointDate.getFullYear()
+                
+                // Check if this is a month boundary (first day of month or significant month change)
+                const isMonthBoundary = pointDate.getDate() <= 3 || // First few days of month
+                  (pointMonth !== currentMonth || pointYear !== currentYear)
+                
+                if (isMonthBoundary) {
+                  const distance = Math.abs(i - nearestIndex)
+                  if (distance < minDistance) {
+                    minDistance = distance
+                    bestIndex = i
+                  }
+                }
+              }
+            }
+            
+            const snappedPercentage = (bestIndex / (totalPoints - 1)) * 100
+            setPinPosition(snappedPercentage)
+          } else {
+            const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
+            setPinPosition(snappedPercentage)
+          }
+        } else {
+          setPinPosition(percentage)
+        }
+        
+        // Mark that pin has been moved by user
+        setHasPinBeenMoved(true)
+      })
+    }
+
+    const handleMouseUp = () => {
+      setIsDraggingPin(false)
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+        animationFrameId = null
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDraggingPin || !chartRef.current || e.touches.length !== 1) return
+      
+      const touch = e.touches[0]
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true
+      })
+      handleMouseMove(mouseEvent)
+    }
+
+    const handleTouchEnd = () => {
+      setIsDraggingPin(false)
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+        animationFrameId = null
+      }
+    }
+
+    if (isDraggingPin) {
+      document.addEventListener("mousemove", handleMouseMove, { passive: false })
+      document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("touchmove", handleTouchMove, { passive: false })
+      document.addEventListener("touchend", handleTouchEnd)
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.removeEventListener("touchmove", handleTouchMove)
+      document.removeEventListener("touchend", handleTouchEnd)
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+    }
+  }, [isDraggingPin, filteredData, plotLeftPx, plotWidthPx])
 
   // Notify parent component when pin month changes (only if pin has been moved by user)
   React.useEffect(() => {
@@ -714,16 +797,18 @@ export function ChartAreaInteractive({
           style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute -left-[1px] w-0.5 bg-blue-500 z-10 pointer-events-none"
+            className="absolute -left-[1px] w-0.5 bg-blue-500 z-10 pointer-events-none transition-all duration-150 ease-out"
             style={{ 
               left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0),
               top: plotTopPx,
-              height: plotHeightPx
+              height: plotHeightPx,
+              opacity: isDraggingPin ? 0.8 : 1
             }}
           >
             <div 
-              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group transition-transform duration-150 ease-out hover:scale-110"
               onMouseDown={startPinDrag}
+              onTouchStart={startPinDrag}
               aria-label="News pin"
               title={`Current month: ${getPinMonthAndYear() || "Loading..."}`}
             >

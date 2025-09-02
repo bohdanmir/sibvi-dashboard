@@ -144,7 +144,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                       )}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs text-muted-foreground font-normal">
+                  <span className="text-xs text-muted-foreground font-normal line-clamp-1">
                     {news.outlet}
                   </span>
                 </div>

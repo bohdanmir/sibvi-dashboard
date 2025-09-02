@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { LinkPreview } from "@/components/link-preview"
 
 interface NewsItem {
   favicon: string
@@ -170,17 +171,10 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                   </div>
                   
                   <div className="flex-shrink-0">
-                    {news.image ? (
-                      <img 
-                        src={news.image} 
-                        alt={news.title}
-                        className="w-16 h-16 rounded-md object-cover bg-muted"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No image</span>
-                      </div>
-                    )}
+                    <LinkPreview 
+                      url={news.link} 
+                      fallbackTitle={news.title}
+                    />
                   </div>
                 </div>
               </CardContent>

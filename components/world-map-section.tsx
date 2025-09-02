@@ -9,6 +9,14 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useIsMobile } from "@/hooks/use-mobile"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
 import {
   ChartConfig,
@@ -30,6 +38,8 @@ const AnalysisToggle = React.memo(({
   currentAnalysis: string | null
   onAnalysisChange: (analysisId: string) => void
 }) => {
+  const isMobile = useIsMobile()
+  
   return (
     <div className="absolute top-2 left-2">
       <ToggleGroup
@@ -37,7 +47,7 @@ const AnalysisToggle = React.memo(({
         value={currentAnalysis || ""}
         onValueChange={onAnalysisChange}
         variant="outline"
-        className="w-auto"
+        className="w-auto hidden md:flex"
       >
         {analyses.map((analysis) => (
           <ToggleGroupItem 
@@ -49,6 +59,22 @@ const AnalysisToggle = React.memo(({
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
+      <Select value={currentAnalysis || ""} onValueChange={onAnalysisChange}>
+        <SelectTrigger
+          className="flex w-32 md:hidden"
+          size="sm"
+          aria-label="Select analysis"
+        >
+          <SelectValue placeholder="Analysis" />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          {analyses.map((analysis) => (
+            <SelectItem key={analysis.id} value={analysis.id} className="rounded-lg">
+              {analysis.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 })
@@ -567,13 +593,13 @@ export function WorldMapSection() {
   // Don't render if no dataset is selected
   if (!selectedDataset) {
     return (
-      <div className="w-full flex gap-4">
-        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+      <div className="w-full flex flex-col lg:flex-row gap-4">
+        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>Please select a dataset to view drivers</p>
           </div>
         </Card>
-        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>Select a dataset to view details</p>
           </div>
@@ -585,8 +611,8 @@ export function WorldMapSection() {
   // Show error if there is one
   if (error) {
     return (
-      <div className="w-full flex gap-4">
-        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+      <div className="w-full flex flex-col lg:flex-row gap-4">
+        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-destructive">
             <div className="text-lg font-semibold mb-2">Error Loading Data</div>
             <p className="text-sm">{error}</p>
@@ -619,7 +645,7 @@ export function WorldMapSection() {
             </Button>
           </div>
         </Card>
-        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>Error occurred while loading data</p>
           </div>
@@ -631,13 +657,13 @@ export function WorldMapSection() {
   // Don't render if no analyses are available
   if (availableAnalyses.length === 0) {
     return (
-      <div className="w-full flex gap-4">
-        <Card className="flex-1 h-[500px] md:h-[600px] flex items-center justify-center">
+      <div className="w-full flex flex-col lg:flex-row gap-4">
+        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>No analyses available for {selectedDataset.title}</p>
           </div>
         </Card>
-        <Card className="w-80 h-[500px] md:h-[600px] flex items-center justify-center">
+        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <p>No analyses found</p>
           </div>
@@ -647,9 +673,9 @@ export function WorldMapSection() {
   }
 
   return (
-    <div className="w-full flex gap-4">
-      {/* Map - Left Side (2/3 width) */}
-      <div className="flex-1 h-[400px] md:h-[500px] overflow-hidden p-0">
+    <div className="w-full flex flex-col lg:flex-row gap-4">
+      {/* Map - Top on mobile, Left on desktop */}
+      <div className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden p-0">
         <div className="relative w-full h-full">
           {/* Map Background */}
           <img 
@@ -747,8 +773,8 @@ export function WorldMapSection() {
         </div>
       </div>
 
-      {/* Drivers Card - Right Side (1/3 width) */}
-      <Card className="w-80 h-auto min-h-[400px] md:min-h-[500px]">
+      {/* Drivers Card - Bottom on mobile, Right on desktop */}
+      <Card className="w-full lg:w-80 h-auto min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
         <CardContent>
           {loading ? (
             <div className="space-y-4 py-4">

@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge"
 import { useDataset } from "@/lib/dataset-context"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { useIsMobile } from "@/hooks/use-mobile"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 interface AnalysisFolder {
@@ -259,6 +267,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
 
 export function DriversComparison() {
   const { selectedDataset } = useDataset()
+  const isMobile = useIsMobile()
   const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
   const [loading, setLoading] = useState(false)
   const [analysisCategories, setAnalysisCategories] = useState<Record<string, Category[]>>({})
@@ -640,12 +649,36 @@ export function DriversComparison() {
                 value={viewMode} 
                 onValueChange={(value) => value && setViewMode(value as ViewMode)}
                 variant="outline"
+                className="hidden md:flex"
               >
                 <ToggleGroupItem value="scenarios" className="px-3 py-2">Scenarios</ToggleGroupItem>
                 <ToggleGroupItem value="regions" className="px-3 py-2">Regions</ToggleGroupItem>
                 <ToggleGroupItem value="categories" className="px-3 py-2">Categories</ToggleGroupItem>
                 <ToggleGroupItem value="predictors" className="px-3 py-2">Predictors</ToggleGroupItem>
               </ToggleGroup>
+              <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+                <SelectTrigger
+                  className="flex w-40 md:hidden"
+                  size="sm"
+                  aria-label="Select view mode"
+                >
+                  <SelectValue placeholder="Select view" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="scenarios" className="rounded-lg">
+                    Scenarios
+                  </SelectItem>
+                  <SelectItem value="regions" className="rounded-lg">
+                    Regions
+                  </SelectItem>
+                  <SelectItem value="categories" className="rounded-lg">
+                    Categories
+                  </SelectItem>
+                  <SelectItem value="predictors" className="rounded-lg">
+                    Predictors
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           

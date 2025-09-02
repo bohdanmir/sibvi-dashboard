@@ -462,6 +462,9 @@ export function ChartAreaInteractive({
   React.useEffect(() => {
     if (onPinMonthChange && filteredData.length > 0) {
       const monthAndYear = getPinMonthAndYear()
+      console.log('Chart sending month to parent:', monthAndYear)
+      console.log('Pin position:', pinPosition)
+      console.log('Filtered data length:', filteredData.length)
       if (monthAndYear) {
         onPinMonthChange(monthAndYear)
       }

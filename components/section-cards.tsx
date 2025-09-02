@@ -87,82 +87,15 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
     console.log('Available months:', Object.keys(newsData))
     console.log('Selected month:', selectedMonth)
     console.log('Show future outlook:', showFutureOutlook)
+    console.log('Has selected month data:', selectedMonth ? newsData[selectedMonth] : 'No selected month')
+    console.log('Month data structure:', selectedMonth && newsData[selectedMonth] ? {
+      hasSummary: !!newsData[selectedMonth].summary,
+      hasNews: !!newsData[selectedMonth].news,
+      newsCount: newsData[selectedMonth].news?.length || 0
+    } : 'No month data')
   }
 
-  if (showFutureOutlook && newsData?.["Future Outlook"] && newsData["Future Outlook"].news) {
-    // Display Future Outlook
-    const outlook = newsData["Future Outlook"]
-    contentTitle = "Future Outlook"
-    contentSummary = outlook.summary || "Future outlook summary not available"
-    
-    displayContent = (
-      <>
-        {outlook.news && outlook.news.length > 0 ? outlook.news.map((news, index) => (
-          <Card key={`outlook-${index}`} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs bg-muted">
-                      {news.favicon ? (
-                        <img 
-                          src={news.favicon} 
-                          alt={news.outlet}
-                          className="w-4 h-4 object-contain"
-                        />
-                      ) : (
-                        <span className="text-xs">{news.outlet.charAt(0)}</span>
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {news.outlet}
-                  </span>
-                </div>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  <IconDotsVertical className="h-4 w-4" />
-                </button>
-              </div>
-              
-              <div className="flex space-x-3">
-                <div className="flex-1 space-y-2">
-                  <a 
-                    href={news.link} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
-                  >
-                    {news.title}
-                  </a>
-                  <div className="text-xs text-muted-foreground">
-                    {news.date}
-                  </div>
-                </div>
-                
-                <div className="flex-shrink-0">
-                  {news.image ? (
-                    <img 
-                      src={news.image} 
-                      alt={news.title}
-                      className="w-16 h-16 rounded-md object-cover bg-muted"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">No image</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )) : (
-          <div className="text-center py-4 text-muted-foreground">
-            No future outlook news available
-          </div>
-        )}
-      </>
-    )
-  } else if (selectedMonth && newsData?.[selectedMonth] && newsData[selectedMonth].news) {
+  if (selectedMonth && newsData?.[selectedMonth] && newsData[selectedMonth].news) {
     // Display Monthly News
     const monthlyData = newsData[selectedMonth]
     contentTitle = `${selectedMonth} Summary`
@@ -235,6 +168,79 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
         )}
       </>
     )
+  } else if (showFutureOutlook && newsData?.["Future Outlook"] && newsData["Future Outlook"].news) {
+    // Display Future Outlook
+    const outlook = newsData["Future Outlook"]
+    contentTitle = "Future Outlook"
+    contentSummary = outlook.summary || "Future outlook summary not available"
+    
+    displayContent = (
+      <>
+        {outlook.news && outlook.news.length > 0 ? outlook.news.map((news, index) => (
+          <Card key={`outlook-${index}`} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs bg-muted">
+                      {news.favicon ? (
+                        <img 
+                          src={news.favicon} 
+                          alt={news.outlet}
+                          className="w-4 h-4 object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs">{news.outlet.charAt(0)}</span>
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {news.outlet}
+                  </span>
+                </div>
+                <button className="text-muted-foreground hover:text-foreground transition-colors">
+                  <IconDotsVertical className="h-4 w-4" />
+                </button>
+              </div>
+              
+              <div className="flex space-x-3">
+                <div className="flex-1 space-y-2">
+                  <a 
+                    href={news.link} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
+                  >
+                    {news.title}
+                  </a>
+                  <div className="text-xs text-muted-foreground">
+                    {news.date}
+                  </div>
+                </div>
+                
+                <div className="flex-shrink-0">
+                  {news.image ? (
+                    <img 
+                      src={news.image} 
+                      alt={news.title}
+                      className="w-16 h-16 rounded-md object-cover bg-muted"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )) : (
+          <div className="text-center py-4 text-muted-foreground">
+            No future outlook news available
+          </div>
+        )}
+      </>
+    )
   }
 
     return (
@@ -254,7 +260,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
                 </div>
                 <div className="flex gap-2">
                   <Badge variant="default">
-                    {showFutureOutlook ? "Outlook" : selectedMonth ? "News" : "Outlook"}
+                    {selectedMonth ? "News" : "Outlook"}
                   </Badge>
                   {selectedMonth && (
                     <>

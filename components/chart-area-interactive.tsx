@@ -82,6 +82,7 @@ export function ChartAreaInteractive({
   // Pin state and functionality
   const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage
   const [isDraggingPin, setIsDraggingPin] = React.useState(false)
+  const [hasPinBeenMoved, setHasPinBeenMoved] = React.useState(false) // Track if pin has been moved by user
   const chartRef = React.useRef<HTMLDivElement>(null)
   // Measured plot area inside the chart (excludes Y axis & margins)
   const [plotLeftPx, setPlotLeftPx] = React.useState<number>(0)
@@ -187,6 +188,9 @@ export function ChartAreaInteractive({
       } else {
         setPinPosition(percentage)
       }
+      
+      // Mark that pin has been moved by user
+      setHasPinBeenMoved(true)
     }
 
     const handleMouseUp = () => {
@@ -458,9 +462,9 @@ export function ChartAreaInteractive({
 
   console.log('Filtered data:', filteredData)
 
-  // Notify parent component when pin month changes
+  // Notify parent component when pin month changes (only if pin has been moved by user)
   React.useEffect(() => {
-    if (onPinMonthChange && filteredData.length > 0) {
+    if (onPinMonthChange && filteredData.length > 0 && hasPinBeenMoved) {
       const monthAndYear = getPinMonthAndYear()
       console.log('Chart sending month to parent:', monthAndYear)
       console.log('Pin position:', pinPosition)
@@ -469,7 +473,7 @@ export function ChartAreaInteractive({
         onPinMonthChange(monthAndYear)
       }
     }
-  }, [pinPosition, filteredData, onPinMonthChange])
+  }, [pinPosition, filteredData, onPinMonthChange, hasPinBeenMoved])
 
   if (!selectedDataset) {
     return (

@@ -18,7 +18,7 @@ export function SiteHeader({}: SiteHeaderProps) {
           className="mx-2 data-[orientation=vertical]:h-4"
         />
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">Acme Inc.</span>
+          <span className="text-sm font-medium text-muted-foreground">Baerlocher</span>
           {selectedDataset && (
             <>
               <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">

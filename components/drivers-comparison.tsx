@@ -119,7 +119,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
   }
 
   return (
-    <Card className="w-80 min-w-80 min-h-[280px] flex flex-col bg-white border border-gray-200">
+    <Card className="w-80 min-w-80 min-h-[280px] flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -155,7 +155,7 @@ function DriverCard({ title, description, categories, overallStatus, trend, anal
                     {category.driverCount > 0 && (
                       <Badge 
                         variant="secondary" 
-                        className="text-[11px] flex-shrink-0 rounded-full border-0 mr-2 bg-gray-50 text-gray-400"
+                        className="text-[11px] flex-shrink-0 rounded-full border-0 mr-2"
                       >
                         {category.driverCount}
                       </Badge>
@@ -438,15 +438,15 @@ export function DriversComparison() {
             })}
             
             {/* New Analysis Card */}
-            <div className="w-80 min-w-80 min-h-[280px] flex flex-col bg-white border border-dashed border-gray-300 rounded-lg p-6 flex items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors">
+            <div className="w-80 min-w-80 min-h-[280px] flex flex-col border border-dashed rounded-lg p-6 flex items-center justify-center cursor-pointer">
               <div className="text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto">
+                  <svg className="w-6 h-6 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-600">New Analysis</h3>
-                <p className="text-sm text-gray-500 mt-1">Create a new analysis</p>
+                <h3 className="text-lg font-medium text-muted-foreground">New Analysis</h3>
+                <p className="text-sm text-muted-foreground mt-1">Create a new analysis</p>
               </div>
             </div>
           </div>

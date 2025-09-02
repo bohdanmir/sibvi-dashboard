@@ -712,11 +712,10 @@ export function WorldMapSection() {
                         const size = getBadgeSize(driver, drivers)
                         return (
                           <Badge 
-                            variant="outline" 
-                            className={`${size.width} ${size.height} rounded-full p-1 ${size.borderWidth} transition-all duration-200 ${
+                            className={`${size.width} ${size.height} rounded-full p-1 ${
                               selectedDriver?.id === driver.id
-                                ? 'bg-sibvi-yellow-100 shadow-lg ring-2 ring-sibvi-yellow-600 dark:bg-primary/30 dark:ring-primary/30 text-sibvi-yellow-600' 
-                                : 'bg-sibvi-yellow-50 hover:-sibvi-cyan-800 dark:hover:bg-muted/60 text-sibvi-yellow-600'
+                                ? 'ring-2 ring-primary' 
+                                : ''
                             }`}
                           >
                             <div className={size.iconSize}>
@@ -839,11 +838,8 @@ export function WorldMapSection() {
               {/* Direction and Lag Information */}
               <div className="flex items-center justify-between">
                 <Badge 
-                  className={`flex items-center gap-2 ${
-                    selectedDriver.direction > 0 
-                      ? 'bg-sibvi-green-100 text-sibvi-green-700' 
-                      : 'bg-sibvi-red-100 text-sibvi-red-600'
-                  }`}
+                  variant="outline"
+                  className="flex items-center gap-2"
                 >
                   {selectedDriver.direction > 0 ? (
                     <TrendingUp className="h-3 w-3" />

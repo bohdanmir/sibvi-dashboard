@@ -97,14 +97,14 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
   if (selectedMonth && newsData?.[selectedMonth] && newsData[selectedMonth].news) {
     // Display Monthly News
     const monthlyData = newsData[selectedMonth]
-    contentTitle = `${selectedMonth} Summary`
+    contentTitle = `${selectedMonth}`
     contentSummary = monthlyData.summary || "Monthly summary not available"
     
     displayContent = (
       <>
         {monthlyData.news && monthlyData.news.length > 0 ? monthlyData.news.map((news, index) => (
           <Card key={`${selectedMonth}-${index}`} className="overflow-hidden">
-            <CardContent className="p-4">
+            <CardContent>
               <div className="flex items-center space-x-2 mb-3">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-xs bg-muted">
@@ -172,7 +172,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
       <>
         {outlook.news && outlook.news.length > 0 ? outlook.news.map((news, index) => (
           <Card key={`outlook-${index}`} className="overflow-hidden">
-            <CardContent className="p-4">
+            <CardContent>
               <div className="flex items-center space-x-2 mb-3">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-xs bg-muted">
@@ -240,7 +240,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
             Loading industry news...
           </div>
         ) : displayContent ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
             {/* Summary Card - First Card */}
             <div className="@container/card rounded-lg px-0 py-6">
               <div className="flex items-start justify-between mb-3">
@@ -253,7 +253,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                   </Badge>
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground line-clamp-5">
+              <div className="text-sm text-muted-foreground line-clamp-4">
                 {contentSummary || "Industry insights and market analysis not available"}
               </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { IconDotsVertical } from "@tabler/icons-react"
+
 import { useDataset } from "@/lib/dataset-context"
 import { useState, useEffect } from "react"
 
@@ -29,10 +29,9 @@ interface NewsData {
 interface SectionCardsProps {
   selectedMonth?: string // Format: "January 2025", "February 2025", etc.
   showFutureOutlook?: boolean // Default to true
-  onResetPin?: () => void // Callback to reset pin selection
 }
 
-export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetPin }: SectionCardsProps) {
+export function SectionCards({ selectedMonth, showFutureOutlook = true }: SectionCardsProps) {
   const { selectedDataset } = useDataset()
   const [newsData, setNewsData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -106,28 +105,23 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
         {monthlyData.news && monthlyData.news.length > 0 ? monthlyData.news.map((news, index) => (
           <Card key={`${selectedMonth}-${index}`} className="overflow-hidden">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs bg-muted">
-                      {news.favicon ? (
-                        <img 
-                          src={news.favicon} 
-                          alt={news.outlet}
-                          className="w-4 h-4 object-contain"
-                        />
-                      ) : (
-                        <span className="text-xs">{news.outlet.charAt(0)}</span>
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {news.outlet}
-                  </span>
-                </div>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  <IconDotsVertical className="h-4 w-4" />
-                </button>
+              <div className="flex items-center space-x-2 mb-3">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs bg-muted">
+                    {news.favicon ? (
+                      <img 
+                        src={news.favicon} 
+                        alt={news.outlet}
+                        className="w-4 h-4 object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs">{news.outlet.charAt(0)}</span>
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground font-normal">
+                  {news.outlet}
+                </span>
               </div>
               
               <div className="flex space-x-3">
@@ -136,11 +130,11 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
                     href={news.link} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
+                    className="text-sm font-normal text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
                   >
                     {news.title}
                   </a>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground font-normal">
                     {news.date}
                   </div>
                 </div>
@@ -179,28 +173,23 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
         {outlook.news && outlook.news.length > 0 ? outlook.news.map((news, index) => (
           <Card key={`outlook-${index}`} className="overflow-hidden">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs bg-muted">
-                      {news.favicon ? (
-                        <img 
-                          src={news.favicon} 
-                          alt={news.outlet}
-                          className="w-4 h-4 object-contain"
-                        />
-                      ) : (
-                        <span className="text-xs">{news.outlet.charAt(0)}</span>
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {news.outlet}
-                  </span>
-                </div>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  <IconDotsVertical className="h-4 w-4" />
-                </button>
+              <div className="flex items-center space-x-2 mb-3">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs bg-muted">
+                    {news.favicon ? (
+                      <img 
+                        src={news.favicon} 
+                        alt={news.outlet}
+                        className="w-4 h-4 object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs">{news.outlet.charAt(0)}</span>
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground font-medium">
+                  {news.outlet}
+                </span>
               </div>
               
               <div className="flex space-x-3">
@@ -262,30 +251,12 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true, onResetP
                   <Badge variant="default">
                     {selectedMonth ? "News" : "Outlook"}
                   </Badge>
-                  {selectedMonth && (
-                    <>
-                      <Badge variant="secondary" className="text-xs">
-                        📌 Pinned
-                      </Badge>
-                                              <button
-                          onClick={onResetPin}
-                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          title="Reset to Future Outlook"
-                        >
-                          ↺
-                        </button>
-                    </>
-                  )}
                 </div>
               </div>
               <div className="text-sm text-muted-foreground line-clamp-5">
                 {contentSummary || "Industry insights and market analysis not available"}
               </div>
-              {selectedMonth && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  📍 Showing news for {selectedMonth} (drag the pin on the chart to change)
-                </div>
-              )}
+
             </div>
             
             {/* News Cards */}

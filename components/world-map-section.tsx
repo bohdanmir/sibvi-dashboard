@@ -655,7 +655,7 @@ export function WorldMapSection() {
           <img 
             src="/map.svg" 
             alt="World Map" 
-            className="w-full h-full object-contain dark:invert dark:brightness-0 dark:contrast-200"
+            className="w-full h-full object-contain dark:invert dark:brightness-200"
             style={{ minWidth: '100%', minHeight: '100%' }}
           />
           

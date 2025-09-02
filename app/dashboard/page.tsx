@@ -33,8 +33,7 @@ function DashboardContent({
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 md:gap-6">
           <SectionCards 
-            selectedMonth={pinMonth} 
-            onResetPin={() => setPinMonth(undefined)}
+            selectedMonth={pinMonth}
           />
           <div className="px-4 lg:px-6">
             <ChartAreaInteractive 
@@ -72,7 +71,7 @@ export default function Page() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="min-h-screen">
           <SiteHeader />
           <DashboardContent 
             timeRange={timeRange} 

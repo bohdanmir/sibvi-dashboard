@@ -55,7 +55,7 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="text-sibvi-cyan-300 truncate text-xs">
+                <span className="text-muted truncate text-xs">
                   {user.email}
                 </span>
               </div>
@@ -76,7 +76,7 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="text-sibvi-cyan-300 truncate text-xs">
+                  <span className="text-mute-foreground truncate text-xs">
                     {user.email}
                   </span>
                 </div>

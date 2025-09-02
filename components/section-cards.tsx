@@ -6,7 +6,6 @@ import { useState, useEffect } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface NewsItem {
   favicon: string
@@ -131,19 +130,25 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
             <Card key={`${contentData.type}-${index}`} className="overflow-hidden">
               <CardContent>
                 <div className="flex items-center space-x-2 mb-3">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs bg-muted">
-                      {news.favicon ? (
-                        <img 
-                          src={news.favicon} 
-                          alt={news.outlet}
-                          className="w-4 h-4 object-contain"
-                        />
-                      ) : (
-                        <span className="text-xs">{news.outlet.charAt(0)}</span>
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
+                  {news.favicon && news.favicon.trim() !== "" ? (
+                    <img 
+                      src={news.favicon} 
+                      alt={news.outlet}
+                      className="w-4 h-4 object-contain"
+                      onError={(e) => {
+                        // Hide the broken image and show fallback
+                        e.currentTarget.style.display = 'none'
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                        if (fallback) fallback.style.display = 'flex'
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-4 h-4 flex items-center justify-center"
+                    style={{ display: news.favicon && news.favicon.trim() !== "" ? 'none' : 'flex' }}
+                  >
+                    <span className="text-xs text-muted-foreground">{news.outlet.charAt(0)}</span>
+                  </div>
                   <span className="text-xs text-muted-foreground font-normal line-clamp-1">
                     {news.outlet}
                   </span>

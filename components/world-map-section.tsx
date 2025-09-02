@@ -244,7 +244,7 @@ export function WorldMapSection() {
   
   // Calculate badge size based on raw importance score (same as comparison cards)
   const getBadgeSize = (driver: DriverData, allDrivers: DriverData[]) => {
-    if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
+    if (allDrivers.length === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3.5 h-3.5', borderWidth: 'border-2 border-background' }
     
     // Extract raw importance value (same logic as comparison cards)
     let rawImportance = 0
@@ -293,20 +293,29 @@ export function WorldMapSection() {
     
     const importanceRange = maxImportance - minImportance
     
-    if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3 h-3', borderWidth: 'border' }
+    if (importanceRange === 0) return { width: 'w-8', height: 'h-8', iconSize: 'w-3.5 h-3.5', borderWidth: 'border-2 border-background' }
     
     // Normalize importance to a scale of 0-1
     const normalizedImportance = (rawImportance - minImportance) / importanceRange
     
-    // Map to size ranges: min size = 24px (w-6), max size = 56px (w-14)
-    const sizeIndex = Math.floor(normalizedImportance * 4) // 0, 1, 2, 3, 4
+    // Map to 3 size ranges with clear thresholds
+    // Use more conservative thresholds to ensure proper distribution
+    let sizeIndex = 0 // Default to smallest
+    if (normalizedImportance >= 0.66) {
+      sizeIndex = 2 // Large - only top 20%
+    } else if (normalizedImportance >= 0.33) {
+      sizeIndex = 1 // Medium - middle 40%
+    } else {
+      sizeIndex = 0 // Small - bottom 40%
+    }
+    
+    // Debug logging
+    console.log(`Driver: ${driver.name}, Raw Importance: ${rawImportance}, Min: ${minImportance}, Max: ${maxImportance}, Range: ${importanceRange}, Normalized: ${normalizedImportance.toFixed(3)}, Size Index: ${sizeIndex}`)
     
     const sizes = [
-      { width: 'w-8', height: 'h-8', iconSize: 'w-4 h-4', borderWidth: 'border-2 border-background' },      // 24px - Very small
-      { width: 'w-8', height: 'h-8', iconSize: 'w-4 h-4', borderWidth: 'border-2 border-background' },    // 32px - Small
-      { width: 'w-12', height: 'h-12', iconSize: 'w-4 h-4', borderWidth: 'border-3 border-background' },  // 40px - Medium
-      { width: 'w-12', height: 'h-12', iconSize: 'w-6 h-6', borderWidth: 'border-3 border-background' },  // 48px - Large
-      { width: 'w-14', height: 'h-14', iconSize: 'w-6 h-6', borderWidth: 'border-3 border-background' }   // 56px - Very large
+      { width: 'w-8', height: 'h-8', iconSize: 'w-3.5 h-3.5', borderWidth: 'border-2 border-background' },      // 32px - Small
+      { width: 'w-10', height: 'h-10', iconSize: 'w-4 h-4', borderWidth: 'border-2 border-background' },    // 40px - Medium
+      { width: 'w-12', height: 'h-12', iconSize: 'w-5 h-5', borderWidth: 'border-3 border-background' }     // 48px - Large
     ]
     
     return sizes[Math.min(sizeIndex, sizes.length - 1)]

@@ -59,11 +59,13 @@ const forecastColors = [
 export function ChartAreaInteractive({ 
   timeRange, 
   onTimeRangeChange,
-  onLoadingChange
+  onLoadingChange,
+  onPinMonthChange
 }: { 
   timeRange?: string
   onTimeRangeChange?: (value: string) => void
   onLoadingChange?: (loading: boolean) => void
+  onPinMonthChange?: (month: string) => void
 }) {
   const isMobile = useIsMobile()
   const { selectedDataset } = useDataset()
@@ -157,6 +159,8 @@ export function ChartAreaInteractive({
     }
   }, [loading, onLoadingChange])
 
+
+
   // Handle pin dragging
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -219,6 +223,22 @@ export function ChartAreaInteractive({
       return date.toLocaleDateString("en-US", { month: "short" })
     }
     return "Jan"
+  }
+
+  // Get full month and year for pin position to send to parent component
+  const getPinMonthAndYear = () => {
+    if (!filteredData.length) return null
+    const totalPoints = filteredData.length
+    const index = Math.round((pinPosition / 100) * (totalPoints - 1))
+    const clampedIndex = Math.max(0, Math.min(totalPoints - 1, index))
+    const dataPoint = filteredData[clampedIndex]
+    if (dataPoint && dataPoint.date) {
+      const date = new Date(dataPoint.date)
+      const month = date.toLocaleDateString("en-US", { month: "long" })
+      const year = date.getFullYear()
+      return `${month} ${year}`
+    }
+    return null
   }
 
   // Load all data (analyses, forecasts, and chart data) when selected dataset changes
@@ -437,6 +457,19 @@ export function ChartAreaInteractive({
   })
 
   console.log('Filtered data:', filteredData)
+
+  // Notify parent component when pin month changes
+  React.useEffect(() => {
+    if (onPinMonthChange && filteredData.length > 0) {
+      const monthAndYear = getPinMonthAndYear()
+      console.log('Chart sending month to parent:', monthAndYear)
+      console.log('Pin position:', pinPosition)
+      console.log('Filtered data length:', filteredData.length)
+      if (monthAndYear) {
+        onPinMonthChange(monthAndYear)
+      }
+    }
+  }, [pinPosition, filteredData, onPinMonthChange])
 
   if (!selectedDataset) {
     return (
@@ -685,12 +718,19 @@ export function ChartAreaInteractive({
             }}
           >
             <div 
-              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group"
               onMouseDown={startPinDrag}
               aria-label="News pin"
+              title={`Current month: ${getPinMonthAndYear() || "Loading..."}`}
             >
               <Newspaper className="w-3 h-3 text-white" aria-hidden="true" />
             </div>
+            {/* Show current month while pin is being dragged */}
+            {isDraggingPin && (
+              <div className="absolute -top-[40px] -left-[20px] bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+                {getPinMonthAndYear() || "Loading..."}
+              </div>
+            )}
           </div>
         </div>
       </div>

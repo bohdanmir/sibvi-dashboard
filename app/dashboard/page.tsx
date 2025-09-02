@@ -26,17 +26,21 @@ function DashboardContent({
   setLoading: (loading: boolean) => void;
 }) {
   const { selectedDataset } = useDataset()
+  const [pinMonth, setPinMonth] = useState<string | undefined>(undefined)
   
   return (
     <div className="flex flex-1 flex-col bg-background">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 md:gap-6">
-          <SectionCards />
+          <SectionCards 
+            selectedMonth={pinMonth}
+          />
           <div className="px-4 lg:px-6">
             <ChartAreaInteractive 
               timeRange={timeRange}
               onTimeRangeChange={setTimeRange}
               onLoadingChange={setLoading}
+              onPinMonthChange={setPinMonth}
             />
           </div>
           <div className="">
@@ -67,7 +71,7 @@ export default function Page() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="min-h-screen">
           <SiteHeader />
           <DashboardContent 
             timeRange={timeRange} 

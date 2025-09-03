@@ -1084,7 +1084,7 @@ export function ChartAreaInteractive({
             onMouseDown={handleChartClick}
             margin={{ left: -10, right: 30, top: 20, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} strokeWidth={0.6} />
+            <CartesianGrid strokeDasharray="3 6" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} strokeWidth={0.6} />
             <XAxis
               dataKey="date"
               tickLine={false}

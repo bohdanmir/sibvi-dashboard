@@ -61,7 +61,6 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
           setNewsData(data)
           // Trigger fade-in animation after a short delay
           setTimeout(() => {
-            console.log('Triggering animation')
             setShowContent(true)
           }, 200)
         } else {
@@ -80,7 +79,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
   }, [selectedDataset])
 
   // Show skeleton when datasets are loading or when news data is loading
-  if (datasetLoading || loading) {
+  if (datasetLoading || loading || !showContent) {
     return (
       <div className="px-4 lg:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
@@ -185,8 +184,6 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
 
   const contentData = getContentData()
 
-  console.log('Render state:', { showContent, loading, hasContentData: !!contentData })
-
   return (
     <div className="px-4 lg:px-6">
       {!contentData ? (
@@ -194,92 +191,79 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
           No content available
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+        <div 
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start transition-all duration-700 ease-out ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
           {/* Summary Card - First Card */}
-          <div 
-            className={`transition-all duration-500 ease-out ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-            style={{ 
-              transitionDelay: showContent ? '0ms' : '0ms' 
-            }}
-          >
-            <div className="rounded-lg px-0 py-6">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-lg font-mono font-normal tabular-nums">
-                  {contentData.title}
-                </div>
-                <div className="flex gap-2">
-                  <Badge variant="default">
-                    {contentData.type === "monthly" ? "News" : "Outlook"}
-                  </Badge>
-                </div>
+          <div className="rounded-lg px-0 py-6">
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-lg font-mono font-normal tabular-nums">
+                {contentData.title}
               </div>
-              <div className="text-sm text-muted-foreground line-clamp-4">
-                {contentData.summary}
+              <div className="flex gap-2">
+                <Badge variant="default">
+                  {contentData.type === "monthly" ? "News" : "Outlook"}
+                </Badge>
               </div>
+            </div>
+            <div className="text-sm text-muted-foreground line-clamp-4">
+              {contentData.summary}
             </div>
           </div>
           
           {/* News Cards */}
           {contentData.news.length > 0 ? contentData.news.map((news, index) => (
-            <div
-              key={`${contentData.type}-${index}`}
-              className={`transition-all duration-500 ease-out ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              style={{ 
-                transitionDelay: showContent ? `${100 + (index * 150)}ms` : '0ms' 
-              }}
-            >
-              <Card className="overflow-hidden">
-                <CardContent>
-                  <div className="flex items-center space-x-2 mb-3">
-                    {news.favicon && news.favicon.trim() !== "" ? (
-                      <img 
-                        src={news.favicon} 
-                        alt={news.outlet}
-                        className="object-contain"
-                        onError={(e) => {
-                          // Hide the broken image and show fallback
-                          e.currentTarget.style.display = 'none'
-                          const fallback = e.currentTarget.nextElementSibling as HTMLElement
-                          if (fallback) fallback.style.display = 'flex'
-                        }}
-                      />
-                    ) : null}
-                    <div 
-                      className="w-4 h-4 flex items-center justify-center"
-                      style={{ display: news.favicon && news.favicon.trim() !== "" ? 'none' : 'flex' }}
+            <Card key={`${contentData.type}-${index}`} className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center space-x-2 mb-3">
+                  {news.favicon && news.favicon.trim() !== "" ? (
+                    <img 
+                      src={news.favicon} 
+                      alt={news.outlet}
+                      className="object-contain"
+                      onError={(e) => {
+                        // Hide the broken image and show fallback
+                        e.currentTarget.style.display = 'none'
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                        if (fallback) fallback.style.display = 'flex'
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-4 h-4 flex items-center justify-center"
+                    style={{ display: news.favicon && news.favicon.trim() !== "" ? 'none' : 'flex' }}
+                  >
+                    <span className="text-xs text-muted-foreground">{news.outlet.charAt(0)}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-normal line-clamp-1">
+                    {news.outlet}
+                  </span>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <div className="flex-1 space-y-2">
+                    <a 
+                      href={news.link} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-normal text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
                     >
-                      <span className="text-xs text-muted-foreground">{news.outlet.charAt(0)}</span>
+                      {news.title}
+                    </a>
+                    <div className="text-xs text-muted-foreground font-normal">
+                      {news.date}
                     </div>
-                    <span className="text-xs text-muted-foreground font-normal line-clamp-1">
-                      {news.outlet}
-                    </span>
                   </div>
                   
-                  <div className="flex space-x-3">
-                    <div className="flex-1 space-y-2">
-                      <a 
-                        href={news.link} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-normal text-primary hover:text-primary/80 transition-colors line-clamp-3 leading-tight"
-                      >
-                        {news.title}
-                      </a>
-                      <div className="text-xs text-muted-foreground font-normal">
-                        {news.date}
-                      </div>
-                    </div>
-                    
-                    <div className="flex-shrink-0">
-                      <LinkPreview 
-                        url={news.link} 
-                        fallbackTitle={news.title}
-                      />
-                    </div>
+                  <div className="flex-shrink-0">
+                    <LinkPreview 
+                      url={news.link} 
+                      fallbackTitle={news.title}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           )) : (
             <div className="text-center py-4 text-muted-foreground">
               No news available

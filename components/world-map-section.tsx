@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X, TrendingDown, BarChart3, Building, Thermometer, Package, Zap, HardHat, Droplets, TrendingUp, Activity, ChevronLeft, ChevronRight, Home, Cloud, Truck, Factory, Users, Database, DollarSign, Globe, FlaskConical, Utensils, Wallet, ShoppingCart, Heart, Mountain, Palette, Users2, ChartCandlestick, Shirt, IdCardLanyard, Drill, ThermometerSun } from "lucide-react"
+import { X, TrendDown, ChartBar, Building, Thermometer, Package, Lightning, HardHat, Drop, TrendUp, Activity, CaretLeft, CaretRight, House, Cloud, Truck, Factory, Users, Database, CurrencyDollar, Globe, Flask, ForkKnife, Wallet, ShoppingCart, Heart, Tree, Palette, Users as Users2, ChartLine, TShirt, IdentificationCard, Wrench, Thermometer as ThermometerSun } from "@phosphor-icons/react"
 import {
   ChartConfig,
   ChartContainer,
@@ -86,7 +86,7 @@ const getCategoryIcon = (category: string) => {
   
   // Housing & Real Estate
   if (categoryLower.includes('housing') || categoryLower.includes('real estate') || categoryLower.includes('residential') || categoryLower.includes('property')) 
-    return <Home className="h-full w-full" />
+    return <House className="h-full w-full" />
   
   // Construction & Infrastructure
   if (categoryLower.includes('construction') || categoryLower.includes('infrastructure') || categoryLower.includes('building') || categoryLower.includes('development') || categoryLower.includes('engineering') || categoryLower.includes('contracting')) 
@@ -102,11 +102,11 @@ const getCategoryIcon = (category: string) => {
   
   // Energy & Power
   if (categoryLower.includes('energy') || categoryLower.includes('power') || categoryLower.includes('electricity')) 
-    return <Zap className="h-full w-full" />
+    return <Lightning className="h-full w-full" />
   
   // Labor Market & Employment
   if (categoryLower.includes('labour') || categoryLower.includes('employment') || categoryLower.includes('jobs') || categoryLower.includes('hiring') || categoryLower.includes('unemployment') || categoryLower.includes('wages') || categoryLower.includes('salary') || categoryLower.includes('job market') || categoryLower.includes('workforce')) 
-    return <IdCardLanyard className="h-full w-full" />
+    return <IdentificationCard className="h-full w-full" />
   
   // Workforce & Human Resources
   if (categoryLower.includes('workforce') || categoryLower.includes('hr') || categoryLower.includes('human resources') || categoryLower.includes('personnel') || categoryLower.includes('staffing') || categoryLower.includes('talent') || categoryLower.includes('recruitment')) 
@@ -118,7 +118,7 @@ const getCategoryIcon = (category: string) => {
   
   // Finance & Economics
   if (categoryLower.includes('price') || categoryLower.includes('inflation') || categoryLower.includes('finance') || categoryLower.includes('economy') || categoryLower.includes('gdp')) 
-    return <DollarSign className="h-full w-full" />
+    return <CurrencyDollar className="h-full w-full" />
   
   // Data & Analytics
   if (categoryLower.includes('data') || categoryLower.includes('analytics') || categoryLower.includes('statistics')) 
@@ -130,11 +130,11 @@ const getCategoryIcon = (category: string) => {
   
   // Chemicals & Pharmaceuticals
   if (categoryLower.includes('chemical') || categoryLower.includes('pharmaceutical') || categoryLower.includes('medicine') || categoryLower.includes('drug') || categoryLower.includes('compound')) 
-    return <FlaskConical className="h-full w-full" />
+    return <Flask className="h-full w-full" />
   
   // Food & Agriculture
   if (categoryLower.includes('food') || categoryLower.includes('processed') || categoryLower.includes('agriculture') || categoryLower.includes('farming') || categoryLower.includes('crop') || categoryLower.includes('grain') || categoryLower.includes('dairy') || categoryLower.includes('meat')) 
-    return <Utensils className="h-full w-full" />
+    return <ForkKnife className="h-full w-full" />
   
   // Income & Wealth
   if (categoryLower.includes('income') || categoryLower.includes('wealth') || categoryLower.includes('salary') || categoryLower.includes('wage') || categoryLower.includes('earnings') || categoryLower.includes('revenue')) 
@@ -150,15 +150,15 @@ const getCategoryIcon = (category: string) => {
   
   // Minerals & Mining
   if (categoryLower.includes('mineral') || categoryLower.includes('mining') || categoryLower.includes('ore') || categoryLower.includes('metal') || categoryLower.includes('coal') || categoryLower.includes('gold') || categoryLower.includes('copper') || categoryLower.includes('iron') || categoryLower.includes('aluminum') || categoryLower.includes('lithium')) 
-    return <Mountain className="h-full w-full" />
+    return <Tree className="h-full w-full" />
   
   // Textiles & Fibers
   if (categoryLower.includes('textile') || categoryLower.includes('fiber') || categoryLower.includes('fabric') || categoryLower.includes('cloth') || categoryLower.includes('cotton') || categoryLower.includes('wool') || categoryLower.includes('silk') || categoryLower.includes('synthetic') || categoryLower.includes('garment') || categoryLower.includes('apparel')) 
-    return <Shirt className="h-full w-full" />
+    return <TShirt className="h-full w-full" />
   
   // Crafts & Artisan
   if (categoryLower.includes('craft') || categoryLower.includes('artisan') || categoryLower.includes('handmade') || categoryLower.includes('artistic') || categoryLower.includes('creative') || categoryLower.includes('design') || categoryLower.includes('pottery') || categoryLower.includes('woodwork') || categoryLower.includes('jewelry')) 
-    return <Drill className="h-full w-full" />
+    return <Wrench className="h-full w-full" />
   
   // Population & Demographics
   if (categoryLower.includes('population') || categoryLower.includes('demographic') || categoryLower.includes('census') || categoryLower.includes('birth') || categoryLower.includes('death') || categoryLower.includes('migration') || categoryLower.includes('immigration') || categoryLower.includes('age') || categoryLower.includes('gender') || categoryLower.includes('ethnicity')) 
@@ -166,10 +166,10 @@ const getCategoryIcon = (category: string) => {
   
   // Market Indices & Trading
   if (categoryLower.includes('market') || categoryLower.includes('index') || categoryLower.includes('indices') || categoryLower.includes('trading') || categoryLower.includes('stock') || categoryLower.includes('equity') || categoryLower.includes('s&p') || categoryLower.includes('nasdaq') || categoryLower.includes('dow') || categoryLower.includes('ftse') || categoryLower.includes('candlestick')) 
-    return <ChartCandlestick className="h-full w-full" />
+    return <ChartLine className="h-full w-full" />
   
   // Default fallback
-  return <BarChart3 className="h-full w-full" />
+  return <ChartBar className="h-full w-full" />
 }
 
 export function WorldMapSection() {
@@ -868,9 +868,9 @@ export function WorldMapSection() {
                   className="flex items-center gap-2"
                 >
                   {selectedDriver.direction > 0 ? (
-                    <TrendingUp className="h-3 w-3" />
+                    <TrendUp className="h-3 w-3" />
                   ) : (
-                    <TrendingDown className="h-3 w-3" />
+                    <TrendDown className="h-3 w-3" />
                   )}
                   {selectedDriver.direction > 0 ? 'Positive' : 'Negative'} Impact
                 </Badge>
@@ -959,7 +959,7 @@ export function WorldMapSection() {
                 variant="outline" 
                 className="w-16 h-16 mx-auto mb-4 rounded-full p-0 bg-muted border-border"
               >
-                <BarChart3 className="h-8 w-8 text-muted-foreground" />
+                <ChartBar className="h-8 w-8 text-muted-foreground" />
               </Badge>
               <p className="text-sm">Select a driver from the map to view details</p>
               <p className="text-xs mt-2">Click on any icon to explore driver data</p>

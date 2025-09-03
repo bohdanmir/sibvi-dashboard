@@ -107,6 +107,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --stroke-width-1: 1px;
+  --stroke-width-1.5: 1.5px;
+  --stroke-width-2: 2px;
+  --stroke-width: 1.5px;
+  --stroke-linecap: square;
+  --stroke-linejoin: miter;
+  --stroke-absolute: true;
 }
 
 :root {
@@ -236,7 +243,19 @@
     @apply bg-background text-foreground;
   }
   
-
+  /* Default stroke properties for all SVG icons */
+  svg {
+    stroke-width: var(--stroke-width);
+    stroke-linecap: var(--stroke-linecap);
+    stroke-linejoin: var(--stroke-linejoin);
+  }
+  
+  /* Lucide icons with absolute stroke width */
+  svg[data-lucide] {
+    stroke-width: var(--stroke-width) !important;
+    stroke-linecap: var(--stroke-linecap) !important;
+    stroke-linejoin: var(--stroke-linejoin) !important;
+  }
 }
 
 

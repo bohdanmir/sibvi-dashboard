@@ -1,6 +1,6 @@
 "use client"
 
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { PlusCircle, Envelope, type Icon } from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,7 +38,7 @@ export function NavMain({
               tooltip="Add dataset"
               className="bg-sibvi-cyan-200 text-sibvi-cyan-900 hover:bg-sibvi-cyan-300 active:bg-sibvi-cyan-400 min-w-8 duration-200 ease-linear"
             >
-              <IconCirclePlusFilled />
+              <PlusCircle />
               <span>Add dataset</span>
             </SidebarMenuButton> */}
             {/* <Button
@@ -46,7 +46,7 @@ export function NavMain({
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
             >
-              <IconMail />
+              <Envelope />
               <span className="sr-only">Inbox</span>
             </Button> */}
           </SidebarMenuItem>

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { useTheme } from "next-themes"
-import { Newspaper } from "lucide-react"
+import { Newspaper } from "@phosphor-icons/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDataset } from "@/lib/dataset-context"

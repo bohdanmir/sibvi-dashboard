@@ -3,17 +3,17 @@
 import * as React from "react"
 
 import {
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconCircleCheckFilled,
-  IconDotsVertical,
-  IconLoader,
-  IconPlus,
-  IconTrendingUp,
-} from "@tabler/icons-react"
+  CaretDown,
+  CaretLeft,
+  CaretRight,
+  CaretDoubleLeft,
+  CaretDoubleRight,
+  CheckCircle,
+  DotsThreeVertical,
+  Spinner,
+  Plus,
+  TrendUp,
+} from "@phosphor-icons/react"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -503,7 +503,7 @@ const getColumns = (
             size="sm"
             className="h-8 w-8 p-0 data-[state=open]:bg-muted"
           >
-            <IconDotsVertical className="h-4 w-4" />
+            <DotsThreeVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -836,7 +836,7 @@ export function DataTable() {
       <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6 pb-6">
         {!initialLoadComplete ? (
           <div className="flex items-center justify-center p-8">
-            <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+            <Spinner className="mr-2 h-4 w-4 animate-spin" />
             Loading analyses and forecasts...
           </div>
         ) : forecastData.length === 0 ? (
@@ -972,7 +972,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof forecastSchema> }) {
               <div className="grid gap-2">
                 <div className="flex gap-2 leading-none font-medium">
                   Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
+                  <TrendUp className="size-4" />
                 </div>
                 <div className="text-muted-foreground">
                   Showing total visitors for the last 6 months. This is just

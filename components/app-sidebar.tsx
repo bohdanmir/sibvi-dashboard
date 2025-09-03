@@ -2,22 +2,22 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+  Camera,
+  ChartBar,
+  House,
+  Database,
+  File,
+  FileText,
+  FileDoc,
+  Folder,
+  Question,
+  Circle,
+  List,
+  ChartPie,
+  MagnifyingGlass,
+  Gear,
+  Users,
+} from "@phosphor-icons/react"
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
@@ -44,19 +44,19 @@ const data = {
     {
       title: "Dashboard",
       url: "#",
-      icon: IconDashboard,
+      icon: House,
     },
     {
       title: "Datasets",
       url: "#",
-      icon: IconDatabase,
+      icon: Database,
       items: [], // Will be populated dynamically
     },
   ],
   navClouds: [
     {
       title: "Capture",
-      icon: IconCamera,
+      icon: Camera,
       isActive: true,
       url: "#",
       items: [
@@ -72,7 +72,7 @@ const data = {
     },
     {
       title: "Proposal",
-      icon: IconFileDescription,
+      icon: FileText,
       url: "#",
       items: [
         {
@@ -87,7 +87,7 @@ const data = {
     },
     {
       title: "Prompts",
-      icon: IconFileAi,
+      icon: File,
       url: "#",
       items: [
         {
@@ -105,34 +105,34 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: IconSettings,
+      icon: Gear,
     },
     {
       title: "Get Help",
       url: "#",
-      icon: IconHelp,
+      icon: Question,
     },
     {
       title: "Search",
       url: "#",
-      icon: IconSearch,
+      icon: MagnifyingGlass,
     },
   ],
   documents: [
     {
       name: "Data Library",
       url: "#",
-      icon: IconDatabase,
+      icon: Database,
     },
     {
       name: "Reports",
       url: "#",
-      icon: IconReport,
+      icon: ChartPie,
     },
     {
       name: "Word Assistant",
       url: "#",
-      icon: IconFileWord,
+      icon: FileDoc,
     },
   ],
 }

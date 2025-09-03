@@ -89,7 +89,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
       }
     } else if (showFutureOutlook && newsData["Future Outlook"]) {
       return {
-        title: "Future Outlook",
+        title: "Q3/Q4 2025",
         summary: newsData["Future Outlook"].summary || "Future outlook summary not available",
         news: newsData["Future Outlook"].news || [],
         type: "outlook"

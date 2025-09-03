@@ -727,7 +727,7 @@ export function ChartAreaInteractive({
     }
   }, [isDraggingPin, filteredData, plotLeftPx, plotWidthPx])
 
-  // Debounced month change notification to prevent stuttering during drag
+  // Debounced month change notification to prevent stuttering during drag and clicks
   React.useEffect(() => {
     if (!onPinMonthChange || !filteredData.length || !hasPinBeenMoved) return
 
@@ -739,22 +739,13 @@ export function ChartAreaInteractive({
       clearTimeout(debounceTimeoutRef.current)
     }
 
-    // If currently dragging, set up a debounced update
-    if (isDraggingPin) {
-      debounceTimeoutRef.current = setTimeout(() => {
-        // Only update if we're still dragging and the position hasn't changed significantly
-        if (isDraggingPin && Math.abs(pinPosition - lastPinPosition) < 0.1) {
-          console.log('Chart sending month to parent (debounced):', monthAndYear)
-          onPinMonthChange(monthAndYear)
-          setLastPinPosition(pinPosition)
-        }
-      }, 200) // 200ms delay to wait for drag to settle
-    } else {
-      // If not dragging, update immediately
-      console.log('Chart sending month to parent (immediate):', monthAndYear)
+    // Always debounce the month change notification to prevent interference with pin animation
+    // This prevents news loading from stuttering the pin animation
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log('Chart sending month to parent (debounced):', monthAndYear)
       onPinMonthChange(monthAndYear)
       setLastPinPosition(pinPosition)
-    }
+    }, 300) // 300ms delay to allow pin animation to complete
 
     // Cleanup function
     return () => {
@@ -1221,21 +1212,24 @@ export function ChartAreaInteractive({
           style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute bg-sibvi-cyan-700 z-10 pointer-events-none transition-all duration-150 ease-out"
+            className="absolute bg-sibvi-cyan-700 z-10 pointer-events-none transition-all duration-200 ease-out"
             style={{ 
               left: (isNaN(plotLeftPx) ? 0 : plotLeftPx) + ((isNaN(pinPosition) ? 0 : pinPosition) / 100) * (isNaN(plotWidthPx) ? 0 : plotWidthPx) - 0.75, // Center the 1.5px stroke
               top: isNaN(plotTopPx) ? 0 : plotTopPx,
               height: isNaN(plotHeightPx) ? 0 : plotHeightPx,
               width: '1.5px',
-              opacity: isDraggingPin ? 0.8 : 1
+              opacity: isDraggingPin ? 0.8 : 1,
+              // Use transform for smoother animation
+              transform: 'translateZ(0)', // Force hardware acceleration
             }}
           >
             <div 
-              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-sibvi-cyan-700 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group transition-transform duration-150 ease-out hover:scale-110"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-sibvi-cyan-700 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group transition-transform duration-200 ease-out hover:scale-110"
               onMouseDown={startPinDrag}
               onTouchStart={startPinDrag}
               aria-label="News pin"
               title={`Current month: ${getPinMonthAndYear() || "Loading..."}`}
+              style={{ transform: 'translateZ(0)' }} // Force hardware acceleration
             >
               <Newspaper className="w-3.5 h-3.5 text-white" aria-hidden="true" />
             </div>

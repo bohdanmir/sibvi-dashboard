@@ -32,6 +32,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { FlickeringGrid } from "@/components/ui/flickering-grid"
 import { useDataset } from "@/lib/dataset-context"
 
 const data = {
@@ -161,27 +162,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5 text-sibvi-cyan-50 hover:bg-sibvi-cyan-800 hover:text-sibvi-cyan-50 active:bg-sibvi-cyan-800"
-            >
-              <a href="#">
-                <img src="/logo-sibvi-2colours.svg" alt="Sibvi Logo" className="h-7 w-auto" />
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={navMainWithDatasets} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <FlickeringGrid 
+          squareSize={1.5}
+          gridGap={20}
+          flickerChance={0.4}
+          color="rgb(39, 209, 239)"
+          maxOpacity={0.40}
+          className="opacity-95"
+        />
+      </div>
+      <div className="relative z-10 flex h-full flex-col">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="data-[slot=sidebar-menu-button]:!p-1.5 text-sibvi-cyan-50 hover:bg-sibvi-cyan-800 hover:text-sibvi-cyan-50 active:bg-sibvi-cyan-800"
+              >
+                <a href="#">
+                  <img src="/logo-sibvi-2colours.svg" alt="Sibvi Logo" className="h-7 w-auto" />
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <NavMain items={navMainWithDatasets} />
+          <NavSecondary items={data.navSecondary} className="mt-auto" />
+        </SidebarContent>
+        <SidebarFooter>
+          <NavUser user={data.user} />
+        </SidebarFooter>
+      </div>
     </Sidebar>
   )
 }

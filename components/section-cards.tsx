@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { LinkPreview } from "@/components/link-preview"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface NewsItem {
   favicon: string
@@ -32,7 +33,7 @@ interface SectionCardsProps {
 }
 
 export function SectionCards({ selectedMonth, showFutureOutlook = true }: SectionCardsProps) {
-  const { selectedDataset } = useDataset()
+  const { selectedDataset, loading: datasetLoading } = useDataset()
   const [newsData, setNewsData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -66,6 +67,53 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
     loadNewsData()
   }, [selectedDataset])
 
+  // Show skeleton when datasets are loading or when news data is loading
+  if (datasetLoading || loading) {
+    return (
+      <div className="px-4 lg:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+          {/* Summary Card Skeleton */}
+          <div className="@container/card rounded-lg px-0 py-6">
+            <div className="flex items-start justify-between mb-3">
+              <Skeleton className="h-6 w-32 @[250px]/card:h-7" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+          
+          {/* News Cards Skeleton */}
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Skeleton className="w-4 h-4 rounded" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  
+                  <div className="flex-shrink-0">
+                    <Skeleton className="w-16 h-12 rounded" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (!selectedDataset) {
     return (
       <div className="px-4 lg:px-6">
@@ -76,15 +124,38 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
     )
   }
 
+  // Convert short month format (e.g., "Apr 2024") to long format (e.g., "April 2024")
+  const convertToLongMonthFormat = (shortMonth: string) => {
+    const monthMap: { [key: string]: string } = {
+      'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+      'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+      'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+    }
+    
+    const parts = shortMonth.split(' ')
+    if (parts.length === 2) {
+      const [shortMonthName, year] = parts
+      const longMonthName = monthMap[shortMonthName]
+      if (longMonthName) {
+        return `${longMonthName} ${year}`
+      }
+    }
+    return shortMonth // Return original if conversion fails
+  }
+
   // Determine what content to show based on selected month
   const getContentData = () => {
     if (!newsData) return null
     
-    if (selectedMonth && newsData[selectedMonth]) {
+    // Try both short and long month formats
+    const longMonthFormat = convertToLongMonthFormat(selectedMonth || '')
+    const monthKey = selectedMonth && newsData[selectedMonth] ? selectedMonth : longMonthFormat
+    
+    if (selectedMonth && newsData[monthKey]) {
       return {
-        title: selectedMonth,
-        summary: newsData[selectedMonth].summary || "Monthly summary not available",
-        news: newsData[selectedMonth].news || [],
+        title: longMonthFormat, // Display in long format for consistency
+        summary: newsData[monthKey].summary || "Monthly summary not available",
+        news: newsData[monthKey].news || [],
         type: "monthly"
       }
     } else if (showFutureOutlook && newsData["Future Outlook"]) {
@@ -103,9 +174,9 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
 
   return (
     <div className="px-4 lg:px-6">
-      {loading || !contentData ? (
+      {!contentData ? (
         <div className="text-center py-8 text-muted-foreground">
-          {loading ? "Loading industry news..." : "No content available"}
+          No content available
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">

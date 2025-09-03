@@ -30,7 +30,7 @@ function DashboardContent({
   
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="@container/main flex flex-1 flex-col gap-2 max-w-8xl mx-auto w-full">
         <div className="flex flex-col gap-4 md:gap-6">
           <SectionCards 
             selectedMonth={pinMonth}

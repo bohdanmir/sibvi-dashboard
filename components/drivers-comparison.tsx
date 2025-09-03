@@ -267,7 +267,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
 }
 
 export function DriversComparison() {
-  const { selectedDataset } = useDataset()
+  const { selectedDataset, loading: datasetLoading } = useDataset()
   const isMobile = useIsMobile()
   const [analysisFolders, setAnalysisFolders] = useState<AnalysisFolder[]>([])
   const [loading, setLoading] = useState(false)
@@ -601,9 +601,113 @@ export function DriversComparison() {
     })
   }
 
+  // Show loading state while datasets are being loaded from the context
+  if (datasetLoading) {
+    return (
+      <div className="">
+        {/* Toggle Group Header Skeleton */}
+        <div className="px-4 lg:px-6 mb-4">
+          <div className="flex items-center">
+            <div className="hidden md:flex gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-20" />
+              ))}
+            </div>
+            <Skeleton className="h-9 w-40 md:hidden" />
+          </div>
+        </div>
+        
+        {/* Driver Cards Skeleton */}
+        <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4 pr-8">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index} className="w-80 min-w-80 min-h-[280px] flex flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <Skeleton className="h-6 w-32 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-15 h-6 rounded" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 flex-1 flex flex-col">
+                <div className="flex-1 space-y-4">
+                  {/* Content skeleton based on view mode */}
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-8" />
+                      </div>
+                      <Skeleton className="h-1.5 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          
+          {/* New Analysis Card Skeleton */}
+          <div className="w-80 min-w-80 min-h-[280px] flex flex-col border border-dashed rounded-lg p-6 flex items-center justify-center">
+            <div className="text-center">
+              <Skeleton className="w-12 h-12 rounded-full mb-3 mx-auto" />
+              <Skeleton className="h-5 w-24 mb-1 mx-auto" />
+              <Skeleton className="h-4 w-32 mx-auto" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!selectedDataset) {
     return (
       <div className="">
+        {/* Toggle Group Header */}
+        <div className="px-4 lg:px-6 mb-4">
+          <div className="flex items-center">
+            <ToggleGroup 
+              type="single" 
+              value={viewMode} 
+              onValueChange={(value) => value && setViewMode(value as ViewMode)}
+              variant="outline"
+              disabled={true}
+              className="hidden md:flex"
+            >
+              <ToggleGroupItem value="scenarios" disabled={true} className="px-3 py-2">Scenarios</ToggleGroupItem>
+              <ToggleGroupItem value="regions" disabled={true} className="px-3 py-2">Regions</ToggleGroupItem>
+              <ToggleGroupItem value="categories" disabled={true} className="px-3 py-2">Categories</ToggleGroupItem>
+              <ToggleGroupItem value="predictors" disabled={true} className="px-3 py-2">Predictors</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} disabled={true}>
+              <SelectTrigger
+                className="flex w-40 md:hidden"
+                size="sm"
+                aria-label="Select view mode"
+                disabled={true}
+              >
+                <SelectValue placeholder="Select view" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="scenarios" className="rounded-lg">
+                  Scenarios
+                </SelectItem>
+                <SelectItem value="regions" className="rounded-lg">
+                  Regions
+                </SelectItem>
+                <SelectItem value="categories" className="rounded-lg">
+                  Categories
+                </SelectItem>
+                <SelectItem value="predictors" className="rounded-lg">
+                  Predictors
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
         <div className="px-4 lg:px-6">
           <p className="text-muted-foreground">
             Select a dataset from the sidebar to view analysis comparisons.

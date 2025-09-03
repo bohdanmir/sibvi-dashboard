@@ -78,7 +78,7 @@ export function ChartAreaInteractive({
   onPinMonthChange?: (month: string) => void
 }) {
   const isMobile = useIsMobile()
-  const { selectedDataset } = useDataset()
+  const { selectedDataset, loading: datasetLoading } = useDataset()
   const { theme } = useTheme()
   const [localTimeRange, setLocalTimeRange] = React.useState("1y")
   const [chartData, setChartData] = React.useState<ChartDataPoint[]>([])
@@ -764,10 +764,123 @@ export function ChartAreaInteractive({
     }
   }, [pinPosition, filteredData, onPinMonthChange, hasPinBeenMoved, isDraggingPin, lastPinPosition])
 
+  // Show loading state while datasets are being loaded from the context
+  if (datasetLoading) {
+    return (
+      <div>
+        <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
+
+        {/* Chart Header with Scale Controls */}
+        <div className="flex items-center justify-start mb-4">
+          {/* Chart Scale Controls */}
+          <div className="flex">
+            <ToggleGroup
+              type="single"
+              value={currentTimeRange}
+              onValueChange={setCurrentTimeRange}
+              variant="outline"
+              disabled={true}
+              className="hidden md:flex"
+            >
+              <ToggleGroupItem value="6m" disabled={true} className="px-3 py-2">6m</ToggleGroupItem>
+              <ToggleGroupItem value="1y" disabled={true} className="px-3 py-2">1y</ToggleGroupItem>
+              <ToggleGroupItem value="3y" disabled={true} className="px-3 py-2">3y</ToggleGroupItem>
+              <ToggleGroupItem value="5y" disabled={true} className="px-3 py-2">5y</ToggleGroupItem>
+              <ToggleGroupItem value="All" disabled={true} className="px-3 py-2">All</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={currentTimeRange} onValueChange={setCurrentTimeRange} disabled={true}>
+              <SelectTrigger
+                className="flex w-40 md:hidden"
+                size="sm"
+                aria-label="Select a value"
+                disabled={true}
+              >
+                <SelectValue placeholder="1 year" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="6m" className="rounded-lg">
+                  6 months
+                </SelectItem>
+                <SelectItem value="1y" className="rounded-lg">
+                  1 year
+                </SelectItem>
+                <SelectItem value="3y" className="rounded-lg">
+                  3 years
+                </SelectItem>
+                <SelectItem value="5y" className="rounded-lg">
+                  5 years
+                </SelectItem>
+                <SelectItem value="All" className="rounded-lg">
+                  All data
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center bg-background">
+          <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+        </div>
+      </div>
+    )
+  }
+
   if (!selectedDataset) {
     return (
-      <div className="flex items-center justify-center h-[250px]">
-        <div className="text-muted-foreground">Please select a dataset from the sidebar</div>
+      <div>
+        <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
+
+        {/* Chart Header with Scale Controls */}
+        <div className="flex items-center justify-start mb-4">
+          {/* Chart Scale Controls */}
+          <div className="flex">
+            <ToggleGroup
+              type="single"
+              value={currentTimeRange}
+              onValueChange={setCurrentTimeRange}
+              variant="outline"
+              disabled={true}
+              className="hidden md:flex"
+            >
+              <ToggleGroupItem value="6m" disabled={true} className="px-3 py-2">6m</ToggleGroupItem>
+              <ToggleGroupItem value="1y" disabled={true} className="px-3 py-2">1y</ToggleGroupItem>
+              <ToggleGroupItem value="3y" disabled={true} className="px-3 py-2">3y</ToggleGroupItem>
+              <ToggleGroupItem value="5y" disabled={true} className="px-3 py-2">5y</ToggleGroupItem>
+              <ToggleGroupItem value="All" disabled={true} className="px-3 py-2">All</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={currentTimeRange} onValueChange={setCurrentTimeRange} disabled={true}>
+              <SelectTrigger
+                className="flex w-40 md:hidden"
+                size="sm"
+                aria-label="Select a value"
+                disabled={true}
+              >
+                <SelectValue placeholder="1 year" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="6m" className="rounded-lg">
+                  6 months
+                </SelectItem>
+                <SelectItem value="1y" className="rounded-lg">
+                  1 year
+                </SelectItem>
+                <SelectItem value="3y" className="rounded-lg">
+                  3 years
+                </SelectItem>
+                <SelectItem value="5y" className="rounded-lg">
+                  5 years
+                </SelectItem>
+                <SelectItem value="All" className="rounded-lg">
+                  All data
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center bg-background">
+          <div className="text-muted-foreground">Please select a dataset from the sidebar</div>
+        </div>
       </div>
     )
   }
@@ -775,7 +888,57 @@ export function ChartAreaInteractive({
   if (loading) {
     return (
       <div>
-        <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
+        <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
+
+        {/* Chart Header with Scale Controls */}
+        <div className="flex items-center justify-start mb-4">
+          {/* Chart Scale Controls */}
+          <div className="flex">
+            <ToggleGroup
+              type="single"
+              value={currentTimeRange}
+              onValueChange={setCurrentTimeRange}
+              variant="outline"
+              disabled={loading}
+              className="hidden md:flex"
+            >
+              <ToggleGroupItem value="6m" disabled={loading} className="px-3 py-2">6m</ToggleGroupItem>
+              <ToggleGroupItem value="1y" disabled={loading} className="px-3 py-2">1y</ToggleGroupItem>
+              <ToggleGroupItem value="3y" disabled={loading} className="px-3 py-2">3y</ToggleGroupItem>
+              <ToggleGroupItem value="5y" disabled={loading} className="px-3 py-2">5y</ToggleGroupItem>
+              <ToggleGroupItem value="All" disabled={loading} className="px-3 py-2">All</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={currentTimeRange} onValueChange={setCurrentTimeRange} disabled={loading}>
+              <SelectTrigger
+                className="flex w-40 md:hidden"
+                size="sm"
+                aria-label="Select a value"
+                disabled={loading}
+              >
+                <SelectValue placeholder="1 year" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="6m" className="rounded-lg">
+                  6 months
+                </SelectItem>
+                <SelectItem value="1y" className="rounded-lg">
+                  1 year
+                </SelectItem>
+                <SelectItem value="3y" className="rounded-lg">
+                  3 years
+                </SelectItem>
+                <SelectItem value="5y" className="rounded-lg">
+                  5 years
+                </SelectItem>
+                <SelectItem value="All" className="rounded-lg">
+                  All data
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center bg-background">
           <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
         </div>
       </div>
@@ -797,7 +960,57 @@ export function ChartAreaInteractive({
   if (!chartData.length || !analyses.length) {
     return (
       <div>
-        <div className="aspect-auto h-[400px] w-full flex items-center justify-center">
+        <style dangerouslySetInnerHTML={{ __html: legendStyles }} />
+
+        {/* Chart Header with Scale Controls */}
+        <div className="flex items-center justify-start mb-4">
+          {/* Chart Scale Controls */}
+          <div className="flex">
+            <ToggleGroup
+              type="single"
+              value={currentTimeRange}
+              onValueChange={setCurrentTimeRange}
+              variant="outline"
+              disabled={loading}
+              className="hidden md:flex"
+            >
+              <ToggleGroupItem value="6m" disabled={loading} className="px-3 py-2">6m</ToggleGroupItem>
+              <ToggleGroupItem value="1y" disabled={loading} className="px-3 py-2">1y</ToggleGroupItem>
+              <ToggleGroupItem value="3y" disabled={loading} className="px-3 py-2">3y</ToggleGroupItem>
+              <ToggleGroupItem value="5y" disabled={loading} className="px-3 py-2">5y</ToggleGroupItem>
+              <ToggleGroupItem value="All" disabled={loading} className="px-3 py-2">All</ToggleGroupItem>
+            </ToggleGroup>
+            <Select value={currentTimeRange} onValueChange={setCurrentTimeRange} disabled={loading}>
+              <SelectTrigger
+                className="flex w-40 md:hidden"
+                size="sm"
+                aria-label="Select a value"
+                disabled={loading}
+              >
+                <SelectValue placeholder="1 year" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="6m" className="rounded-lg">
+                  6 months
+                </SelectItem>
+                <SelectItem value="1y" className="rounded-lg">
+                  1 year
+                </SelectItem>
+                <SelectItem value="3y" className="rounded-lg">
+                  3 years
+                </SelectItem>
+                <SelectItem value="5y" className="rounded-lg">
+                  5 years
+                </SelectItem>
+                <SelectItem value="All" className="rounded-lg">
+                  All data
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="aspect-auto h-[400px] w-full flex items-center justify-center bg-background">
           <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
         </div>
       </div>
@@ -860,7 +1073,7 @@ export function ChartAreaInteractive({
       <div className="relative">
               <ChartContainer
         config={chartConfig}
-        className="aspect-auto h-[400px] w-full relative"
+        className="aspect-auto h-[400px] w-full relative bg-background"
         ref={chartRef}
         onClick={handleChartClick}
         onMouseEnter={() => setIsHovering(true)}
@@ -868,7 +1081,7 @@ export function ChartAreaInteractive({
       >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-background">
             <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
           </div>
         ) : (

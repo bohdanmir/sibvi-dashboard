@@ -135,7 +135,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                     <img 
                       src={news.favicon} 
                       alt={news.outlet}
-                      className="w-4 h-4 object-contain"
+                      className="object-contain"
                       onError={(e) => {
                         // Hide the broken image and show fallback
                         e.currentTarget.style.display = 'none'

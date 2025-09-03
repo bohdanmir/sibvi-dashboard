@@ -33,6 +33,16 @@ const legendStyles = `
 
 export const description = "An interactive multi-series line chart with forecasts"
 
+// Helper function to format large numbers with k/m abbreviations
+const formatNumber = (value: number): string => {
+  if (value >= 1000000) {
+    return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'm'
+  } else if (value >= 1000) {
+    return (value / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  }
+  return value.toString()
+}
+
 interface ChartDataPoint {
   date: string
   historical?: number
@@ -865,8 +875,9 @@ export function ChartAreaInteractive({
             key={currentTimeRange}
             onClick={handleChartClick}
             onMouseDown={handleChartClick}
+            margin={{ left: -10, right: 30, top: 20, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} strokeWidth={1} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} strokeWidth={0.6} />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -889,10 +900,7 @@ export function ChartAreaInteractive({
               minTickGap={32}
               tick={{ fill: theme === "dark" ? "#9ca3af" : "#6b7280" }}
               tickFormatter={(value) => {
-                return value.toLocaleString("en-US", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
+                return formatNumber(value)
               }}
             />
             <Tooltip
@@ -912,7 +920,7 @@ export function ChartAreaInteractive({
             <Legend 
               verticalAlign="bottom" 
               align="left"
-              wrapperStyle={{ paddingTop: '20px' }}
+              wrapperStyle={{ paddingTop: '24px', paddingLeft: '42px' }}
               onClick={(entry) => {
                 const seriesName = entry.dataKey as string
                 setHiddenSeries(prev => {

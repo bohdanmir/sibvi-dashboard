@@ -173,6 +173,65 @@ export function ChartAreaInteractive({
     setIsDraggingPin(true)
   }
 
+  // Handle chart click to move pin to specific position
+  const handleChartClick = (event: any) => {
+    console.log('Chart click detected:', event.type, event)
+    
+    // Prevent event bubbling to avoid conflicts (only if the method exists)
+    if (event && typeof event.stopPropagation === 'function') {
+      event.stopPropagation()
+    }
+    
+    if (!chartRef.current || !filteredData.length) {
+      console.log('Chart click ignored - no ref or data:', { hasRef: !!chartRef.current, dataLength: filteredData.length })
+      return
+    }
+
+    const chartRect = chartRef.current.getBoundingClientRect()
+    const containerLeft = chartRect.left
+    const safePlotLeftPx = isNaN(plotLeftPx) ? 0 : plotLeftPx
+    const safePlotWidthPx = isNaN(plotWidthPx) ? chartRect.width : plotWidthPx
+    const effectiveLeft = containerLeft + safePlotLeftPx
+    const effectiveWidth = safePlotWidthPx || chartRect.width
+
+    // Get click coordinates - handle different event types
+    let clickX = 0
+    if (event && typeof event.clientX === 'number') {
+      clickX = event.clientX
+    } else if (event && event.nativeEvent && typeof event.nativeEvent.clientX === 'number') {
+      clickX = event.nativeEvent.clientX
+    } else {
+      console.log('No valid click coordinates found in event:', event)
+      return
+    }
+
+    // Calculate relative position within plotted area
+    const relativeX = clickX - effectiveLeft
+    const rawPercentage = effectiveWidth > 0 ? (relativeX / effectiveWidth) * 100 : 0
+    const percentage = Math.max(0, Math.min(100, isNaN(rawPercentage) ? 0 : rawPercentage))
+
+    // Snap to nearest data point
+    const totalPoints = filteredData.length
+    if (totalPoints > 1) {
+      const nearestIndex = Math.round((percentage / 100) * (totalPoints - 1))
+      const clampedIndex = Math.max(0, Math.min(totalPoints - 1, nearestIndex))
+      const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
+      
+      setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
+      setHasPinBeenMoved(true)
+      
+      console.log('Chart clicked, moving pin to:', {
+        clickX,
+        relativeX,
+        percentage,
+        snappedPercentage,
+        month: getPinMonthAndYear(),
+        chartRect: { left: chartRect.left, width: chartRect.width },
+        plotDimensions: { left: safePlotLeftPx, width: safePlotWidthPx }
+      })
+    }
+  }
+
   // Get current month label for pin position based on actual data on X axis
   const getPinMonthLabel = () => {
     if (!filteredData.length) return "Jan"
@@ -440,12 +499,15 @@ export function ChartAreaInteractive({
       animationFrameId = requestAnimationFrame(() => {
         const chartRect = chartRef.current!.getBoundingClientRect()
         const containerLeft = chartRect.left
-        const effectiveLeft = containerLeft + plotLeftPx
-        const effectiveWidth = plotWidthPx || chartRect.width
+        const safePlotLeftPx = isNaN(plotLeftPx) ? 0 : plotLeftPx
+        const safePlotWidthPx = isNaN(plotWidthPx) ? chartRect.width : plotWidthPx
+        const effectiveLeft = containerLeft + safePlotLeftPx
+        const effectiveWidth = safePlotWidthPx || chartRect.width
 
         // Calculate relative position within plotted area (ignoring Y axis width)
         const relativeX = e.clientX - effectiveLeft
-        const percentage = Math.max(0, Math.min(100, (relativeX / effectiveWidth) * 100))
+        const rawPercentage = effectiveWidth > 0 ? (relativeX / effectiveWidth) * 100 : 0
+        const percentage = Math.max(0, Math.min(100, isNaN(rawPercentage) ? 0 : rawPercentage))
 
         // Enhanced month snapping: snap to nearest month boundary
         const totalPoints = filteredData.length
@@ -487,13 +549,13 @@ export function ChartAreaInteractive({
             }
             
             const snappedPercentage = (bestIndex / (totalPoints - 1)) * 100
-            setPinPosition(snappedPercentage)
+            setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
           } else {
             const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
-            setPinPosition(snappedPercentage)
+            setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
           }
         } else {
-          setPinPosition(percentage)
+          setPinPosition(isNaN(percentage) ? 0 : percentage)
         }
         
         // Mark that pin has been moved by user
@@ -690,8 +752,9 @@ export function ChartAreaInteractive({
       <div className="relative">
               <ChartContainer
         config={chartConfig}
-        className="aspect-auto h-[400px] w-full select-none"
+        className="aspect-auto h-[400px] w-full"
         ref={chartRef}
+        onClick={handleChartClick}
       >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
@@ -703,6 +766,8 @@ export function ChartAreaInteractive({
           <LineChart 
             data={filteredData}
             key={currentTimeRange}
+            onClick={handleChartClick}
+            onMouseDown={handleChartClick}
           >
             <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
             <XAxis
@@ -835,9 +900,9 @@ export function ChartAreaInteractive({
           <div 
             className="absolute -left-[1px] w-0.5 bg-blue-500 z-10 pointer-events-none transition-all duration-150 ease-out"
             style={{ 
-              left: plotLeftPx + (pinPosition / 100) * (plotWidthPx || 0),
-              top: plotTopPx,
-              height: plotHeightPx,
+              left: (isNaN(plotLeftPx) ? 0 : plotLeftPx) + ((isNaN(pinPosition) ? 0 : pinPosition) / 100) * (isNaN(plotWidthPx) ? 0 : plotWidthPx),
+              top: isNaN(plotTopPx) ? 0 : plotTopPx,
+              height: isNaN(plotHeightPx) ? 0 : plotHeightPx,
               opacity: isDraggingPin ? 0.8 : 1
             }}
           >

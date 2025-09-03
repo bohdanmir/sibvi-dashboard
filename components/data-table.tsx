@@ -595,7 +595,7 @@ const generateDiscreteValues = (): number[] => {
 }
 
 export function DataTable() {
-  const { selectedDataset } = useDataset()
+  const { selectedDataset, loading: datasetLoading } = useDataset()
   const [analyses, setAnalyses] = React.useState<{ id: string; title?: string; name?: string }[]>([])
   const [selectedAnalysis, setSelectedAnalysis] = React.useState<string>("")
   const [forecastData, setForecastData] = React.useState<z.infer<typeof forecastSchema>[]>([])
@@ -782,13 +782,97 @@ export function DataTable() {
 
 
 
+  // Show loading state while datasets are being loaded from the context
+  if (datasetLoading) {
+    return (
+      <Tabs
+        value="loading"
+        onValueChange={() => {}}
+        className="w-full flex-col justify-start gap-6"
+      >
+        <div className="flex items-center justify-between px-4 lg:px-6">
+          <Label htmlFor="view-selector" className="sr-only">
+            Analysis
+          </Label>
+          <Select value="loading" onValueChange={() => {}} disabled>
+            <SelectTrigger
+              className="flex w-fit @4xl/main:hidden"
+              size="sm"
+              id="view-selector"
+              disabled
+            >
+              <SelectValue placeholder="Loading..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="loading" disabled>Loading...</SelectItem>
+            </SelectContent>
+          </Select>
+          <ToggleGroup
+            type="single"
+            value="loading"
+            onValueChange={() => {}}
+            variant="outline"
+            disabled
+            className="hidden @4xl/main:flex"
+          >
+            <ToggleGroupItem value="loading" disabled className="px-3 py-2">
+              Loading...
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        <div className="flex flex-col px-4 lg:px-6 pb-6">
+          <div className="flex items-center justify-center p-8">
+            <Spinner className="mr-2 h-4 w-4 animate-spin" />
+            Loading datasets...
+          </div>
+        </div>
+      </Tabs>
+    )
+  }
+
   if (!selectedDataset) {
     return (
-      <div className="px-4 lg:px-6">
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">Please select a dataset to view forecast data</p>
+      <Tabs
+        value="no-dataset"
+        onValueChange={() => {}}
+        className="w-full flex-col justify-start gap-6"
+      >
+        <div className="flex items-center justify-between px-4 lg:px-6">
+          <Label htmlFor="view-selector" className="sr-only">
+            Analysis
+          </Label>
+          <Select value="no-dataset" onValueChange={() => {}} disabled>
+            <SelectTrigger
+              className="flex w-fit @4xl/main:hidden"
+              size="sm"
+              id="view-selector"
+              disabled
+            >
+              <SelectValue placeholder="Select an analysis" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="no-dataset" disabled>Select an analysis</SelectItem>
+            </SelectContent>
+          </Select>
+          <ToggleGroup
+            type="single"
+            value="no-dataset"
+            onValueChange={() => {}}
+            variant="outline"
+            disabled
+            className="hidden @4xl/main:flex"
+          >
+            <ToggleGroupItem value="no-dataset" disabled className="px-3 py-2">
+              Select an analysis
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-      </div>
+        <div className="flex flex-col px-4 lg:px-6 pb-6">
+          <div className="rounded-lg border border-dashed p-8 text-center">
+            <p className="text-muted-foreground">Please select a dataset to view forecast data</p>
+          </div>
+        </div>
+      </Tabs>
     )
   }
 

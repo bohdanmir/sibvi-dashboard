@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X, TrendDown, ChartBar, Building, Thermometer, Package, Lightning, HardHat, Drop, TrendUp, Activity, CaretLeft, CaretRight, House, Cloud, Truck, Factory, Users, Database, CurrencyDollar, Globe, Flask, ForkKnife, Wallet, ShoppingCart, Heart, Tree, Palette, Users as Users2, ChartLine, TShirt, IdentificationCard, Wrench, Thermometer as ThermometerSun } from "@phosphor-icons/react"
+import { X, TrendDown, ChartBar, Building, Thermometer, Package, Lightning, HardHat, Drop, TrendUp, CaretLeft, CaretRight, House, Cloud, Truck, Factory, Users, Database, CurrencyDollar, Globe, Flask, ForkKnife, Wallet, ShoppingCart, Heart, Tree, Palette, Users as Users2, ChartLine, TShirt, IdentificationCard, Wrench, Thermometer as ThermometerSun } from "@phosphor-icons/react"
 import {
   ChartConfig,
   ChartContainer,
@@ -173,7 +173,7 @@ const getCategoryIcon = (category: string) => {
 }
 
 export function WorldMapSection() {
-  const { selectedDataset } = useDataset()
+  const { selectedDataset, loading: datasetLoading } = useDataset()
   const { theme } = useTheme()
   const [drivers, setDrivers] = useState<DriverData[]>([])
   const [selectedDriver, setSelectedDriver] = useState<DriverData | null>(null)
@@ -589,6 +589,26 @@ export function WorldMapSection() {
 
   // Memoize analyses to prevent unnecessary re-renders
   const memoizedAnalyses = useMemo(() => availableAnalyses, [availableAnalyses])
+
+  // Show loading state while datasets are being loaded from the context
+  if (datasetLoading) {
+    return (
+      <div className="w-full flex flex-col lg:flex-row gap-4">
+        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
+            <p>Loading datasets...</p>
+          </div>
+        </Card>
+        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   // Don't render if no dataset is selected
   if (!selectedDataset) {

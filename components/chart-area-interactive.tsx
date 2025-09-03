@@ -866,7 +866,7 @@ export function ChartAreaInteractive({
             onClick={handleChartClick}
             onMouseDown={handleChartClick}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme === "dark" ? "#374151" : "#e5e7eb"} strokeWidth={1} />
             <XAxis
               dataKey="date"
               tickLine={false}

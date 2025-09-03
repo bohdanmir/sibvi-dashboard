@@ -284,7 +284,7 @@ export function ChartAreaInteractive({
     const dataPoint = filteredData[clampedIndex]
     if (dataPoint && dataPoint.date) {
       const date = new Date(dataPoint.date)
-      const month = date.toLocaleDateString("en-US", { month: "long" })
+      const month = date.toLocaleDateString("en-US", { month: "short" })
       const year = date.getFullYear()
       return `${month} ${year}`
     }
@@ -1003,26 +1003,27 @@ export function ChartAreaInteractive({
           style={{ paddingTop: 0 }}
         >
           <div 
-            className="absolute -left-[1px] w-0.5 bg-blue-500 z-10 pointer-events-none transition-all duration-150 ease-out"
+            className="absolute bg-sibvi-cyan-700 z-10 pointer-events-none transition-all duration-150 ease-out"
             style={{ 
-              left: (isNaN(plotLeftPx) ? 0 : plotLeftPx) + ((isNaN(pinPosition) ? 0 : pinPosition) / 100) * (isNaN(plotWidthPx) ? 0 : plotWidthPx),
+              left: (isNaN(plotLeftPx) ? 0 : plotLeftPx) + ((isNaN(pinPosition) ? 0 : pinPosition) / 100) * (isNaN(plotWidthPx) ? 0 : plotWidthPx) - 0.75, // Center the 1.5px stroke
               top: isNaN(plotTopPx) ? 0 : plotTopPx,
               height: isNaN(plotHeightPx) ? 0 : plotHeightPx,
+              width: '1.5px',
               opacity: isDraggingPin ? 0.8 : 1
             }}
           >
             <div 
-              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-blue-500 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group transition-transform duration-150 ease-out hover:scale-110"
+              className="absolute -top-[12px] -left-[12px] w-6 h-6 bg-sibvi-cyan-700 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing flex items-center justify-center select-none group transition-transform duration-150 ease-out hover:scale-110"
               onMouseDown={startPinDrag}
               onTouchStart={startPinDrag}
               aria-label="News pin"
               title={`Current month: ${getPinMonthAndYear() || "Loading..."}`}
             >
-              <Newspaper className="w-3 h-3 text-white" aria-hidden="true" />
+              <Newspaper className="w-3.5 h-3.5 text-white" aria-hidden="true" />
             </div>
             {/* Show current month while pin is being dragged */}
             {isDraggingPin && (
-              <div className="absolute -top-[40px] -left-[20px] bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+              <div className="absolute -top-[40px] -left-[36px] bg-sibvi-cyan-700 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
                 {getPinMonthAndYear() || "Loading..."}
               </div>
             )}

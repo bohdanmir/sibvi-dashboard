@@ -74,11 +74,12 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
           {/* Summary Card Skeleton */}
           <div className="@container/card rounded-lg px-0 py-6">
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-1">
               <Skeleton className="h-6 w-32 @[250px]/card:h-7" />
               <Skeleton className="h-5 w-16" />
             </div>
             <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -87,9 +88,9 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
           
           {/* News Cards Skeleton */}
           {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden">
-              <CardContent>
-                <div className="flex items-center space-x-2 mb-3">
+            <Card key={index} className="overflow-hidden min-h-[140px]">
+              <CardContent className="pb-0">
+                <div className="flex items-center space-x-2 mb-1">
                   <Skeleton className="w-4 h-4 rounded" />
                   <Skeleton className="h-3 w-20" />
                 </div>
@@ -98,12 +99,12 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-3 w-16" />
                   </div>
                   
                   <div className="flex-shrink-0">
-                    <Skeleton className="w-16 h-12 rounded" />
+                    <Skeleton className="w-16 h-16 rounded" />
                   </div>
                 </div>
               </CardContent>

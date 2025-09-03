@@ -80,10 +80,11 @@ export function ChartAreaInteractive({
   const [hiddenSeries, setHiddenSeries] = React.useState<Set<string>>(new Set())
 
   // Pin state and functionality
-  const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage
+  const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage (0 = left side)
   const [isDraggingPin, setIsDraggingPin] = React.useState(false)
   const [hasPinBeenMoved, setHasPinBeenMoved] = React.useState(false) // Track if pin has been moved by user
   const [lastPinPosition, setLastPinPosition] = React.useState<number>(0) // Track last position for debouncing
+  const [pinDate, setPinDate] = React.useState<string | null>(null) // Store the current pin date to maintain across scale changes
   const chartRef = React.useRef<HTMLDivElement>(null)
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
   // Measured plot area inside the chart (excludes Y axis & margins)
@@ -155,6 +156,8 @@ export function ChartAreaInteractive({
     }
   }, [isMobile, setCurrentTimeRange])
 
+
+
   // Notify parent component of loading state changes
   React.useEffect(() => {
     if (onLoadingChange) {
@@ -220,12 +223,19 @@ export function ChartAreaInteractive({
       setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
       setHasPinBeenMoved(true)
       
+      // Store the pin date for maintaining position across scale changes
+      const dataPoint = filteredData[clampedIndex]
+      if (dataPoint && dataPoint.date) {
+        setPinDate(dataPoint.date)
+      }
+      
       console.log('Chart clicked, moving pin to:', {
         clickX,
         relativeX,
         percentage,
         snappedPercentage,
         month: getPinMonthAndYear(),
+        pinDate: dataPoint?.date,
         chartRect: { left: chartRect.left, width: chartRect.width },
         plotDimensions: { left: safePlotLeftPx, width: safePlotWidthPx }
       })
@@ -260,6 +270,48 @@ export function ChartAreaInteractive({
       return `${month} ${year}`
     }
     return null
+  }
+
+  // Find pin position for a specific date in the current filtered data
+  const findPinPositionForDate = (targetDate: string) => {
+    if (!filteredData.length) return 0
+    
+    const targetDateObj = new Date(targetDate)
+    let closestIndex = 0
+    let minDistance = Infinity
+    
+    // First, try to find an exact match
+    const exactMatch = filteredData.findIndex(dataPoint => 
+      dataPoint.date && new Date(dataPoint.date).getTime() === targetDateObj.getTime()
+    )
+    
+    if (exactMatch !== -1) {
+      return (exactMatch / (filteredData.length - 1)) * 100
+    }
+    
+    // If no exact match, find the closest date
+    filteredData.forEach((dataPoint, index) => {
+      if (dataPoint.date) {
+        const pointDate = new Date(dataPoint.date)
+        const distance = Math.abs(pointDate.getTime() - targetDateObj.getTime())
+        if (distance < minDistance) {
+          minDistance = distance
+          closestIndex = index
+        }
+      }
+    })
+    
+    // If the target date is outside the current range, clamp to the nearest edge
+    const firstDate = new Date(filteredData[0].date)
+    const lastDate = new Date(filteredData[filteredData.length - 1].date)
+    
+    if (targetDateObj < firstDate) {
+      return 0 // Pin at the beginning
+    } else if (targetDateObj > lastDate) {
+      return 100 // Pin at the end
+    }
+    
+    return (closestIndex / (filteredData.length - 1)) * 100
   }
 
   // Load all data (analyses, forecasts, and chart data) when selected dataset changes
@@ -341,6 +393,15 @@ export function ChartAreaInteractive({
         
         setChartData(combinedData)
         setFileName(csvFileName)
+        
+        // Initialize pin date to the earliest data point (left side of chart) if not already set
+        if (!pinDate && combinedData.length > 0) {
+          const earliestDataPoint = combinedData[0]
+          if (earliestDataPoint && earliestDataPoint.date) {
+            setPinDate(earliestDataPoint.date)
+          }
+        }
+        
         setLoading(false)
       } catch (error) {
         console.error('Error loading all data:', error)
@@ -479,6 +540,21 @@ export function ChartAreaInteractive({
 
   console.log('Filtered data:', filteredData)
 
+  // Update pin position when time range changes to maintain the same month/year
+  React.useEffect(() => {
+    if (!filteredData.length || !pinDate) return
+    
+    // Find the pin position for the stored date in the new filtered data
+    const newPosition = findPinPositionForDate(pinDate)
+    setPinPosition(newPosition)
+    
+    console.log('Pin position updated for time range change:', {
+      pinDate,
+      newPosition,
+      timeRange: currentTimeRange
+    })
+  }, [filteredData, currentTimeRange, pinDate])
+
   // Handle pin dragging with smooth movement and month snapping
   React.useEffect(() => {
     let animationFrameId: number | null = null
@@ -550,9 +626,21 @@ export function ChartAreaInteractive({
             
             const snappedPercentage = (bestIndex / (totalPoints - 1)) * 100
             setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
+            
+            // Store the pin date for maintaining position across scale changes
+            const bestDataPoint = filteredData[bestIndex]
+            if (bestDataPoint && bestDataPoint.date) {
+              setPinDate(bestDataPoint.date)
+            }
           } else {
             const snappedPercentage = (clampedIndex / (totalPoints - 1)) * 100
             setPinPosition(isNaN(snappedPercentage) ? 0 : snappedPercentage)
+            
+            // Store the pin date for maintaining position across scale changes
+            const dataPoint = filteredData[clampedIndex]
+            if (dataPoint && dataPoint.date) {
+              setPinDate(dataPoint.date)
+            }
           }
         } else {
           setPinPosition(isNaN(percentage) ? 0 : percentage)

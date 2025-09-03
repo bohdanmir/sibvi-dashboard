@@ -37,6 +37,20 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
   const [newsData, setNewsData] = useState<NewsData | null>(null)
   const [loading, setLoading] = useState(false)
   const [showContent, setShowContent] = useState(false)
+  const [isMonthChanging, setIsMonthChanging] = useState(false)
+
+  // Detect when selectedMonth changes and show skeleton immediately
+  useEffect(() => {
+    if (selectedMonth !== undefined) {
+      setIsMonthChanging(true)
+      setShowContent(false)
+      // Reset the month changing state and show content after a short delay
+      setTimeout(() => {
+        setIsMonthChanging(false)
+        setShowContent(true)
+      }, 100)
+    }
+  }, [selectedMonth])
 
   useEffect(() => {
     const loadNewsData = async () => {
@@ -78,8 +92,8 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
     loadNewsData()
   }, [selectedDataset])
 
-  // Show skeleton when datasets are loading or when news data is loading
-  if (datasetLoading || loading || !showContent) {
+  // Show skeleton when datasets are loading, when news data is loading, or when month is changing
+  if (datasetLoading || loading || !showContent || isMonthChanging) {
     return (
       <div className="px-4 lg:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">

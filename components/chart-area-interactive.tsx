@@ -102,6 +102,7 @@ export function ChartAreaInteractive({
   const [plotWidthPx, setPlotWidthPx] = React.useState<number>(0)
   const [plotTopPx, setPlotTopPx] = React.useState<number>(0)
   const [plotHeightPx, setPlotHeightPx] = React.useState<number>(0)
+  const [isHovering, setIsHovering] = React.useState(false)
 
   // Use external timeRange if provided, otherwise use local state
   const currentTimeRange = timeRange || localTimeRange
@@ -859,9 +860,11 @@ export function ChartAreaInteractive({
       <div className="relative">
               <ChartContainer
         config={chartConfig}
-        className="aspect-auto h-[400px] w-full"
+        className="aspect-auto h-[400px] w-full relative"
         ref={chartRef}
         onClick={handleChartClick}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Show loading skeleton while chart data is being prepared to prevent layout shifts */}
         {loading ? (
@@ -905,6 +908,8 @@ export function ChartAreaInteractive({
             />
             <Tooltip
               cursor={false}
+              position={{ y: 10 }}
+              wrapperStyle={{ zIndex: 20 }}
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
@@ -957,7 +962,7 @@ export function ChartAreaInteractive({
                     }
                     return <g key={`forecast-dot-empty-${analysisId}-${index}`} />
                   }}
-                  activeDot={{ r: 6, fill: color, stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
+                  activeDot={{ r: 6, fill: color, stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))", style: { zIndex: isHovering ? 20 : 5 } }}
                   name={`${analysis?.name || `${analysisId}`}`}
                   hide={hiddenSeries.has(dataKey)}
                   isAnimationActive={true}
@@ -983,7 +988,7 @@ export function ChartAreaInteractive({
                 }
                 return <g key={`historical-dot-empty-${index}`} />
               }}
-              activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))" }}
+              activeDot={{ r: 6, fill: theme === "dark" ? "#ffffff" : "#000000", stroke: theme === "dark" ? "#000000" : "#FFFFFF", strokeWidth: 3, filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.2))", style: { zIndex: isHovering ? 20 : 5 } }}
               name="Historical Data"
               strokeDasharray="0" // Solid line for historical data
               hide={hiddenSeries.has('historical')}

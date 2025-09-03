@@ -83,7 +83,9 @@ export function ChartAreaInteractive({
   const [pinPosition, setPinPosition] = React.useState<number>(0) // 0-100 percentage
   const [isDraggingPin, setIsDraggingPin] = React.useState(false)
   const [hasPinBeenMoved, setHasPinBeenMoved] = React.useState(false) // Track if pin has been moved by user
+  const [lastPinPosition, setLastPinPosition] = React.useState<number>(0) // Track last position for debouncing
   const chartRef = React.useRef<HTMLDivElement>(null)
+  const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
   // Measured plot area inside the chart (excludes Y axis & margins)
   const [plotLeftPx, setPlotLeftPx] = React.useState<number>(0)
   const [plotWidthPx, setPlotWidthPx] = React.useState<number>(0)
@@ -505,6 +507,11 @@ export function ChartAreaInteractive({
         cancelAnimationFrame(animationFrameId)
         animationFrameId = null
       }
+      // Clear any pending debounced updates when drag ends
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+        debounceTimeoutRef.current = null
+      }
     }
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -524,6 +531,11 @@ export function ChartAreaInteractive({
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId)
         animationFrameId = null
+      }
+      // Clear any pending debounced updates when drag ends
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+        debounceTimeoutRef.current = null
       }
     }
 
@@ -545,18 +557,42 @@ export function ChartAreaInteractive({
     }
   }, [isDraggingPin, filteredData, plotLeftPx, plotWidthPx])
 
-  // Notify parent component when pin month changes (only if pin has been moved by user)
+  // Debounced month change notification to prevent stuttering during drag
   React.useEffect(() => {
-    if (onPinMonthChange && filteredData.length > 0 && hasPinBeenMoved) {
-      const monthAndYear = getPinMonthAndYear()
-      console.log('Chart sending month to parent:', monthAndYear)
-      console.log('Pin position:', pinPosition)
-      console.log('Filtered data length:', filteredData.length)
-      if (monthAndYear) {
-        onPinMonthChange(monthAndYear)
+    if (!onPinMonthChange || !filteredData.length || !hasPinBeenMoved) return
+
+    const monthAndYear = getPinMonthAndYear()
+    if (!monthAndYear) return
+
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // If currently dragging, set up a debounced update
+    if (isDraggingPin) {
+      debounceTimeoutRef.current = setTimeout(() => {
+        // Only update if we're still dragging and the position hasn't changed significantly
+        if (isDraggingPin && Math.abs(pinPosition - lastPinPosition) < 0.1) {
+          console.log('Chart sending month to parent (debounced):', monthAndYear)
+          onPinMonthChange(monthAndYear)
+          setLastPinPosition(pinPosition)
+        }
+      }, 200) // 200ms delay to wait for drag to settle
+    } else {
+      // If not dragging, update immediately
+      console.log('Chart sending month to parent (immediate):', monthAndYear)
+      onPinMonthChange(monthAndYear)
+      setLastPinPosition(pinPosition)
+    }
+
+    // Cleanup function
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [pinPosition, filteredData, onPinMonthChange, hasPinBeenMoved])
+  }, [pinPosition, filteredData, onPinMonthChange, hasPinBeenMoved, isDraggingPin, lastPinPosition])
 
   if (!selectedDataset) {
     return (

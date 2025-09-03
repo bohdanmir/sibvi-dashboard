@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Sparkline } from "@/components/ui/sparkline"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useDataset } from "@/lib/dataset-context"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -615,16 +616,57 @@ export function DriversComparison() {
   if (loading) {
     return (
       <div className="">
-        <div className="px-4 lg:px-6">
-          <p className="text-muted-foreground">
-            Loading analysis folders for {selectedDataset.title}...
-          </p>
+        {/* Toggle Group Header Skeleton */}
+        <div className="px-4 lg:px-6 mb-4">
+          <div className="flex items-center">
+            <div className="hidden md:flex gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-20" />
+              ))}
+            </div>
+            <Skeleton className="h-9 w-40 md:hidden" />
+          </div>
         </div>
-        <div className="px-4 lg:px-6">
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-80 h-48 bg-muted/50 dark:bg-muted/30 animate-pulse rounded-lg border border-border/50"></div>
-            ))}
+        
+        {/* Driver Cards Skeleton */}
+        <div className="flex gap-4 px-4 lg:px-6 overflow-x-auto pb-4 pr-8">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index} className="w-80 min-w-80 min-h-[280px] flex flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <Skeleton className="h-6 w-32 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-15 h-6 rounded" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 flex-1 flex flex-col">
+                <div className="flex-1 space-y-4">
+                  {/* Content skeleton based on view mode */}
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-3 w-8" />
+                      </div>
+                      <Skeleton className="h-1.5 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          
+          {/* New Analysis Card Skeleton */}
+          <div className="w-80 min-w-80 min-h-[280px] flex flex-col border border-dashed rounded-lg p-6 flex items-center justify-center">
+            <div className="text-center">
+              <Skeleton className="w-12 h-12 rounded-full mb-3 mx-auto" />
+              <Skeleton className="h-5 w-24 mb-1 mx-auto" />
+              <Skeleton className="h-4 w-32 mx-auto" />
+            </div>
           </div>
         </div>
       </div>

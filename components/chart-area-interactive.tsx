@@ -185,6 +185,15 @@ export function ChartAreaInteractive({
       event.stopPropagation()
     }
     
+    // Check if the click target is part of the legend - if so, don't move the pin
+    if (event && event.target) {
+      const target = event.target as Element
+      if (target.closest('.recharts-legend-wrapper') || target.closest('.recharts-legend-item')) {
+        console.log('Chart click ignored - clicked on legend')
+        return
+      }
+    }
+    
     if (!chartRef.current || !filteredData.length) {
       console.log('Chart click ignored - no ref or data:', { hasRef: !!chartRef.current, dataLength: filteredData.length })
       return

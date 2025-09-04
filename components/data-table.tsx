@@ -71,6 +71,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -594,6 +595,74 @@ const generateDiscreteValues = (): number[] => {
   return values
 }
 
+// Skeleton table component for loading state
+function SkeletonTable() {
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">
+              <Skeleton className="h-4 w-4 mx-auto" />
+            </TableHead>
+            <TableHead>
+              <Skeleton className="h-4 w-20" />
+            </TableHead>
+            <TableHead className="text-right">
+              <Skeleton className="h-4 w-16 ml-auto" />
+            </TableHead>
+            <TableHead className="text-right">
+              <Skeleton className="h-4 w-20 ml-auto" />
+            </TableHead>
+            <TableHead className="text-right">
+              <Skeleton className="h-4 w-20 ml-auto" />
+            </TableHead>
+            <TableHead className="text-right">
+              <Skeleton className="h-4 w-20 ml-auto" />
+            </TableHead>
+            <TableHead className="text-right">
+              <Skeleton className="h-4 w-20 ml-auto" />
+            </TableHead>
+            <TableHead className="w-12">
+              <Skeleton className="h-4 w-4 mx-auto" />
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Skeleton className="h-4 w-4 mx-auto" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-16 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-20 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-20 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-20 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-20 ml-auto" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-4 mx-auto" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
 export function DataTable() {
   const { selectedDataset, loading: datasetLoading } = useDataset()
   const [analyses, setAnalyses] = React.useState<{ id: string; title?: string; name?: string }[]>([])
@@ -919,10 +988,7 @@ export function DataTable() {
       </div>
       <TabsContent value={selectedAnalysis} className="flex flex-col px-4 lg:px-6 pb-6">
         {!initialLoadComplete ? (
-          <div className="flex items-center justify-center p-8">
-            <Spinner className="mr-2 h-4 w-4 animate-spin" />
-            Loading analyses and forecasts...
-          </div>
+          <SkeletonTable />
         ) : forecastData.length === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center">
             <p className="text-muted-foreground">No forecast data available for this analysis</p>

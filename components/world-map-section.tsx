@@ -609,19 +609,58 @@ export function WorldMapSection() {
   // Show loading state while datasets are being loaded from the context
   if (datasetLoading) {
     return (
-      <div className="w-full flex flex-col lg:flex-row gap-4">
-        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
-            <p>Loading datasets...</p>
+      <div className="w-full flex flex-col gap-4">
+        {/* Analysis Navigation - Skeleton */}
+        <div className="flex justify-center lg:justify-start">
+          <Skeleton className="h-9 w-48" />
+        </div>
+        
+        <div className="w-full flex flex-col lg:flex-row gap-4">
+          {/* Map with spinner overlay */}
+          <div className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden p-0">
+            <div className="relative w-full h-full">
+              {/* Map Background */}
+              <img 
+                src="/map.svg" 
+                alt="World Map" 
+                className="w-full h-full object-contain dark:hidden"
+                style={{ minWidth: '100%', minHeight: '100%' }}
+              />
+              <img 
+                src="/map_dark.svg" 
+                alt="World Map" 
+                className="w-full h-full object-contain hidden dark:block"
+                style={{ minWidth: '100%', minHeight: '100%' }}
+              />
+              
+              {/* Loading Spinner Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+              </div>
+            </div>
           </div>
-        </Card>
-        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
-            <p>Loading...</p>
-          </div>
-        </Card>
+
+          {/* Skeleton Card */}
+          <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px]">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-1/3" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                </div>
+                <Skeleton className="h-32 w-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -690,17 +729,60 @@ export function WorldMapSection() {
   // Don't render if no analyses are available
   if (availableAnalyses.length === 0) {
     return (
-      <div className="w-full flex flex-col lg:flex-row gap-4">
-        <Card className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <p>No analyses available for {selectedDataset.title}</p>
+      <div className="w-full flex flex-col gap-4">
+        {/* Analysis Navigation - Skeleton */}
+        <div className="flex justify-center lg:justify-start">
+          <Skeleton className="h-9 w-48" />
+        </div>
+        
+        <div className="w-full flex flex-col lg:flex-row gap-4">
+          {/* Map with message */}
+          <div className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden p-0">
+            <div className="relative w-full h-full">
+              {/* Map Background */}
+              <img 
+                src="/map.svg" 
+                alt="World Map" 
+                className="w-full h-full object-contain dark:hidden"
+                style={{ minWidth: '100%', minHeight: '100%' }}
+              />
+              <img 
+                src="/map_dark.svg" 
+                alt="World Map" 
+                className="w-full h-full object-contain hidden dark:block"
+                style={{ minWidth: '100%', minHeight: '100%' }}
+              />
+              
+              {/* Message overlay */}
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <div className="text-center text-muted-foreground bg-background/80 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  <p className="text-sm">No analyses available for {selectedDataset.title}</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </Card>
-        <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <p>No analyses found</p>
-          </div>
-        </Card>
+
+          {/* Skeleton Card */}
+          <Card className="w-full lg:w-80 h-[300px] sm:h-[400px] md:h-[500px]">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-1/3" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                </div>
+                <Skeleton className="h-32 w-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -1012,15 +1094,20 @@ export function WorldMapSection() {
               </p>
             </div>
           ) : (
-            <div className="text-center text-muted-foreground py-8">
-              <Badge 
-                variant="outline" 
-                className="w-16 h-16 mx-auto mb-4 rounded-full p-0 bg-muted border-border"
-              >
-                <ChartBar className="h-8 w-8 text-muted-foreground" />
-              </Badge>
-              <p className="text-sm">Select a driver from the map to view details</p>
-              <p className="text-xs mt-2">Click on any icon to explore driver data</p>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
+              <Skeleton className="h-32 w-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
             </div>
           )}
         </CardContent>

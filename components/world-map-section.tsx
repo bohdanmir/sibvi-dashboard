@@ -41,7 +41,7 @@ const AnalysisToggle = React.memo(({
   const isMobile = useIsMobile()
   
   return (
-    <div className="absolute top-2 left-2">
+    <div className="flex justify-center lg:justify-start">
       <ToggleGroup
         type="single"
         value={currentAnalysis || ""}
@@ -693,24 +693,31 @@ export function WorldMapSection() {
   }
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-4">
-      {/* Map - Top on mobile, Left on desktop */}
-      <div className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden p-0">
-        <div className="relative w-full h-full">
-          {/* Map Background */}
-          <img 
-            src="/map.svg" 
-            alt="World Map" 
-            className="w-full h-full object-contain dark:invert dark:brightness-200"
-            style={{ minWidth: '100%', minHeight: '100%' }}
-          />
-          
-          {/* Analysis Navigation - Always visible */}
-          <AnalysisToggle 
-            analyses={memoizedAnalyses} 
-            currentAnalysis={currentAnalysis} 
-            onAnalysisChange={handleAnalysisChange} 
-          />
+    <div className="w-full flex flex-col gap-4">
+      {/* Analysis Navigation - Outside map container */}
+      <AnalysisToggle 
+        analyses={memoizedAnalyses} 
+        currentAnalysis={currentAnalysis} 
+        onAnalysisChange={handleAnalysisChange} 
+      />
+      
+      <div className="w-full flex flex-col lg:flex-row gap-4">
+        {/* Map - Top on mobile, Left on desktop */}
+        <div className="w-full lg:flex-1 h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden p-0">
+          <div className="relative w-full h-full">
+            {/* Map Background */}
+            <img 
+              src="/map.svg" 
+              alt="World Map" 
+              className="w-full h-full object-contain dark:hidden"
+              style={{ minWidth: '100%', minHeight: '100%' }}
+            />
+            <img 
+              src="/map_dark.svg" 
+              alt="World Map" 
+              className="w-full h-full object-contain hidden dark:block"
+              style={{ minWidth: '100%', minHeight: '100%' }}
+            />
           
           {/* Loading Overlay - Only when loading */}
           {loading && (
@@ -788,12 +795,12 @@ export function WorldMapSection() {
                   </TooltipContent>
                 </Tooltip>
               ))}
-            </TooltipProvider>
-          )}
+                    </TooltipProvider>
+      )}
+          </div>
         </div>
-      </div>
 
-      {/* Drivers Card - Bottom on mobile, Right on desktop */}
+        {/* Drivers Card - Bottom on mobile, Right on desktop */}
       <Card className="w-full lg:w-80 h-auto min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
         <CardContent>
           {loading ? (
@@ -987,6 +994,7 @@ export function WorldMapSection() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

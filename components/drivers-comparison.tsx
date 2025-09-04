@@ -19,6 +19,27 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+// Animated Progress Bar Component
+function AnimatedProgress({ value, className, ...props }: { value: number; className?: string; [key: string]: any }) {
+  const [animatedValue, setAnimatedValue] = useState(0)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimatedValue(value)
+    }, 100) // Small delay to ensure smooth animation start
+
+    return () => clearTimeout(timer)
+  }, [value])
+
+  return (
+    <Progress 
+      value={animatedValue} 
+      className={`${className} [&>div]:transition-all [&>div]:duration-700 [&>div]:ease-out`}
+      {...props}
+    />
+  )
+}
+
 
 interface AnalysisFolder {
   id: string
@@ -180,7 +201,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
       <CardContent className="space-y-4 flex-1 flex flex-col">
         <div className="flex-1 space-y-4">
           {viewMode === 'scenarios' && scenario && (
-            <div className="space-y-2">
+            <div key="scenarios" className="space-y-2">
               <div className="text-sm text-muted-foreground">
                 {scenario.summary || 'No scenario summary available'}
               </div>
@@ -188,7 +209,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
           )}
           
           {viewMode === 'scenarios' && !scenario && (
-            <div className="space-y-2">
+            <div key="scenarios-loading" className="space-y-2">
               <div className="text-sm text-muted-foreground">
                 Loading scenario data...
               </div>
@@ -196,7 +217,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
           )}
           
           {viewMode === 'regions' && regions && (
-            <div className="space-y-2">
+            <div key="regions" className="space-y-2">
               {regions.map((region) => (
                 <div key={region.id} className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
@@ -207,7 +228,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                     </div>
                     <span className="text-muted-foreground flex-shrink-0">{region.cumulativeImpact.toFixed(1)}%</span>
                   </div>
-                  <Progress 
+                  <AnimatedProgress 
                     value={region.cumulativeImpact} 
                     className="h-1.5 [&>div]:bg-sibvi-cyan-700"
                   />
@@ -217,7 +238,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
           )}
           
           {viewMode === 'categories' && categories && (
-            <div className="space-y-2">
+            <div key="categories" className="space-y-2">
               {categories
                 .filter(category => category.driverCount > 0) // Filter out empty categories
                 .map((category) => (
@@ -231,7 +252,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                       </div>
                       <span className="text-muted-foreground flex-shrink-0">{category.importance}%</span>
                     </div>
-                    <Progress 
+                    <AnimatedProgress 
                       value={category.importance} 
                       className="h-1.5 [&>div]:bg-sibvi-cyan-700"
                     />
@@ -241,7 +262,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
           )}
           
           {viewMode === 'predictors' && drivers && (
-            <div className="space-y-2">
+            <div key="predictors" className="space-y-2">
               {drivers.map((driver) => (
                 <div key={driver.id} className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
@@ -252,7 +273,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                     </div>
                     <span className="text-muted-foreground flex-shrink-0">{driver.importance.toFixed(1)}%</span>
                   </div>
-                  <Progress 
+                  <AnimatedProgress 
                     value={driver.importance} 
                     className="h-1.5 [&>div]:bg-sibvi-cyan-700"
                   />

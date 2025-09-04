@@ -835,30 +835,38 @@ export function DriversComparison() {
               const categories = getMergedCategories(folder.id)
               
               return (
-                <DriverCard
+                <div
                   key={folder.id}
-                  title={folder.name}
-                  description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
-                  categories={viewMode === 'categories' ? categories : undefined}
-                  regions={viewMode === 'regions' ? analysisRegions[folder.id] : undefined}
-                  drivers={viewMode === 'predictors' ? analysisDrivers[folder.id] : undefined}
-                  scenario={viewMode === 'scenarios' ? (() => {
-                    const scenario = analysisScenarios[folder.id]
-                    console.log(`Rendering scenario for ${folder.id}:`, scenario)
-                    return scenario
-                  })() : undefined}
-                  overallStatus={mockData.overallStatus}
-                  trend={mockData.trend}
-                  analysisId={folder.id}
-                  forecastData={analysisForecasts[folder.id] || []}
-                  analysisIndex={index}
-                  viewMode={viewMode}
-                />
+                  className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <DriverCard
+                    title={folder.name}
+                    description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
+                    categories={viewMode === 'categories' ? categories : undefined}
+                    regions={viewMode === 'regions' ? analysisRegions[folder.id] : undefined}
+                    drivers={viewMode === 'predictors' ? analysisDrivers[folder.id] : undefined}
+                    scenario={viewMode === 'scenarios' ? (() => {
+                      const scenario = analysisScenarios[folder.id]
+                      console.log(`Rendering scenario for ${folder.id}:`, scenario)
+                      return scenario
+                    })() : undefined}
+                    overallStatus={mockData.overallStatus}
+                    trend={mockData.trend}
+                    analysisId={folder.id}
+                    forecastData={analysisForecasts[folder.id] || []}
+                    analysisIndex={index}
+                    viewMode={viewMode}
+                  />
+                </div>
               )
             })}
             
             {/* New Analysis Card */}
-            <div className="w-80 min-w-80 min-h-[280px] flex flex-col border border-dashed rounded-lg p-6 flex items-center justify-center cursor-pointer">
+            <div 
+              className="w-80 min-w-80 min-h-[280px] flex flex-col border border-dashed rounded-lg p-6 flex items-center justify-center cursor-pointer animate-in fade-in-0 slide-in-from-bottom-4 duration-500 hover:bg-muted/50 transition-colors"
+              style={{ animationDelay: `${analysisFolders.length * 100}ms` }}
+            >
               <div className="text-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 mx-auto">
                   <svg className="w-6 h-6 " fill="none" stroke="currentColor" viewBox="0 0 24 24">

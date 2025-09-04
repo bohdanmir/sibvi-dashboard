@@ -177,10 +177,13 @@ export function WorldMapSection() {
   const { theme } = useTheme()
   const [drivers, setDrivers] = useState<DriverData[]>([])
   const [selectedDriver, setSelectedDriver] = useState<DriverData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [currentAnalysis, setCurrentAnalysis] = useState<string | null>(null)
   const [availableAnalyses, setAvailableAnalyses] = useState<AnalysisInfo[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [animationKey, setAnimationKey] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [showIcons, setShowIcons] = useState(true)
+  const [fadeOutKey, setFadeOutKey] = useState(0)
   
   // Generate chart data from driver's normalized series or fallback to sample data
   const generateDriverChartData = (driver: DriverData) => {
@@ -379,7 +382,6 @@ export function WorldMapSection() {
     setSelectedDriver(null)
     setAvailableAnalyses([])
     setError(null)
-    setLoading(false)
   }, [selectedDataset?.title])
 
   // Discover analyses when dataset changes
@@ -388,7 +390,6 @@ export function WorldMapSection() {
       if (!selectedDataset) return
       
       console.log('Loading analyses for dataset:', selectedDataset.title)
-      setLoading(true)
       
       try {
         const analyses = await discoverAnalyses(selectedDataset.title)
@@ -401,12 +402,10 @@ export function WorldMapSection() {
           setCurrentAnalysis(analyses[0].id)
         } else {
           console.log('No analyses found for dataset')
-          setLoading(false)
         }
       } catch (error) {
         console.error('Error loading analyses:', error)
         setError(`Failed to load analyses: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        setLoading(false)
       }
     }
     
@@ -459,7 +458,6 @@ export function WorldMapSection() {
       }
       
       console.log('Loading drivers for dataset:', selectedDataset.title, 'analysis:', currentAnalysis)
-      setLoading(true)
       setError(null)
       
       try {
@@ -478,7 +476,6 @@ export function WorldMapSection() {
           region: d.region
         })))
         setDrivers(driversData)
-        setLoading(false)
         // Set the driver with highest importance as selected by default
         if (driversData.length > 0) {
           const highestImportanceDriver = getHighestImportanceDriver(driversData)
@@ -502,7 +499,6 @@ export function WorldMapSection() {
         
         console.error('Error loading drivers:', error)
         setError(`Failed to load drivers: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        setLoading(false)
         setDrivers([])
         setSelectedDriver(null)
       }
@@ -536,8 +532,26 @@ export function WorldMapSection() {
   }
 
   const handleAnalysisChange = useCallback((analysisId: string) => {
-    setCurrentAnalysis(analysisId)
-  }, [])
+    if (isTransitioning) return // Prevent multiple rapid clicks
+    
+    setIsTransitioning(true)
+    
+    // Step 1: Trigger fade out animation for current icons
+    setFadeOutKey(prev => prev + 1)
+    setShowIcons(false)
+    
+    // Step 2: After fade out completes, update analysis and prepare new icons
+    setTimeout(() => {
+      setCurrentAnalysis(analysisId)
+      setAnimationKey(prev => prev + 1)
+      
+      // Step 3: After a longer pause to ensure complete separation, fade in new icons
+      setTimeout(() => {
+        setShowIcons(true)
+        setIsTransitioning(false)
+      }, 200) // Longer pause to ensure complete separation
+    }, 350) // Wait for fade out animation to complete
+  }, [isTransitioning])
 
   const getCurrentAnalysis = () => availableAnalyses.find(a => a.id === currentAnalysis)
 
@@ -639,13 +653,11 @@ export function WorldMapSection() {
             <Button 
               onClick={() => {
                 setError(null)
-                setLoading(true)
                 // Retry loading
                 if (currentAnalysis) {
                   fetchDriversData(selectedDataset.title, currentAnalysis)
                     .then(driversData => {
                       setDrivers(driversData)
-                      setLoading(false)
                       if (driversData.length > 0) {
                         const highestImportanceDriver = getHighestImportanceDriver(driversData)
                         if (highestImportanceDriver) {
@@ -655,7 +667,6 @@ export function WorldMapSection() {
                     })
                     .catch(err => {
                       setError(`Retry failed: ${err.message}`)
-                      setLoading(false)
                     })
                 }
               }}
@@ -719,56 +730,100 @@ export function WorldMapSection() {
               style={{ minWidth: '100%', minHeight: '100%' }}
             />
           
-          {/* Loading Overlay - Only when loading */}
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-sibvi-cyan-700">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sibvi-cyan-700 mx-auto mb-4"></div>
-                <p>Loading drivers data...</p>
-              </div>
-            </div>
-          )}
-          
-          {/* Driver Icons - Only when not loading */}
-          {!loading && (
-            <TooltipProvider>
-              {drivers
-                .filter(driver => {
-                  // Filter out drivers with 0 importance
-                  let importance = 0
-                  if (driver.rawImportance && typeof driver.rawImportance === 'object') {
-                    const importanceObj = driver.rawImportance as any
-                    if (importanceObj.overall && typeof importanceObj.overall === 'object') {
-                      const overall = importanceObj.overall as any
-                      if (typeof overall.mean === 'number') {
-                        importance = overall.mean
+          {/* Fade Out Animation for Current Icons */}
+          {drivers.length > 0 && !showIcons && isTransitioning && (
+            <div key={`fadeout-container-${fadeOutKey}`}>
+              <TooltipProvider>
+                {drivers
+                  .filter(driver => {
+                    let importance = 0
+                    if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+                      const importanceObj = driver.rawImportance as any
+                      if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+                        const overall = importanceObj.overall as any
+                        if (typeof overall.mean === 'number') {
+                          importance = overall.mean
+                        }
                       }
                     }
-                  }
-                  if (importance === 0) {
-                    importance = driver.importance
-                  }
-                  return importance > 0
-                })
-                .map((driver, index) => (
-                <Tooltip key={driver.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => handleDriverClick(driver)}
-                      className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110 focus:outline-none"
-                      style={{
-                        left: `${driver.coordinates.x}%`,
-                        top: `${driver.coordinates.y}%`
-                      }}
-                    >
+                    if (importance === 0) {
+                      importance = driver.importance
+                    }
+                    return importance > 0
+                  })
+                  .map((driver, index) => (
+                  <Tooltip key={`fadeout-${fadeOutKey}-${driver.id}`}>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out"
+                        style={{
+                          left: `${driver.coordinates.x}%`,
+                          top: `${driver.coordinates.y}%`,
+                          animation: `fadeOutSlideDown 0.3s ease-out ${index * 30}ms both`
+                        }}
+                      >
                       {(() => {
                         const size = getBadgeSize(driver, drivers)
                         return (
                           <Badge 
-                            className={`${size.width} ${size.height} rounded-full p-1 ${
+                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out`}
+                          >
+                            <div className={size.iconSize}>
+                              {getCategoryIcon(driver.category)}
+                            </div>
+                          </Badge>
+                        )
+                      })()}
+                    </button>
+                  </TooltipTrigger>
+                </Tooltip>
+              ))}
+              </TooltipProvider>
+            </div>
+          )}
+
+          {/* Driver Icons Group - Fade In Animation */}
+          {drivers.length > 0 && showIcons && (
+            <div key={`${currentAnalysis}-${animationKey}`}>
+              <TooltipProvider>
+                {drivers
+                  .filter(driver => {
+                    // Filter out drivers with 0 importance
+                    let importance = 0
+                    if (driver.rawImportance && typeof driver.rawImportance === 'object') {
+                      const importanceObj = driver.rawImportance as any
+                      if (importanceObj.overall && typeof importanceObj.overall === 'object') {
+                        const overall = importanceObj.overall as any
+                        if (typeof overall.mean === 'number') {
+                          importance = overall.mean
+                        }
+                      }
+                    }
+                    if (importance === 0) {
+                      importance = driver.importance
+                    }
+                    return importance > 0
+                  })
+                  .map((driver, index) => (
+                  <Tooltip key={`fadein-${currentAnalysis}-${animationKey}-${driver.id}`}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleDriverClick(driver)}
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out hover:scale-110 focus:outline-none"
+                        style={{
+                          left: `${driver.coordinates.x}%`,
+                          top: `${driver.coordinates.y}%`,
+                          animation: `fadeInSlideUp 0.5s ease-out ${index * 50}ms both`
+                        }}
+                      >
+                      {(() => {
+                        const size = getBadgeSize(driver, drivers)
+                        return (
+                          <Badge 
+                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out ${
                               selectedDriver?.id === driver.id
-                                ? 'ring-2 ring-primary' 
-                                : ''
+                                ? 'ring-2 ring-primary scale-110' 
+                                : 'hover:scale-105'
                             }`}
                           >
                             <div className={size.iconSize}>
@@ -783,7 +838,7 @@ export function WorldMapSection() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top" 
-                    className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
+                    className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2"
                   >
                     <div className="space-y-1">
                       <div className="font-medium">{index + 1}. {driver.name}</div>
@@ -794,50 +849,17 @@ export function WorldMapSection() {
                     </div>
                   </TooltipContent>
                 </Tooltip>
-              ))}
-                    </TooltipProvider>
-      )}
+                ))}
+              </TooltipProvider>
+            </div>
+          )}
           </div>
         </div>
 
         {/* Drivers Card - Bottom on mobile, Right on desktop */}
       <Card className="w-full lg:w-80 h-auto min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
         <CardContent>
-          {loading ? (
-            <div className="space-y-4 py-4">
-              {/* Category skeleton */}
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-3 w-3 rounded-full" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-              
-              {/* Title skeleton */}
-              <Skeleton className="h-6 w-full" />
-              
-              {/* Region skeleton */}
-              <Skeleton className="h-3 w-24" />
-              
-              {/* Importance score skeleton */}
-              <Skeleton className="h-12 w-20" />
-              
-              {/* Badge and lag skeleton */}
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-              
-              {/* Chart skeleton */}
-              <div className="space-y-2">
-                <Skeleton className="h-32 w-full" />
-              </div>
-              
-              {/* Description skeleton */}
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-3/4" />
-              </div>
-            </div>
-          ) : selectedDriver ? (
+          {selectedDriver ? (
             <div className="space-y-2">
               {/* Driver Header */}
               <div className="flex flex-col items-start gap-3 pb-1">

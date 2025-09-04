@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -37,6 +37,42 @@ function AnimatedProgress({ value, className, ...props }: { value: number; class
       className={`${className} [&>div]:transition-all [&>div]:duration-700 [&>div]:ease-out`}
       {...props}
     />
+  )
+}
+
+// Animated Skeleton Card Component
+function AnimatedSkeletonCard({ 
+  targetHeight, 
+  isAnimating, 
+  children, 
+  className 
+}: { 
+  targetHeight: number | null
+  isAnimating: boolean
+  children: React.ReactNode
+  className?: string 
+}) {
+  const [currentHeight, setCurrentHeight] = useState(280) // Start with min height
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (targetHeight && isAnimating) {
+      // Animate to target height
+      setCurrentHeight(targetHeight)
+    }
+  }, [targetHeight, isAnimating])
+
+  return (
+    <div
+      ref={cardRef}
+      className={`transition-all duration-700 ease-out ${className}`}
+      style={{ 
+        height: isAnimating && targetHeight ? `${targetHeight}px` : '280px',
+        minHeight: isAnimating && targetHeight ? `${targetHeight}px` : '280px'
+      }}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -299,6 +335,68 @@ export function DriversComparison() {
   const [analysisScenarios, setAnalysisScenarios] = useState<Record<string, Scenario>>({})
   const [analysisRegions, setAnalysisRegions] = useState<Record<string, Region[]>>({})
   const [analysisDrivers, setAnalysisDrivers] = useState<Record<string, Driver[]>>({})
+  
+  // Skeleton animation state (only for initial loading)
+  const [skeletonHeights, setSkeletonHeights] = useState<Record<string, number>>({})
+  const [isAnimatingSkeleton, setIsAnimatingSkeleton] = useState(false)
+  const [showSkeleton, setShowSkeleton] = useState(true)
+  const contentRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  
+  // Height animation state for view mode changes
+  const [isAnimatingHeight, setIsAnimatingHeight] = useState(false)
+  const [cardHeights, setCardHeights] = useState<Record<string, number>>({})
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [pendingViewMode, setPendingViewMode] = useState<ViewMode | null>(null)
+
+  // Function to measure content heights
+  const measureContentHeights = () => {
+    const heights: Record<string, number> = {}
+    Object.entries(contentRefs.current).forEach(([analysisId, ref]) => {
+      if (ref) {
+        heights[analysisId] = ref.offsetHeight
+      }
+    })
+    return heights
+  }
+
+  // Function to start skeleton animation (only for initial loading)
+  const startSkeletonAnimation = () => {
+    const heights = measureContentHeights()
+    setSkeletonHeights(heights)
+    setIsAnimatingSkeleton(true)
+    
+    // After animation completes, hide skeleton and show real content
+    setTimeout(() => {
+      setShowSkeleton(false)
+      setIsAnimatingSkeleton(false)
+    }, 700) // Match the animation duration
+  }
+
+  // Function to animate card heights when view mode changes
+  const animateCardHeights = (newViewMode: ViewMode) => {
+    setIsTransitioning(true)
+    setPendingViewMode(newViewMode)
+    setIsAnimatingHeight(true)
+    
+    // Phase 1: Measure and animate to new height
+    setTimeout(() => {
+      const newHeights = measureContentHeights()
+      setCardHeights(newHeights)
+      
+      // Phase 2: After height animation, switch content
+      setTimeout(() => {
+        setViewMode(newViewMode)
+        setIsAnimatingHeight(false)
+        
+        // Phase 3: Reset after content switch
+        setTimeout(() => {
+          setCardHeights({})
+          setIsTransitioning(false)
+          setPendingViewMode(null)
+        }, 100)
+      }, 300) // Match CSS transition duration
+    }, 50)
+  }
 
   const fetchDriversReport = async (datasetTitle: string, analysisId: string) => {
     try {
@@ -572,6 +670,11 @@ export function DriversComparison() {
           setAnalysisScenarios(scenarios)
           setAnalysisRegions(regions)
           setAnalysisDrivers(drivers)
+          
+          // Reset skeleton state when new data loads
+          setShowSkeleton(true)
+          setIsAnimatingSkeleton(false)
+          setSkeletonHeights({})
         } else {
           setAnalysisFolders([])
           setAnalysisCategories({})
@@ -587,6 +690,38 @@ export function DriversComparison() {
 
     fetchAnalysisFolders()
   }, [selectedDataset])
+
+  // Trigger skeleton animation when content is ready
+  useEffect(() => {
+    if (!loading && analysisFolders.length > 0 && showSkeleton) {
+      // Small delay to ensure content is rendered
+      const timer = setTimeout(() => {
+        startSkeletonAnimation()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, analysisFolders.length, showSkeleton])
+
+  // Custom view mode change handler
+  const handleViewModeChange = (newViewMode: ViewMode) => {
+    if (!loading && analysisFolders.length > 0 && !showSkeleton && !isTransitioning) {
+      animateCardHeights(newViewMode)
+    } else {
+      // Fallback for initial load or when transitioning
+      setViewMode(newViewMode)
+    }
+  }
+
+  // Reset card heights when animation completes
+  useEffect(() => {
+    if (!isAnimatingHeight && Object.keys(cardHeights).length > 0) {
+      // Small delay to ensure the transition is complete
+      const timer = setTimeout(() => {
+        setCardHeights({})
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isAnimatingHeight, cardHeights])
 
   // Generate mock data for each analysis folder
   const generateMockData = (index: number) => {
@@ -814,16 +949,17 @@ export function DriversComparison() {
               <ToggleGroup 
                 type="single" 
                 value={viewMode} 
-                onValueChange={(value) => value && setViewMode(value as ViewMode)}
+                onValueChange={(value) => value && handleViewModeChange(value as ViewMode)}
                 variant="outline"
                 className="hidden md:flex"
+                disabled={isTransitioning}
               >
                 <ToggleGroupItem value="scenarios" className="px-3 py-2">Scenarios</ToggleGroupItem>
                 <ToggleGroupItem value="regions" className="px-3 py-2">Regions</ToggleGroupItem>
                 <ToggleGroupItem value="categories" className="px-3 py-2">Categories</ToggleGroupItem>
                 <ToggleGroupItem value="predictors" className="px-3 py-2">Predictors</ToggleGroupItem>
               </ToggleGroup>
-              <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+              <Select value={viewMode} onValueChange={(value) => handleViewModeChange(value as ViewMode)} disabled={isTransitioning}>
                 <SelectTrigger
                   className="flex w-40 md:hidden"
                   size="sm"
@@ -861,24 +997,154 @@ export function DriversComparison() {
                   className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <DriverCard
-                    title={folder.name}
-                    description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
-                    categories={viewMode === 'categories' ? categories : undefined}
-                    regions={viewMode === 'regions' ? analysisRegions[folder.id] : undefined}
-                    drivers={viewMode === 'predictors' ? analysisDrivers[folder.id] : undefined}
-                    scenario={viewMode === 'scenarios' ? (() => {
-                      const scenario = analysisScenarios[folder.id]
-                      console.log(`Rendering scenario for ${folder.id}:`, scenario)
-                      return scenario
-                    })() : undefined}
-                    overallStatus={mockData.overallStatus}
-                    trend={mockData.trend}
-                    analysisId={folder.id}
-                    forecastData={analysisForecasts[folder.id] || []}
-                    analysisIndex={index}
-                    viewMode={viewMode}
-                  />
+                  {/* Hidden content for height measurement (only during initial loading) */}
+                  {showSkeleton && (
+                    <div 
+                      ref={(el) => { contentRefs.current[folder.id] = el }}
+                      className="absolute opacity-0 pointer-events-none"
+                      style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}
+                    >
+                      <DriverCard
+                        title={folder.name}
+                        description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
+                        categories={(pendingViewMode || viewMode) === 'categories' ? categories : undefined}
+                        regions={(pendingViewMode || viewMode) === 'regions' ? analysisRegions[folder.id] : undefined}
+                        drivers={(pendingViewMode || viewMode) === 'predictors' ? analysisDrivers[folder.id] : undefined}
+                        scenario={(pendingViewMode || viewMode) === 'scenarios' ? (() => {
+                          const scenario = analysisScenarios[folder.id]
+                          console.log(`Rendering scenario for ${folder.id}:`, scenario)
+                          return scenario
+                        })() : undefined}
+                        overallStatus={mockData.overallStatus}
+                        trend={mockData.trend}
+                        analysisId={folder.id}
+                        forecastData={analysisForecasts[folder.id] || []}
+                        analysisIndex={index}
+                        viewMode={pendingViewMode || viewMode}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Skeleton Card (only during initial loading) */}
+                  {showSkeleton && (
+                    <AnimatedSkeletonCard
+                      targetHeight={skeletonHeights[folder.id] || null}
+                      isAnimating={isAnimatingSkeleton}
+                      className="w-80 min-w-80"
+                    >
+                      <Card className="w-full h-full flex flex-col">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <Skeleton className="h-6 w-32 mb-2" />
+                              <Skeleton className="h-4 w-24" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="w-15 h-6 rounded" />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4 flex-1 flex flex-col">
+                          <div className="flex-1 space-y-4">
+                            {/* Content skeleton based on view mode and actual data */}
+                            {viewMode === 'scenarios' && (
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-4 w-1/2" />
+                              </div>
+                            )}
+                            {viewMode === 'regions' && analysisRegions[folder.id] && (
+                              <>
+                                {analysisRegions[folder.id].slice(0, 6).map((_, i) => (
+                                  <div key={i} className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <Skeleton className="h-3 w-24" />
+                                      <Skeleton className="h-3 w-8" />
+                                    </div>
+                                    <Skeleton className="h-1.5 w-full" />
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            {viewMode === 'categories' && categories && (
+                              <>
+                                {categories.filter(cat => cat.driverCount > 0).slice(0, 8).map((_, i) => (
+                                  <div key={i} className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <Skeleton className="h-3 w-24" />
+                                      <Skeleton className="h-3 w-8" />
+                                    </div>
+                                    <Skeleton className="h-1.5 w-full" />
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            {viewMode === 'predictors' && analysisDrivers[folder.id] && (
+                              <>
+                                {analysisDrivers[folder.id].slice(0, 10).map((_, i) => (
+                                  <div key={i} className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <Skeleton className="h-3 w-24" />
+                                      <Skeleton className="h-3 w-8" />
+                                    </div>
+                                    <Skeleton className="h-1.5 w-full" />
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            {/* Fallback skeleton if no data available */}
+                            {(!analysisRegions[folder.id] && viewMode === 'regions') ||
+                             (!categories && viewMode === 'categories') ||
+                             (!analysisDrivers[folder.id] && viewMode === 'predictors') && (
+                              Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="space-y-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-3 w-8" />
+                                  </div>
+                                  <Skeleton className="h-1.5 w-full" />
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </AnimatedSkeletonCard>
+                  )}
+                  
+                  {/* Real Content with height animation */}
+                  {!showSkeleton && (
+                    <div 
+                      ref={(el) => { contentRefs.current[folder.id] = el }}
+                      className={`transition-all duration-300 ease-out ${
+                        isAnimatingHeight ? 'opacity-90' : 'opacity-100'
+                      } ${isTransitioning ? 'pointer-events-none' : ''}`}
+                      style={{
+                        height: isAnimatingHeight && cardHeights[folder.id] ? `${cardHeights[folder.id]}px` : 'auto',
+                        minHeight: '280px'
+                      }}
+                    >
+                      <DriverCard
+                        title={folder.name}
+                        description={`${categories.reduce((total, cat) => total + cat.driverCount, 0)} total drivers`}
+                        categories={(pendingViewMode || viewMode) === 'categories' ? categories : undefined}
+                        regions={(pendingViewMode || viewMode) === 'regions' ? analysisRegions[folder.id] : undefined}
+                        drivers={(pendingViewMode || viewMode) === 'predictors' ? analysisDrivers[folder.id] : undefined}
+                        scenario={(pendingViewMode || viewMode) === 'scenarios' ? (() => {
+                          const scenario = analysisScenarios[folder.id]
+                          console.log(`Rendering scenario for ${folder.id}:`, scenario)
+                          return scenario
+                        })() : undefined}
+                        overallStatus={mockData.overallStatus}
+                        trend={mockData.trend}
+                        analysisId={folder.id}
+                        forecastData={analysisForecasts[folder.id] || []}
+                        analysisIndex={index}
+                        viewMode={pendingViewMode || viewMode}
+                      />
+                    </div>
+                  )}
                 </div>
               )
             })}

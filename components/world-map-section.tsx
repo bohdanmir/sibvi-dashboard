@@ -184,6 +184,7 @@ export function WorldMapSection() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showIcons, setShowIcons] = useState(true)
   const [fadeOutKey, setFadeOutKey] = useState(0)
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false)
   
   // Generate chart data from driver's normalized series or fallback to sample data
   const generateDriverChartData = (driver: DriverData) => {
@@ -535,6 +536,7 @@ export function WorldMapSection() {
     if (isTransitioning) return // Prevent multiple rapid clicks
     
     setIsTransitioning(true)
+    setIsLoadingAnalysis(true)
     
     // Step 1: Trigger fade out animation for current icons
     setFadeOutKey(prev => prev + 1)
@@ -543,13 +545,13 @@ export function WorldMapSection() {
     // Step 2: After fade out completes, update analysis and prepare new icons
     setTimeout(() => {
       setCurrentAnalysis(analysisId)
-      setAnimationKey(prev => prev + 1)
       
-      // Step 3: After a longer pause to ensure complete separation, fade in new icons
+      // Step 3: Wait for drivers to load, then fade in new icons
       setTimeout(() => {
         setShowIcons(true)
         setIsTransitioning(false)
-      }, 200) // Longer pause to ensure complete separation
+        setIsLoadingAnalysis(false)
+      }, 100) // Short delay to ensure drivers are loaded
     }, 350) // Wait for fade out animation to complete
   }, [isTransitioning])
 
@@ -730,6 +732,13 @@ export function WorldMapSection() {
               style={{ minWidth: '100%', minHeight: '100%' }}
             />
           
+          {/* Loading Spinner Overlay */}
+          {isLoadingAnalysis && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="w-6 h-6 border-2 border-muted-foreground/20 border-t-muted-foreground/60 rounded-full animate-spin"></div>
+            </div>
+          )}
+          
           {/* Fade Out Animation for Current Icons */}
           {drivers.length > 0 && !showIcons && isTransitioning && (
             <div key={`fadeout-container-${fadeOutKey}`}>
@@ -783,8 +792,8 @@ export function WorldMapSection() {
           )}
 
           {/* Driver Icons Group - Fade In Animation */}
-          {drivers.length > 0 && showIcons && (
-            <div key={`${currentAnalysis}-${animationKey}`}>
+          {drivers.length > 0 && showIcons && !isTransitioning && (
+            <div key={`${currentAnalysis}-${drivers.length}`}>
               <TooltipProvider>
                 {drivers
                   .filter(driver => {

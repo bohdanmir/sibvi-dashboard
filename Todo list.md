@@ -13,6 +13,7 @@ Driver comparison
 Map
 - [ ] Map icons switch glitch
 - [X] Position of icons on a map
+- [X] Mobile toggle group fix 
 
 Dark theme:
 - [ ] Chart hovers

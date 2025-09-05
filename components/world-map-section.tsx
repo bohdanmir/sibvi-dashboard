@@ -41,7 +41,7 @@ const AnalysisToggle = React.memo(({
   const isMobile = useIsMobile()
   
   return (
-    <div className="flex justify-center lg:justify-start">
+    <div className="flex justify-start">
       <ToggleGroup
         type="single"
         value={currentAnalysis || ""}
@@ -61,7 +61,7 @@ const AnalysisToggle = React.memo(({
       </ToggleGroup>
       <Select value={currentAnalysis || ""} onValueChange={onAnalysisChange}>
         <SelectTrigger
-          className="flex w-32 md:hidden"
+          className="flex w-auto min-w-32 md:hidden"
           size="sm"
           aria-label="Select analysis"
         >

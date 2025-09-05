@@ -857,9 +857,13 @@ export function WorldMapSection() {
                         const size = getBadgeSize(driver, drivers)
                         return (
                           <Badge 
-                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out`}
+                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out bg-background text-foreground`}
                           >
-                            <div className={size.iconSize}>
+                            <div className={`${size.iconSize} ${
+                              selectedDriver?.id === driver.id
+                                ? 'text-sibvi-cyan-700 dark:text-sibvi-cyan-700'
+                                : 'text-muted-foreground'
+                            }`}>
                               {getCategoryIcon(driver.category)}
                             </div>
                           </Badge>
@@ -911,13 +915,17 @@ export function WorldMapSection() {
                         const size = getBadgeSize(driver, drivers)
                         return (
                           <Badge 
-                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out ${
+                            className={`${size.width} ${size.height} rounded-full p-1 transition-all duration-200 ease-out bg-background text-foreground ${
                               selectedDriver?.id === driver.id
-                                ? 'ring-2 ring-primary scale-110' 
+                                ? 'ring-3 ring-sibvi-cyan-700 dark:ring-sibvi-cyan-700 scale-110' 
                                 : 'hover:scale-105'
                             }`}
                           >
-                            <div className={size.iconSize}>
+                            <div className={`${size.iconSize} ${
+                              selectedDriver?.id === driver.id
+                                ? 'text-sibvi-cyan-700 dark:text-sibvi-cyan-600'
+                                : 'text-muted-foreground'
+                            }`}>
                               {getCategoryIcon(driver.category)}
                             </div>
                           </Badge>
@@ -929,14 +937,14 @@ export function WorldMapSection() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top" 
-                    className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2"
+                    className="max-w-xs text-xs bg-popover text-popover-foreground border border-border shadow-lg"
                   >
                     <div className="space-y-1">
-                      <div className="font-medium">{index + 1}. {driver.name}</div>
-                      <div className="text-muted-foreground">{driver.category}</div>
-                      <div className="text-muted-foreground">
-                        ({driver.coordinates.x.toFixed(1)}%, {driver.coordinates.y.toFixed(1)}%)
+                      <div className="text-muted-foreground flex items-center gap-1">
+                        <span className="h-3 w-3 text-muted-foreground">{getCategoryIcon(driver.category)}</span>
+                        <span className="line-clamp-1">{driver.category}</span>
                       </div>
+                      <div className="font-normal font-mono">{driver.name}</div>
                     </div>
                   </TooltipContent>
                 </Tooltip>

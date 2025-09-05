@@ -266,7 +266,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                   </div>
                   <AnimatedProgress 
                     value={region.cumulativeImpact} 
-                    className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                    className="h-1.5 dark:bg-sibvi-cyan-900/30 [&>div]:bg-sibvi-cyan-700"
                   />
                 </div>
               ))}
@@ -290,7 +290,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                     </div>
                     <AnimatedProgress 
                       value={category.importance} 
-                      className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                      className="h-1.5 dark:bg-sibvi-cyan-900/30 [&>div]:bg-sibvi-cyan-700"
                     />
                   </div>
                 ))}
@@ -311,7 +311,7 @@ function DriverCard({ title, description, categories, regions, drivers, scenario
                   </div>
                   <AnimatedProgress 
                     value={driver.importance} 
-                    className="h-1.5 [&>div]:bg-sibvi-cyan-700"
+                    className="h-1.5 dark:bg-sibvi-cyan-900/30 [&>div]:bg-sibvi-cyan-700"
                   />
                 </div>
               ))}

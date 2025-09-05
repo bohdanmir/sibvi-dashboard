@@ -16,9 +16,9 @@ Map
 
 Dark theme:
 - [ ] Chart hovers
-- [ ] User cart font colour
-- [ ] default badg bg colour (new)
-- [ ] Comparison drivers prgreess bg
+- [X] User cart font colour
+- [X] default badg bg colour (new)
+- [X] Comparison drivers prgreess bg
 - [ ] Card bg not same colour as sidebar
 - [ ] Table hovers bg
 

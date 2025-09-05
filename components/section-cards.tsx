@@ -215,7 +215,7 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                 {contentData.title}
               </div>
               <div className="flex gap-2">
-                <Badge variant="default">
+                <Badge variant="default"  className="dark:bg-sibvi-cyan-700">
                   {contentData.type === "monthly" ? "News" : "Outlook"}
                 </Badge>
               </div>

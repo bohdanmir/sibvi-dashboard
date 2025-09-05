@@ -18,13 +18,14 @@ export function SiteHeader({}: SiteHeaderProps) {
           className="mx-2 data-[orientation=vertical]:h-4"
         />
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">Baerlocher</span>
+          <img src="/baerlocher.png" alt="Baerlocher" className="h-4 w-4" />
+          <span className="text-sm font-normal text-muted-foreground">Baerlocher</span>
           {selectedDataset && (
             <>
               <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-              <h1 className="text-sm font-medium">{selectedDataset.title}</h1>
+              <h1 className="text-sm font-normal">{selectedDataset.title}</h1>
             </>
           )}
         </div>

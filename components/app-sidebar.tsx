@@ -37,9 +37,9 @@ import { useDataset } from "@/lib/dataset-context"
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Ralf Gelshorn",
+    email: "user@baerlocher.com",
+    avatar: "/baerlocher1.png",
   },
   navMain: [
     {

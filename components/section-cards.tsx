@@ -270,10 +270,32 @@ export function SectionCards({ selectedMonth, showFutureOutlook = true }: Sectio
                   </div>
                   
                   <div className="flex-shrink-0">
-                    <LinkPreview 
-                      url={news.link} 
-                      fallbackTitle={news.title}
-                    />
+                    {news.image && news.image.trim() !== "" ? (
+                      <div className="w-16 h-16 rounded-md overflow-hidden bg-muted">
+                        <img 
+                          src={news.image} 
+                          alt={news.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to LinkPreview if image fails to load
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                            if (fallback) fallback.style.display = 'block'
+                          }}
+                        />
+                        <div style={{ display: 'none' }}>
+                          <LinkPreview 
+                            url={news.link} 
+                            fallbackTitle={news.title}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <LinkPreview 
+                        url={news.link} 
+                        fallbackTitle={news.title}
+                      />
+                    )}
                   </div>
                 </div>
               </CardContent>

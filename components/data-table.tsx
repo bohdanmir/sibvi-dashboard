@@ -994,7 +994,7 @@ export function DataTable() {
             <p className="text-muted-foreground">No forecast data available for this analysis</p>
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-md border dark:bg-sibvi-cyan-800">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

@@ -12,7 +12,7 @@ Driver comparison
 
 Map
 - [ ] Map icons switch glitch
-- [ ] Position of icons on a map
+- [X] Position of icons on a map
 
 Dark theme:
 - [ ] Chart hovers
